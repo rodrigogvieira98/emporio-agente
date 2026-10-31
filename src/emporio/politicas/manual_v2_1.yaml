@@ -1,0 +1,503 @@
+# Transcrição do Manual de Políticas e Procedimentos, versão 2.1 (Junho de 2025).
+# Fonte: data/raw/politicas_da_loja.pdf (extraído com pypdf). O campo `texto` segue o PDF,
+# inclusive a grafia original. `condicoes` são os valores estruturados que o código consulta;
+# nenhum fato de loja existe em arquivos .py.
+manual:
+  titulo: Manual de Políticas e Procedimentos
+  versao: "2.1"
+  data: Junho de 2025
+  classificacao: Documento interno, uso restrito da equipe de atendimento
+  fonte_pdf: data/raw/politicas_da_loja.pdf
+
+secoes:
+  - id: capa
+    titulo: Capa
+    pagina: 1
+    temas: [manual]
+    publico: false
+    texto: |
+      EMPÓRIO DA MÚSICA
+      Sua música começa aqui.
+      MANUAL DE POLÍTICAS E PROCEDIMENTOS
+      Atendimento ao Cliente
+      Rua 14 de Maio, 3200 — Centro Campo Grande – MS – CEP 79202-333
+      (67) 3341-4444 — contato@emporiodamusica.com.br
+      Versão 2.1 — Junho de 2025
+      Documento interno — Uso restrito da equipe de atendimento
+    condicoes:
+      - {chave: contato.telefone_capa, valor: "(67) 3341-4444"}
+      - {chave: contato.email_capa, valor: "contato@emporiodamusica.com.br"}
+
+  - id: "1"
+    titulo: Sobre a Empório da Música
+    pagina: 2
+    temas: [empresa, escopo, catalogo]
+    publico: true
+    texto: |
+      A Empório da Música é uma loja especializada em instrumentos musicais, fundada em 2008 em Campo Grande, Mato Grosso do Sul. Com mais de 15 anos de atuação no mercado, somos referência regional na venda de instrumentos para músicos iniciantes, intermediários e profissionais. Nosso catálogo abrange mais de 300 instrumentos de marcas nacionais e internacionais, incluindo guitarras, baixos, violões, baterias, teclados, instrumentos de sopro, cordas orquestrais e ukuleles. Trabalhamos exclusivamente com instrumentos musicais — não comercializamos acessórios como cordas, palhetas, cabos, cases, pedais ou amplificadores.
+    condicoes:
+      - {chave: empresa.nome_fantasia, valor: "Empório da Música"}
+      - {chave: empresa.fundacao_ano, valor: 2008}
+      - {chave: empresa.catalogo_instrumentos_mais_de, valor: 300}
+      - {chave: escopo.somente_instrumentos, valor: true}
+      - {chave: escopo.acessorios_nao_vendidos, valor: [cordas, palhetas, cabos, cases, pedais, amplificadores]}
+
+  - id: "1.1"
+    titulo: Missão
+    pagina: 2
+    temas: [empresa]
+    publico: true
+    texto: |
+      Democratizar o acesso a instrumentos musicais de qualidade na região Centro-Oeste, oferecendo atendimento especializado e preços competitivos, contribuindo para o desenvolvimento cultural e musical da comunidade.
+    condicoes: []
+
+  - id: "1.2"
+    titulo: Dados da Empresa
+    pagina: 2
+    temas: [empresa, endereco, contato]
+    publico: true
+    texto: |
+      Campo | Informação
+      Razão Social | Empório da Música Instrumentos Musicais Ltda.
+      Nome Fantasia | Empório da Música
+      CNPJ | 12.345.678/0001-90
+      Endereço | Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333
+      Telefone / WhatsApp | (67) 3341-4444
+      E-mail | contato@empóriodamusica.com.br
+      Fundação | 2008
+    condicoes:
+      - {chave: empresa.razao_social, valor: "Empório da Música Instrumentos Musicais Ltda."}
+      - {chave: empresa.cnpj, valor: "12.345.678/0001-90"}
+      - chave: empresa.endereco
+        valor: {logradouro: "Rua 14 de Maio", numero: "3200", bairro: Centro, cidade: Campo Grande, uf: MS, cep: "79202-333"}
+      - {chave: contato.telefone_whatsapp_dados_empresa, valor: "(67) 3341-4444"}
+      - {chave: contato.email_dados_empresa, valor: "contato@empóriodamusica.com.br"}
+
+  - id: "2"
+    titulo: Horário de Funcionamento
+    pagina: 2
+    temas: [horario]
+    publico: true
+    texto: |
+      O atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.
+      Dia | Horário
+      Segunda a Sexta-feira | 09:00 às 18:00
+      Sábado | 09:00 às 13:00
+      Domingo e Feriados | Fechado
+      Em datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp.
+    condicoes:
+      # dias: 0 = segunda ... 6 = domingo
+      - chave: horario.funcionamento
+        valor:
+          - {dias: [0, 1, 2, 3, 4], abre: "09:00", fecha: "18:00"}
+          - {dias: [5], abre: "09:00", fecha: "13:00"}
+          - {dias: [6], fechado: true}
+      - {chave: horario.feriados_fechado, valor: true}
+      - {chave: horario.datas_especiais_podem_estender, valor: true}
+
+  - id: "3"
+    titulo: Formas de Pagamento
+    pagina: 3
+    temas: [pagamento]
+    publico: true
+    texto: |
+      Aceitamos as seguintes formas de pagamento para compras presenciais e online:
+      Forma | Condições | Observações
+      PIX | Pagamento à vista | 5% de desconto sobre o preço de tabela
+      Cartão de Débito | Pagamento à vista | Todas as bandeiras aceitas
+      Cartão de Crédito | Até 12x sem juros | Parcela mínima de R$ 100,00
+      Boleto Bancário | Pagamento à vista | Compensação em até 3 dias úteis
+    condicoes:
+      - {chave: pagamento.pix_desconto_percentual, valor: 5, unidade: percentual, base: preco_de_tabela}
+      - {chave: pagamento.debito_a_vista, valor: true}
+      - {chave: pagamento.credito_parcelas_max, valor: 12}
+      - {chave: pagamento.credito_sem_juros, valor: true}
+      - {chave: pagamento.credito_parcela_minima_tabela_centavos, valor: 10000}
+      - {chave: pagamento.boleto_a_vista, valor: true}
+      - {chave: pagamento.boleto_compensacao_dias_uteis_max, valor: 3}
+
+  - id: "3.1"
+    titulo: Regras de Parcelamento
+    pagina: 3
+    temas: [pagamento, parcelamento]
+    publico: true
+    texto: |
+      • Parcelamento em até 3x: sem juros, sem valor mínimo de parcela (exceto abaixo de R$ 50,00).
+      • Parcelamento de 4x a 6x: sem juros, parcela mínima de R$ 80,00.
+      • Parcelamento de 7x a 12x: sem juros, parcela mínima de R$ 100,00.
+      • Combinação de formas de pagamento: permitida (ex.: PIX + cartão) para compras acima de R$ 2.000,00.
+    condicoes:
+      - chave: pagamento.parcelamento_faixas
+        valor:
+          - {de: 1, ate: 3, parcela_minima_centavos: 5000}
+          - {de: 4, ate: 6, parcela_minima_centavos: 8000}
+          - {de: 7, ate: 12, parcela_minima_centavos: 10000}
+      - {chave: pagamento.parcelamento_excecao_abaixo_centavos, valor: 5000}
+      - {chave: pagamento.combinacao_formas_acima_centavos, valor: 200000}
+
+  - id: "4"
+    titulo: Política de Trocas e Devoluções
+    pagina: 4
+    temas: [trocas, devolucao]
+    publico: true
+    texto: |
+      A Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções.
+    condicoes: []
+
+  - id: "4.1"
+    titulo: Direito de Arrependimento (Compras Online)
+    pagina: 4
+    temas: [trocas, devolucao, arrependimento]
+    publico: true
+    texto: |
+      • O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.
+      • O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.
+      • O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.
+      • O frete de devolução é por conta da loja em caso de arrependimento.
+    condicoes:
+      - chave: regra.arrependimento
+        valor:
+          prazo_dias: 7
+          tipo_dias: corridos
+          marco_inicial: recebimento
+          aplica_a: compra_online
+          dados_necessarios: [canal_compra, data_recebimento, estado_produto]
+          estado_exigido: embalagem original, sem sinais de uso, com todos os acessórios e manuais
+      - {chave: devolucao.arrependimento_reembolso_dias_uteis_max, valor: 10}
+      - {chave: devolucao.arrependimento_frete_por_conta_da_loja, valor: true}
+
+  - id: "4.2"
+    titulo: Trocas por Defeito
+    pagina: 4
+    temas: [trocas, defeito, garantia]
+    publico: true
+    texto: |
+      • Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.
+      • Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.
+      • Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos.
+    condicoes:
+      - chave: regra.defeito
+        valor:
+          prazo_dias: 30
+          tipo_dias: corridos
+          marco_inicial: compra
+          dados_necessarios: [data_compra, descricao_defeito]
+      - {chave: defeito.apos_prazo_aciona_fabricante, valor: true}
+      - {chave: defeito.loja_pode_intermediar_mediante_solicitacao, valor: true}
+
+  - id: "4.3"
+    titulo: Trocas por Preferência
+    pagina: 4
+    temas: [trocas, troca_preferencia]
+    publico: true
+    texto: |
+      • Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.
+      • O produto deve estar em perfeito estado e na embalagem original.
+      • Diferenças de valor serão cobradas ou reembolsadas conforme o caso.
+    condicoes:
+      - chave: regra.preferencia
+        valor:
+          prazo_dias: 7
+          tipo_dias: nao_informado
+          marco_inicial: nao_informado
+          dados_necessarios: [data_compra, data_recebimento, estado_produto]
+          depende_de_disponibilidade: true
+      - {chave: troca_preferencia.diferenca_de_valor_cobrada_ou_reembolsada, valor: true}
+
+  - id: "4.4"
+    titulo: Itens Não Elegíveis para Troca
+    pagina: 4
+    temas: [trocas, itens_nao_elegiveis]
+    publico: true
+    texto: |
+      • Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).
+      • Produtos adquiridos em promoções de liquidação com aviso explícito de "venda final".
+      • Boquilhas de instrumentos de sopro, por questões de higiene.
+    condicoes:
+      - chave: trocas.itens_nao_elegiveis
+        valor:
+          - Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial)
+          - Produtos adquiridos em promoções de liquidação com aviso explícito de venda final
+          - Boquilhas de instrumentos de sopro
+
+  - id: "5"
+    titulo: Política de Frete e Entregas
+    pagina: 4
+    temas: [frete, entrega]
+    publico: true
+    texto: ""
+    condicoes: []
+
+  - id: "5.1"
+    titulo: Entregas na Região Metropolitana de Campo Grande
+    pagina: 4
+    temas: [frete, entrega]
+    publico: true
+    texto: |
+      • Frete grátis para pedidos acima de R$ 500,00.
+      • Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.
+      • Prazo de entrega: 1 a 3 dias úteis.
+      • Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega.
+    condicoes:
+      - {chave: frete.cidade_base, valor: Campo Grande}
+      - {chave: frete.gratis_acima_centavos, valor: 50000}
+      - {chave: frete.taxa_abaixo_centavos, valor: 3500}
+      - {chave: frete.prazo_dias_uteis, valor: {min: 1, max: 3}}
+      - {chave: frete.entrega_motoboy_proprio, valor: true}
+
+  - id: "5.2"
+    titulo: Entregas para Outras Cidades
+    pagina: 5
+    temas: [frete, entrega]
+    publico: true
+    texto: |
+      Utilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.
+      Modalidade | Prazo Estimado | Rastreamento | Seguro
+      PAC (Correios) | 5 a 12 dias úteis | Sim | Incluído
+      SEDEX (Correios) | 2 a 5 dias úteis | Sim | Incluído
+      Jadlog (.package) | 3 a 8 dias úteis | Sim | Incluído
+      O valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja.
+    condicoes:
+      - chave: frete.outras_cidades_modalidades
+        valor:
+          - {nome: PAC (Correios), prazo_dias_uteis: {min: 5, max: 12}, rastreamento: true, seguro: true}
+          - {nome: SEDEX (Correios), prazo_dias_uteis: {min: 2, max: 5}, rastreamento: true, seguro: true}
+          - {nome: Jadlog (.package), prazo_dias_uteis: {min: 3, max: 8}, rastreamento: true, seguro: true}
+      - {chave: frete.outras_cidades_calculo, valor: automatico por CEP de destino, peso e dimensões}
+      - {chave: frete.grande_porte_cotacao_individual, valor: [baterias acústicas, pianos digitais, contrabaixos]}
+      - {chave: frete.avaria_recusar_recebimento, valor: true}
+
+  - id: "5.3"
+    titulo: Código de Rastreamento
+    pagina: 5
+    temas: [frete, rastreamento]
+    publico: true
+    texto: |
+      O código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog.
+    condicoes:
+      - {chave: rastreamento.enviado_por, valor: [e-mail, WhatsApp]}
+      - {chave: rastreamento.consulta_em, valor: [Correios, Jadlog]}
+
+  - id: "6"
+    titulo: Promoções e Descontos
+    pagina: 6
+    temas: [promocoes]
+    publico: true
+    texto: ""
+    condicoes: []
+
+  - id: "6.1"
+    titulo: Tipos de Promoção
+    pagina: 6
+    temas: [promocoes]
+    publico: true
+    texto: |
+      A Empório da Música realiza promoções periódicas ao longo do ano. As principais campanhas incluem:
+      • Aniversário da Loja (Agosto): descontos de 10% a 25% em itens selecionados.
+      • Black Friday (Novembro): descontos de 15% a 30% em todo o catálogo.
+      • Volta às Aulas (Fevereiro): descontos especiais em instrumentos para estudantes.
+      • Queima de Estoque: promoções pontuais para renovação de catálogo.
+      • Semana do Músico: promoções na semana do Dia do Músico (22 de novembro).
+    condicoes: []
+
+  - id: "6.2"
+    titulo: Regras de Promoções
+    pagina: 6
+    temas: [promocoes]
+    publico: true
+    texto: |
+      Cumulatividade: promoções não são cumulativas. O desconto de PIX (5%) não se aplica sobre preços já promocionais.
+      Estoque: promoções estão sujeitas à disponibilidade de estoque. Produtos esgotados durante a promoção não geram direito a rain check (reserva de preço).
+      Comunicação: preços promocionais devem sempre ser apresentados junto ao preço original e o percentual de desconto, para total transparência ao cliente.
+    condicoes:
+      - {chave: promocoes.cumulativas, valor: false}
+      - {chave: promocoes.pix_sobre_preco_promocional, valor: false}
+      - {chave: promocoes.rain_check, valor: false}
+      - {chave: promocoes.apresentar_preco_original_e_percentual, valor: true}
+
+  - id: "7"
+    titulo: Atendimento via WhatsApp
+    pagina: 6
+    temas: [atendimento, contato]
+    publico: true
+    texto: |
+      O canal de WhatsApp (67) 3321-4500 é o principal meio de atendimento remoto da Empório da Música. O atendimento pode ser realizado por atendentes humanos ou pelo assistente virtual.
+    condicoes:
+      - {chave: contato.whatsapp_secao_7, valor: "(67) 3321-4500"}
+
+  - id: "7.1"
+    titulo: Diretrizes de Atendimento
+    pagina: 6
+    temas: [atendimento, escopo]
+    publico: false
+    texto: |
+      Tom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.
+      Tempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.
+      Informações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.
+      Escopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível.
+    condicoes:
+      - {chave: atendimento.tempo_resposta_max_minutos, valor: 5}
+      - {chave: atendimento.fora_do_expediente_informar_retorno, valor: true}
+      - {chave: atendimento.consultar_sistema_para_preco_estoque_prazo, valor: true}
+
+  - id: "7.2"
+    titulo: Fluxo de Atendimento Padrão
+    pagina: 6
+    temas: [atendimento]
+    publico: false
+    texto: |
+      1. Saudação: cumprimentar o cliente pelo nome (se disponível) e perguntar como pode ajudar.
+      2. Entendimento: identificar a necessidade do cliente (busca de produto, dúvida, rastreamento, reclamação).
+      3. Consulta: buscar no sistema as informações relevantes (produto, estoque, promoção, pedido).
+      4. Resposta: apresentar as opções de forma clara e objetiva, com preços e condições.
+      5. Fechamento: confirmar se o cliente precisa de mais alguma coisa e encerrar com cordialidade.
+    condicoes: []
+
+  - id: "7.3"
+    titulo: Situações Especiais
+    pagina: 7
+    temas: [atendimento, reclamacao, promocoes]
+    publico: false
+    texto: |
+      Produto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.
+      Produto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.
+      Promoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.
+      Reclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável. Prazo de retorno: 24 horas úteis.
+    condicoes:
+      - {chave: atendimento.prazo_retorno_reclamacao_horas_uteis, valor: 24}
+      - {chave: atendimento.promocao_vencida_informar_com_transparencia, valor: true}
+
+  - id: "8"
+    titulo: Garantia
+    pagina: 7
+    temas: [garantia]
+    publico: true
+    texto: ""
+    condicoes: []
+
+  - id: "8.1"
+    titulo: Garantia Legal
+    pagina: 7
+    temas: [garantia]
+    publico: true
+    texto: |
+      Conforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente.
+    condicoes:
+      - chave: regra.garantia_legal
+        valor:
+          prazo_dias: 90
+          tipo_dias: nao_informado
+          marco_inicial: recebimento
+          dados_necessarios: [data_recebimento, descricao_defeito]
+
+  - id: "8.2"
+    titulo: Garantia do Fabricante
+    pagina: 7
+    temas: [garantia]
+    publico: true
+    texto: |
+      Além da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto.
+    condicoes:
+      - {chave: garantia.fabricante_prazo_meses, valor: {min: 6, max: 24}}
+
+  - id: "8.3"
+    titulo: O que Não Cobre a Garantia
+    pagina: 7
+    temas: [garantia]
+    publico: true
+    texto: |
+      • Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).
+      • Danos por mau uso, queda, exposição a condições climáticas extremas.
+      • Modificações ou reparos realizados por terceiros não autorizados.
+      • Danos estéticos que não afetem a funcionalidade do instrumento.
+    condicoes:
+      - chave: garantia.nao_cobre
+        valor:
+          - Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro)
+          - Danos por mau uso, queda, exposição a condições climáticas extremas
+          - Modificações ou reparos realizados por terceiros não autorizados
+          - Danos estéticos que não afetem a funcionalidade do instrumento
+
+  - id: "9"
+    titulo: Privacidade e Proteção de Dados
+    pagina: 7
+    temas: [privacidade]
+    publico: true
+    texto: |
+      A Empório da Música está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Os dados pessoais coletados durante o atendimento (nome, telefone, e-mail, endereço) são utilizados exclusivamente para:
+      • Processamento e entrega de pedidos.
+      • Comunicação sobre status de pedidos e rastreamento.
+      • Envio de promoções e novidades (mediante consentimento explícito do cliente).
+      • Cumprimento de obrigações legais e fiscais.
+      Dados de clientes não são compartilhados com terceiros para fins de marketing. O cliente pode solicitar a exclusão de seus dados a qualquer momento entrando em contato pelo WhatsApp ou e-mail.
+    condicoes:
+      - {chave: privacidade.compartilha_para_marketing, valor: false}
+      - {chave: privacidade.exclusao_a_pedido_do_cliente, valor: true}
+
+  - id: "10"
+    titulo: Disposições Finais
+    pagina: 8
+    temas: [manual]
+    publico: false
+    texto: |
+      Este manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente.
+      Empório da Música — Sua música começa aqui.
+      Última atualização: Junho de 2025 — Versão 2.1
+    condicoes: []
+
+ambiguidades:
+  - id: telefone_whatsapp
+    descricao: O manual traz dois números diferentes, (67) 3341-4444 como telefone e WhatsApp nos dados da empresa e (67) 3321-4500 como canal de WhatsApp na seção 7.
+    secoes: [capa, "1.2", "7"]
+    temas: [contato]
+    tratamento: informar_ambos_e_pedir_confirmacao_da_equipe
+  - id: email
+    descricao: O e-mail aparece grafado de duas formas, sem acento na capa e com acento nos dados da empresa.
+    secoes: [capa, "1.2"]
+    temas: [contato]
+    tratamento: informar_ambos_e_pedir_confirmacao_da_equipe
+  - id: parcela_minima
+    descricao: A tabela de pagamento exige parcela mínima de R$ 100,00 no crédito, enquanto as regras de parcelamento têm faixas de R$ 50,00, R$ 80,00 e R$ 100,00.
+    secoes: ["3", "3.1"]
+    temas: [pagamento, parcelamento]
+    tratamento: requer_confirmacao_da_equipe
+  - id: excecao_abaixo_50
+    descricao: O texto "exceto abaixo de R$ 50,00" não diz se a compra abaixo desse valor pode ser parcelada.
+    secoes: ["3.1"]
+    temas: [pagamento, parcelamento]
+    tratamento: requer_confirmacao_da_equipe
+  - id: frete_exatamente_500
+    descricao: O manual fala em acima e abaixo de R$ 500,00 e não diz o que vale para um pedido de exatamente R$ 500,00.
+    secoes: ["5.1"]
+    temas: [frete]
+    tratamento: requer_confirmacao_da_equipe
+  - id: regiao_metropolitana_sem_lista
+    descricao: O manual não lista as cidades da região metropolitana de Campo Grande.
+    secoes: ["5.1", "5.2"]
+    temas: [frete]
+    tratamento: cotacao_necessaria
+  - id: marco_troca_preferencia
+    descricao: A troca por preferência vale por 7 dias, mas o manual não diz se a contagem parte da compra ou do recebimento, nem se são dias corridos.
+    secoes: ["4.3"]
+    temas: [troca_preferencia, trocas]
+    tratamento: requer_confirmacao_da_equipe
+  - id: prazo_30_x_90
+    descricao: A troca por defeito é de 30 dias corridos desde a compra, e a garantia legal é de 90 dias desde o recebimento. O manual não explica como os dois prazos se combinam.
+    secoes: ["4.2", "8.1"]
+    temas: [defeito, garantia]
+    tratamento: requer_confirmacao_da_equipe
+  - id: total_300_instrumentos
+    descricao: O manual fala em mais de 300 instrumentos no catálogo, e o sistema tem um número menor de produtos cadastrados.
+    secoes: ["1"]
+    temas: [catalogo, empresa]
+    tratamento: nao_afirmar_tamanho_do_catalogo
+  - id: lojas_parceiras_sem_lista
+    descricao: O manual manda sugerir lojas parceiras quando possível, mas não traz a lista.
+    secoes: ["7.1"]
+    temas: [escopo]
+    tratamento: nao_citar_loja
+  - id: feriados_sem_calendario
+    descricao: O manual diz que a loja fecha em feriados, mas não traz calendário de feriados.
+    secoes: ["2"]
+    temas: [horario]
+    tratamento: avisar_que_feriado_pode_alterar

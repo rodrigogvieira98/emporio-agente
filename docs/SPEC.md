@@ -66,6 +66,19 @@ Trace JSONL em `var/trace.jsonl` por turno, campo `origem` obrigatório (real, e
 
 CLI `python -m emporio.cli --origem demo`.
 
+## Concisão e redundância
+
+Complemento aprovado pelo Rodrigo em 31/10/2026, aplicado na etapa 5, quando o modelo entra. Não altera as etapas 1 a 3.
+
+- O estado guarda `ja_informados`: chaves dos fatos e avisos já entregues na conversa, por entidade, atributo e valor.
+- Fato ou aviso já entregue não reaparece sem pedido do cliente. Exceções: o valor mudou, ou o cliente perguntou de novo.
+- Saudação no máximo uma vez por conversa.
+- Texto livre do modelo: no máximo 2 frases curtas e no máximo 1 pergunta por turno.
+- Antes de exibir, o código remove frase repetida ou quase igual dentro do turno e em relação às respostas anteriores, sem nunca remover bloco factual necessário à resposta atual.
+- A avaliação mede tamanho da resposta em caracteres e taxa de repetição, com contagens, contra o controle por regras. A taxa conta fatos e avisos reapresentados sem pedido sobre o total de fatos e avisos exibidos.
+
 ## Testes obrigatórios
+
+Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.
 
 Cinco estados de cada ferramenta, cálculos com valor esperado (Crafter HT-100 por PIX: 2399,00, 18%, 1967,18; Takamine GD20 sem promoção; Shelby SN-100 em 6x `requer_confirmacao`), idempotência, negado unificado, trace sem PII, varredura de literais de loja em `.py`, teste que altera o YAML e muda a resposta, e conversa completa de devolução do pedido 4: pergunta pedido, pergunta canal, data e estado, propõe registro, confirma protocolo.

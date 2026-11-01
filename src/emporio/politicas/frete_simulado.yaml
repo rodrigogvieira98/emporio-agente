@@ -1,0 +1,50 @@
+# Frete estimado (simulação).
+# HIPÓTESES do protótipo, não tarifa de transportadora nem de qualquer serviço postal. Valores em centavos,
+# medidas em cm, pesos em kg. Origem da simulação: Mato Grosso do Sul. Prazos NÃO moram aqui: vêm do manual.
+# Texto original do manual fica em manual_v2_1.yaml e não é alterado por este arquivo.
+versao: "2026-11-01"
+hipotese: true
+aviso: Simulação do protótipo, não é tarifa de transportadora. O valor final depende da cotação da equipe.
+
+peso_cubado:
+  divisor: 6000            # C x L x A / divisor, em kg
+adicional_lado_grande:
+  acima_de_cm: 100         # quando algum lado passa disso
+  valor_centavos: 1119
+
+# `multiplicador` incide sobre base + por kg; o adicional entra depois. `nome` casa com o início do nome no manual,
+# de onde saem os prazos. Modalidade do manual sem entrada aqui (a de transportadora) fica sem preço.
+modalidades:
+  - {id: economica, nome: PAC, multiplicador: 1.0, principal: true}
+  - {id: expressa, nome: SEDEX, multiplicador: 1.6, principal: false}
+
+# Zonas por UF de destino. Campo Grande/MS segue a regra própria da loja (calcular_condicoes), não esta tabela.
+zonas:
+  - {id: z1, ufs: [MS], base_centavos: 2100, por_kg_centavos: 180}
+  - {id: z2, ufs: [SP, PR, MT, GO, DF, MG], base_centavos: 2600, por_kg_centavos: 250}
+  - {id: z3, ufs: [RJ, ES, SC, RS], base_centavos: 2900, por_kg_centavos: 290}
+  - {id: z4, ufs: [BA, SE, AL, PE, PB, RN, CE, PI, MA, TO], base_centavos: 3300, por_kg_centavos: 320}
+  - {id: z5, ufs: [PA, AP, AM, RR, AC, RO], base_centavos: 3600, por_kg_centavos: 360}
+
+# Uma unidade é uma caixa. Dimensões estimadas C x L x A e peso real.
+caixas:
+  ukulele_pequeno: {nome: ukulele soprano ou concert, comprimento: 65, largura: 26, altura: 12, peso: 1.5}
+  ukulele_grande: {nome: ukulele tenor ou barítono, comprimento: 80, largura: 30, altura: 13, peso: 2}
+  violao: {nome: violão, comprimento: 110, largura: 45, altura: 16, peso: 5}
+  guitarra: {nome: guitarra, comprimento: 112, largura: 42, altura: 14, peso: 6.5}
+  baixo_eletrico: {nome: baixo elétrico, comprimento: 128, largura: 42, altura: 14, peso: 7.5}
+  teclado_61: {nome: teclado de 61 teclas, comprimento: 110, largura: 42, altura: 20, peso: 12}
+
+# Que caixa cada produto usa. A primeira regra que casa vale. `categoria` compara com o nome da categoria no banco.
+# `escala_ate_mm` e `teclas` leem as especificações do produto. `grande_porte` não tem valor: cotação individual.
+# Produto que nenhuma regra cobre também fica em cotação individual, nunca com valor inventado.
+produtos:
+  - {nome_contem: [piano, contrabaixo], grande_porte: true}
+  - {categoria: Ukuleles, escala_ate_mm: 400, caixa: ukulele_pequeno}
+  - {categoria: Ukuleles, caixa: ukulele_grande}
+  - {categoria: Violões, caixa: violao}
+  - {categoria: Guitarras, caixa: guitarra}
+  - {categoria: Baixos, caixa: baixo_eletrico}
+  - {categoria: Teclados e Pianos, teclas: 61, caixa: teclado_61}
+  - {categoria: Teclados e Pianos, grande_porte: true}
+  - {categoria: Baterias e Percussão, grande_porte: true}

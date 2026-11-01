@@ -58,3 +58,8 @@ def agora() -> datetime:
 
 def hoje() -> date:
     return agora().date()
+
+
+def caminho_frete_simulado() -> Path:
+    padrao = Path(__file__).resolve().parent / "politicas" / "frete_simulado.yaml"
+    return Path(os.environ.get("EMPORIO_FRETE_SIMULADO") or padrao)

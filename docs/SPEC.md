@@ -276,6 +276,8 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 2. ícone de telefone, número em destaque e horário de atendimento em uma linha curta, com os dados do manual;
 3. ícone de pacote, a frase "Já fez seu pedido e quer saber onde ele está?" e botão contornado "Rastrear pedido", para `/rastreio`.
 
+**"Para começar" em carrossel.** Decisão do Rodrigo, para compactar a home. A grade da seção "Para começar" vira carrossel, com o mesmo componente, os mesmos controles e o mesmo comportamento da vitrine de destaques, reaproveitando `vitrine.js` e o CSS existentes. Os dois carrosséis funcionam de forma independente, sem autoplay, com rótulos acessíveis próprios, e sem rolagem horizontal da página em 390 px. Cada um mantém seus produtos e o link "Ver todos os instrumentos".
+
 **Canais clicáveis.** Decisão do Rodrigo em 01/11/2026, que substitui a decisão anterior de manter contatos só como texto. Nas telas, cada canal tem ícone e link direto, gerado por padrão a partir dos dados do manual, sem depender de variável de ambiente:
 - botão "Fale conosco" da faixa: `mailto:` para o e-mail do manual, com assunto preenchido, e não mais `/fale-conosco`;
 - bloco do telefone da faixa: número com link `tel:` e, ao lado, ícone do WhatsApp com link `https://wa.me/55DDDNUMERO`, em nova aba;

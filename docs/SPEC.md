@@ -97,6 +97,32 @@ Detalhamento do plano v3 aprovado pelo Rodrigo ("pode seguir com o site e o dock
 - Docker Compose: serviço `app` (python:3.12-slim, usuário sem root, porta 8000) e serviço `ollama` com volume do modelo. Um serviço de uma vez baixa o modelo padrão. Sem GPU a stack sobe e responde; com GPU, configuração opcional documentada.
 - Testes: rotas com `TestClient` (catálogo, produto descontinuado sem compra, rastreio ok e negado, chat devolve protocolo em pedido de atendente, chat sem Ollama responde). Um teste Playwright de ponta a ponta no chat e no rastreio, marcado para rodar à parte.
 
+## Homepage e identidade visual (etapa 6b)
+
+Pedido do Rodrigo em 01/11/2026: homepage com header e footer a partir do manual, carrossel de produtos com valores, estilo próprio decidido pelo Planner, sem copiar lojas do segmento e sem cara de site gerado por IA.
+
+**Imagens.** Nenhuma imagem baixada da internet. Fotos de produto pertencem às marcas e lojas, o repositório é público, e uma foto genérica ao lado de um modelo específico mostraria um produto que não é o vendido, contra a regra de todo fato ter fonte. No lugar: ilustrações próprias em SVG de traço, uma por categoria (violão, guitarra, baixo, ukulele, teclado, bateria e as demais existentes), reaproveitadas no card do produto conforme a categoria.
+
+**Direção visual: balcão de loja de música do Centro de Campo Grande.**
+- Cores (tokens CSS): papel `#F4EEE3`, tinta `#1F1A17`, jacarandá `#6B3A23`, ipê `#E3A72F` só em destaque pontual (etiqueta de promoção, foco), pantanal `#2F4A3A` para "disponível", cinza quente `#8A8178` para texto secundário. Sem gradiente, sem roxo, sem vidro fosco, sem sombra difusa grande.
+- Tipografia: Zilla Slab (títulos, preços, logotipo) e Public Sans (texto), ambas OFL, servidas localmente em woff2 com o arquivo de licença. Números de preço com algarismos tabulares.
+- Forma: bordas de 1px na cor tinta, cantos de 2 a 4px, grade assimétrica, filete horizontal separando seções como em impressão. Preço em "etiqueta" de papel com furo e barbante desenhados em CSS/SVG.
+- Proibido (cara de IA): emoji, ícones genéricos em círculo, três cards iguais centralizados com ícone, texto em gradiente, hero gigante com frase de efeito em inglês ou genérica ("eleve seu som"), contadores animados, depoimentos inventados.
+
+**Estrutura da homepage.**
+1. Faixa superior: endereço, horário de hoje e "aberta agora" ou "fechada, abre às X", calculados por `expediente` a partir do manual.
+2. Header: logotipo tipográfico com pequena marca SVG própria, busca, menu de categorias, links Políticas e Rastrear pedido, botão Falar com a Lia.
+3. Vitrine (carrossel): produtos com promoção ativa (`listar_promocoes`) e, para completar até 8, os mais baratos vendáveis de categorias diferentes (`buscar_produtos`). Cada etiqueta mostra preço de tabela, promoção quando houver (original, percentual, final) e condição PIX ou parcelamento vinda de `calcular_condicoes`. Carrossel em CSS scroll-snap, navegável por teclado e sem JS obrigatório; setas são realce progressivo.
+4. Categorias com as ilustrações; categoria sem produto vendável aparece como "em breve" sem link quebrado.
+5. "Como funciona comprar aqui": pagamento, frete, troca e garantia, com texto curto vindo de `consultar_politica`/`fato()`, incluindo as ressalvas das ambiguidades registradas (ex.: frete de exatamente R$ 500 confirmado pela equipe). Link para Políticas.
+6. Chamada para a Lia, com exemplos de perguntas clicáveis que abrem o chat já preenchido.
+7. Visite a loja: endereço, horário completo e contatos, sem mapa externo.
+8. Footer: navegação, contatos do manual com origem (já existente), formas de pagamento em texto, políticas, e o aviso "Loja fictícia criada para um desafio técnico; dados de demonstração".
+
+**Regras que continuam valendo.** Todo fato vem das ferramentas ou do manual (teste de literais cobre templates e CSS). Texto de marca que não é fato (títulos de seção, chamadas) pode ficar no template. Responsivo de 360px a 1440px sem rolagem horizontal da página. Contraste AA. Foco visível.
+
+**Testes.** Rota `/` com vitrine contendo os 4 produtos em promoção ativa e seus valores (Crafter HT-100: 2.399,00, 18%, 1.967,18), nenhuma promoção inativa, categoria vazia sem link, faixa de expediente aberta e fechada por `EMPORIO_DATA_REFERENCIA`, aviso de loja fictícia no footer. Playwright: carrossel navegável por teclado, captura de tela em 390px e 1280px anexada à entrega.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

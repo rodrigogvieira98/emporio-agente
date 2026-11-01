@@ -20,7 +20,7 @@ PONTOS_FORTE = 8  # ofensa ou raiva explícita
 PONTOS_MEDIO = 4  # frustração explícita
 PONTOS_CAIXA_ALTA = 2
 PONTOS_PONTUACAO = 2
-PONTOS_REPETIDA = 4
+PONTOS_REPETIDA = 3
 PONTOS_FALHAS = 4
 
 FORTE = re.compile(
@@ -69,8 +69,8 @@ def detectar(mensagem: str, estado: Estado) -> str:
         pontos += PONTOS_CAIXA_ALTA
     if PONTUACAO_REPETIDA.search(mensagem):
         pontos += PONTOS_PONTUACAO
-    if len(norm) >= 12 and estado.assinatura_ultima_mensagem == assinatura(mensagem):
-        pontos += PONTOS_REPETIDA  # o cliente repete a mesma pergunta
+    if pontos > 0 and len(norm) >= 12 and estado.assinatura_ultima_mensagem == assinatura(mensagem):
+        pontos += PONTOS_REPETIDA  # repetir a mesma pergunta só pesa junto de outro sinal; calmo, não é frustração
     if estado.falhas_seguidas >= 2:
         pontos += PONTOS_FALHAS
     if pontos >= LIMIAR_IRRITADO:

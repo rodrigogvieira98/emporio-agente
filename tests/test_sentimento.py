@@ -53,7 +53,8 @@ def test_rotulos(frase, esperado):
 def test_mesma_pergunta_repetida_e_falhas_seguidas_somam_pontos():
     e = Estado()
     assert sentimento.registrar(e, "qual o horário de funcionamento?") == "neutro"
-    assert sentimento.registrar(e, "qual o horário de funcionamento?") == "frustrado"  # repetiu a pergunta
+    assert sentimento.registrar(e, "qual o horário de funcionamento?") == "neutro"  # repetir calmo não é frustração
+    assert sentimento.registrar(e, "de novo, qual o horário de funcionamento?") == "frustrado"
     e2 = Estado(falhas_seguidas=2)
     assert sentimento.detectar("qual o horário de funcionamento?", e2) == "frustrado"
 
@@ -195,3 +196,20 @@ def test_produto_no_meio_da_frase_e_encontrado(frase, nome, preco):
     (r,) = conversar(frase)
     assert nome in r.texto and preco in r.texto and "Não encontrei" not in r.texto
     assert not tem_empatia(r.texto)  # "não estou bravo" e as demais são neutras
+
+
+# 6. repetir a mesma pergunta, calmo, não é frustração ---------------------------------------
+
+def test_mesma_pergunta_calma_tres_vezes_da_tres_respostas_iguais_sem_oferta():
+    r = conversar("qual o endereço da loja?", "qual o endereço da loja?", "qual o endereço da loja?")
+    assert len({x.texto for x in r}) == 1
+    assert not any(tem_empatia(x.texto) or respostas.OFERTA_HUMANO in x.texto for x in r)
+    linhas = [json.loads(x) for x in config.caminho_trace().read_text(encoding="utf-8").splitlines() if x.strip()]
+    assert [x["sentimento"] for x in linhas] == ["neutro"] * 3
+
+
+def test_de_novo_repetido_continua_frustrado():
+    r = conversar("de novo, qual o endereço?", "de novo, qual o endereço?")
+    linhas = [json.loads(x) for x in config.caminho_trace().read_text(encoding="utf-8").splitlines() if x.strip()]
+    assert [x["sentimento"] for x in linhas] == ["frustrado", "frustrado"]
+    assert tem_empatia(r[0].texto)

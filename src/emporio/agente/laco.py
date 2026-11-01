@@ -14,6 +14,7 @@ from ..dados import banco
 from ..ferramentas.condicoes import calcular_condicoes
 from ..ferramentas.encaminhamento import registrar_encaminhamento
 from ..ferramentas.envelope import Fato, Resultado
+from ..ferramentas.pedido_demo import consultar_pedido_demo
 from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
 from ..ferramentas.promocoes import listar_promocoes
@@ -31,10 +32,11 @@ log = logging.getLogger("emporio.agente")
 
 MAX_PASSOS = 3
 FERRAMENTAS = {f.__name__: f for f in (buscar_produtos, ver_produto, calcular_condicoes, consultar_pedido,
-                                       consultar_politica, registrar_encaminhamento, listar_promocoes)}
+                                       consultar_politica, registrar_encaminhamento, listar_promocoes,
+                                       consultar_pedido_demo)}
 # só o caminho "encaminhar" (com permissão) pode gravar chamado
 SO_ENCAMINHAR = {"registrar_encaminhamento"}
-NECESSITA_CONVERSA = {"consultar_pedido", "registrar_encaminhamento"}
+NECESSITA_CONVERSA = {"consultar_pedido", "consultar_pedido_demo", "registrar_encaminhamento"}
 LIMPAR_AO_CONCLUIR = ("proposta", "regra", "relato", "registro_explicito", "opcoes", "referencia", "cidade",
                       "valor_pedido", "forma", "parcelas")
 
@@ -232,7 +234,7 @@ def gravar_mensagem(conversa_id: str, turno: int, texto: str, origem: str) -> No
 
 def integrar(estado: Estado, passo: Passo) -> None:
     r, nome = passo.resultado, passo.ferramenta
-    if r.estado in ("falha", "negado") and nome in ("consultar_pedido", "buscar_produtos", "ver_produto",
+    if r.estado in ("falha", "negado") and nome in ("consultar_pedido", "consultar_pedido_demo", "buscar_produtos", "ver_produto",
                                                     "calcular_condicoes", "consultar_politica",
                                                     "registrar_encaminhamento", "listar_promocoes"):
         estado.falhas_seguidas += 1
@@ -243,6 +245,11 @@ def integrar(estado: Estado, passo: Passo) -> None:
             estado.coletados["pedido"] = r.dados
         elif r.estado == "negado":
             estado.declarados.pop("pedido_id", None)  # pede de novo os dois dados
+    elif nome == "consultar_pedido_demo":  # pedido DEMO-: mesma conversa, sem telefone
+        if r.estado == "ok":
+            estado.coletados["pedido_demo"] = r.dados
+        elif r.estado == "negado":
+            estado.declarados.pop("pedido_demo", None)
     elif nome == "ver_produto":
         if r.estado == "ambiguo":
             estado.coletados["opcoes"] = r.dados["opcoes"]

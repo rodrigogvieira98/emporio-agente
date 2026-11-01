@@ -275,3 +275,36 @@ def test_cabecalho_mostra_a_contagem_do_carrinho(cliente):
     assert 'class="contagem-carrinho"' not in cliente.get("/").text
     comprar(cliente, TAKAMINE, 2)
     assert 'class="contagem-carrinho"' in cliente.get("/").text
+
+
+# --- Lia reconhece DEMO- ------------------------------------------------------------------
+
+def _pedido_demo_da_sessao(cliente):
+    comprar(cliente, TAKAMINE)
+    base = final_unit(TAKAMINE, "debito")
+    return numero_do_pedido(cliente.post(
+        "/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)}))
+
+
+def test_lia_responde_pedido_demo_como_demonstracao(cliente, sql):
+    from emporio.agente.laco import Agente
+    numero = _pedido_demo_da_sessao(cliente)
+    sessao = sql.execute("SELECT sessao FROM pedidos_demo").fetchone()[0]
+    r = Agente().responder(sessao, f"cadê o meu pedido {numero}?", "eval")
+    assert "demonstração" in r.texto and numero in r.texto and "R$ 2.199,00" in r.texto
+    ferramentas = [a.get("ferramenta") for a in r.acoes]
+    assert "consultar_pedido_demo" in ferramentas and "consultar_pedido" not in ferramentas
+    assert "telefone" not in r.texto.lower()
+
+
+def test_lia_nega_pedido_demo_de_outra_conversa(cliente, sql):
+    from emporio.agente.laco import Agente
+    numero = _pedido_demo_da_sessao(cliente)
+    r = Agente().responder("web-outra-conversa", f"status do pedido {numero.lower()}", "eval")
+    assert "Não encontrei esse pedido de demonstração" in r.texto and "R$" not in r.texto
+
+
+def test_pedido_dos_dados_segue_pedindo_o_telefone():
+    from emporio.agente.laco import Agente
+    r = Agente().responder("c-dados", "quero saber do pedido 8", "eval")
+    assert "últimos" in r.texto or "telefone" in r.texto

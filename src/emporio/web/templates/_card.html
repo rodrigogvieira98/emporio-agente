@@ -1,6 +1,6 @@
 <article class="card" data-produto="{{ p.id }}">
   <a class="card-arte" href="/produto/{{ p.id }}" tabindex="-1" aria-hidden="true">
-    {% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="" loading="lazy" decoding="async">
+    {% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="" loading="{{ 'eager' if carrossel else 'lazy' }}" decoding="async">
     {% else %}<svg viewBox="0 0 64 64"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>{% endif %}
   </a>
   <div class="card-corpo">

@@ -34,7 +34,7 @@
   <div class="carrossel" data-carrossel role="region" aria-roledescription="carrossel" aria-label="Produtos em destaque" tabindex="0">
     <ul class="carrossel-lista">
     {% for p in destaques %}
-      <li class="carrossel-item" data-produto="{{ p.id }}" data-nome="{{ p.nome }}">{% include "_card.html" %}</li>
+      <li class="carrossel-item" data-produto="{{ p.id }}" data-nome="{{ p.nome }}">{% set carrossel = true %}{% include "_card.html" %}</li>
     {% endfor %}
     </ul>
     <div class="carrossel-controles" data-controles hidden>

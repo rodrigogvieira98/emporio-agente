@@ -146,7 +146,13 @@ button:disabled { opacity: .55; cursor: wait; }
 @media (min-width: 1024px) { .categorias { grid-template-columns: repeat(6, 1fr); gap: var(--s4); } }
 
 /* cartão de produto: foto, nome, preço, condição, acesso */
-.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--s4); }
+.grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+@media (min-width: 640px) { .grade { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--s4); } }
+@media (max-width: 639px) {
+  .card-corpo { padding: var(--s3); }
+  .et-nome { font-size: 1rem; }
+  .preco-final { font-size: 1.25rem; }
+}
 .card { display: flex; flex-direction: column; height: 100%; background: var(--papel-claro); border: 1px solid var(--cinza); border-radius: var(--raio); overflow: hidden; }
 .card-arte { display: grid; place-items: center; aspect-ratio: 4 / 3; background: #fff; color: var(--tinta); }
 .card-arte img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -180,6 +186,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .carrossel-ativo .carrossel-lista { position: relative; display: block; overflow: hidden; scroll-snap-type: none; padding: 0; touch-action: pan-y; }
 .carrossel-ativo .carrossel-item { position: absolute; top: 0; left: 50%; width: min(17rem, 78%); transition: transform .45s cubic-bezier(.25,.46,.45,.94), opacity .45s cubic-bezier(.25,.46,.45,.94); will-change: transform; }
 .carrossel-ativo .carrossel-item:not(.e-centro) { cursor: pointer; }
+.carrossel-ativo a, .carrossel-ativo img { -webkit-user-drag: none; user-select: none; }
 .carrossel-ativo .e-centro .card { border-color: var(--pantanal); border-width: 2px; }
 .carrossel-controles { display: flex; align-items: center; justify-content: center; gap: var(--s4); margin-top: var(--s4); }
 .carrossel-controles[hidden] { display: none; }
@@ -255,7 +262,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .filtros label.inline { flex-direction: row; align-items: center; gap: var(--s2); min-height: 44px; }
 .filtros input[type=checkbox] { width: 20px; min-height: 20px; height: 20px; accent-color: var(--pantanal); }
 .contagem { color: var(--cinza-texto); }
-.grade-catalogo { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+@media (min-width: 640px) { .grade-catalogo { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); } }
 .paginacao { display: flex; align-items: center; justify-content: center; gap: var(--s4); margin-top: var(--s8); flex-wrap: wrap; }
 .paginacao-atual { font-variant-numeric: tabular-nums; color: var(--cinza-texto); }
 @media (min-width: 900px) {
@@ -306,7 +313,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .credito p { padding: var(--s3) var(--s4); margin: 0; font-size: .875rem; }
 
 /* Lia flutuante */
-.lia { position: fixed; right: max(var(--s4), env(safe-area-inset-right)); bottom: max(var(--s4), env(safe-area-inset-bottom)); z-index: 70; display: flex; flex-direction: column; align-items: flex-end; gap: var(--s3); }
+.lia-flutuante { position: fixed; right: max(var(--s4), env(safe-area-inset-right)); bottom: max(var(--s4), env(safe-area-inset-bottom)); z-index: 70; display: flex; flex-direction: column; align-items: flex-end; gap: var(--s3); }
 .lia-botao { gap: var(--s2); padding: var(--s1) var(--s4) var(--s1) var(--s1); min-height: 52px; border-radius: 999px; background: var(--pantanal); color: var(--papel-claro); border-color: var(--pantanal);
   font-weight: 700; box-shadow: 0 2px 0 var(--pantanal-escuro), 0 4px 14px rgba(31,26,23,.25); }
 .lia-botao:hover { background: var(--pantanal-escuro); color: var(--papel-claro); }
@@ -337,7 +344,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 767px) {
   .lia-botao span { font-size: .9375rem; }
   html.chat-tela-cheia, html.chat-tela-cheia body { overflow: hidden; }
-  html.chat-tela-cheia .lia { inset: 0; right: 0; bottom: auto; top: var(--topo-visivel, 0px); height: var(--altura-visivel, 100dvh); align-items: stretch; z-index: 80; }
+  html.chat-tela-cheia .lia-flutuante { inset: 0; right: 0; bottom: auto; top: var(--topo-visivel, 0px); height: var(--altura-visivel, 100dvh); align-items: stretch; z-index: 80; }
   html.chat-tela-cheia .chat { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; display: flex; flex-direction: column; box-shadow: none; }
   html.chat-tela-cheia .chat-topo { flex: none; padding-top: calc(var(--s3) + env(safe-area-inset-top)); padding-inline: max(var(--s4), env(safe-area-inset-left)) max(var(--s4), env(safe-area-inset-right)); }
   html.chat-tela-cheia .chat-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }

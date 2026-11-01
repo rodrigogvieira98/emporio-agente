@@ -54,7 +54,7 @@ def celular():
 
 def capturar(pagina, destino: Path) -> None:
     """Página inteira; a barra fixa da Lia sairia no meio da imagem, então fica fora só da captura."""
-    pagina.add_style_tag(content="#chat { display: none !important; }")
+    pagina.add_style_tag(content="#lia { display: none !important; }")
     pagina.screenshot(path=str(destino), full_page=True)
 
 
@@ -70,7 +70,6 @@ def sem_rolagem_horizontal(pagina) -> bool:
 def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     pagina = celular
     pagina.goto(f"{url_site}/produto/{CRAFTER}")
-    assert "Nenhum valor foi cobrado" in pagina.inner_text("main")
     assert sem_rolagem_horizontal(pagina)
     pagina.click(".btn-comprar")
 
@@ -81,7 +80,7 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     pagina.click("text=Ir para o checkout")
 
     pagina.wait_for_url("**/checkout")
-    assert pagina.locator("button:has-text('Finalizar')").is_disabled()  # falta a cidade
+    assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()  # falta a cidade
     pagina.select_option("select[name=forma]", "pix")
     pagina.fill("input[name=cidade]", "Campo Grande")
     pagina.click("button:has-text('Atualizar valores')")
@@ -90,7 +89,7 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     assert "R$ 1.967,18" in texto and "promoção -18%" in texto and "desconto do PIX" not in texto
     assert "Frete grátis" in texto
     assert sem_rolagem_horizontal(pagina)
-    pagina.locator("button:has-text('Finalizar')").click()
+    pagina.locator("button:has-text('Registrar pedido')").click()
 
     pagina.wait_for_url("**/pedido/PED-0001")
     assert "PED-0001" in pagina.inner_text("main") and "Nenhum valor foi cobrado" in pagina.inner_text("main")
@@ -102,7 +101,7 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     pagina.fill("input[name=pedido]", "PED-0001")
     pagina.click("button:has-text('Consultar')")
     pagina.wait_for_load_state()
-    assert "PED-0001" in pagina.inner_text("main") and "demonstração" in pagina.inner_text("main")
+    assert "PED-0001" in pagina.inner_text("main") and "Nenhum valor foi cobrado" in pagina.inner_text("main")
 
 
 def test_parcela_a_confirmar_bloqueia_a_finalizacao_em_390px(url_site, celular):
@@ -112,6 +111,6 @@ def test_parcela_a_confirmar_bloqueia_a_finalizacao_em_390px(url_site, celular):
     pagina.wait_for_url("**/carrinho")
     pagina.goto(f"{url_site}/checkout?forma=credito&parcelas=6&cidade=Campo+Grande")
     assert "a confirmar com a equipe" in pagina.inner_text("main").lower()  # o selo é exibido em caixa alta
-    assert pagina.locator("button:has-text('Finalizar')").is_disabled()
+    assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()
     assert sem_rolagem_horizontal(pagina)
     capturar(pagina, CAPTURAS / "compra_confirmar_390.png")

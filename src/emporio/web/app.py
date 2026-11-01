@@ -38,7 +38,7 @@ POR_PAGINA = 12  # produtos por página do catálogo; o limite de 5 itens é do 
 log = logging.getLogger("emporio.web")
 
 AQUI = Path(__file__).resolve().parent
-VERSAO_SW = "1"  # sobe a cada mudança do service worker ou da lista de estáticos que exija renovar o cache
+VERSAO_SW = "2"  # sobe a cada mudança do service worker ou da lista de estáticos que exija renovar o cache
 SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline", "/favicon.ico")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja

@@ -67,7 +67,7 @@ def _frete() -> str:
     cidade = _v("frete.cidade_base", "")
     return (f"Em {cidade}: frete grátis acima de {_brl('frete.gratis_acima_centavos')} e taxa de "
             f"{_brl('frete.taxa_abaixo_centavos')} abaixo disso. Para pedido de exatamente "
-            f"{_brl('frete.gratis_acima_centavos')}, {CONFIRMAR[0].lower()}{CONFIRMAR[1:]} "
+            f"{_brl('frete.gratis_acima_centavos')}, o frete é um ponto em aberto. {CONFIRMAR} "
             "Para outras cidades, o frete é calculado pelo CEP de destino, peso e dimensões, "
             "e instrumentos de grande porte podem ter cotação individual.")
 
@@ -93,7 +93,7 @@ def _troca() -> str:
     p = _v("regra.preferencia") or {}
     return (f"Compra online: devolução em até {a.get('prazo_dias')} dias {a.get('tipo_dias')} após o recebimento, "
             f"com o produto na embalagem original. Troca por preferência: em até {p.get('prazo_dias')} dias, "
-            f"conforme a disponibilidade do produto desejado; {CONFIRMAR[0].lower()}{CONFIRMAR[1:]}")
+            f"conforme a disponibilidade do produto desejado. A contagem desse prazo é um ponto em aberto. {CONFIRMAR}")
 
 
 def _devolucao() -> str:
@@ -110,7 +110,7 @@ def _defeito() -> str:
     d = _v("regra.defeito") or {}
     return (f"Defeito de fabricação: troca em até {d.get('prazo_dias')} dias {d.get('tipo_dias')} após a compra. "
             "Depois desse prazo, a garantia é acionada com o fabricante, e podemos intermediar se você pedir. "
-            f"Como se combinam esse prazo e a garantia legal, {CONFIRMAR[0].lower()}{CONFIRMAR[1:]}")
+            f"Como esse prazo se combina com a garantia legal é um ponto em aberto. {CONFIRMAR}")
 
 
 def _garantia() -> str:

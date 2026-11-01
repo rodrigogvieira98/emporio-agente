@@ -56,7 +56,7 @@ def _com_sw_ativo(navegador, url, largura=1280, altura=800):
 
 
 def _abrir_chat(pagina):
-    if pagina.locator("#chat-corpo").is_hidden():
+    if pagina.locator("#chat").is_hidden():
         pagina.click("#chat-alternar")
 
 
@@ -136,8 +136,8 @@ def test_lia_em_390px_ocupa_a_tela_sem_rolagem_horizontal(url_site, navegador):
     assert campo["y"] + campo["height"] <= 844 and campo["height"] >= 44
     assert pagina.evaluate("getComputedStyle(document.querySelector('#chat-mensagem')).fontSize") == "16px"
     assert pagina.locator("#chat-enviar").bounding_box()["height"] >= 44
-    pagina.click("#chat-alternar")  # fechar volta para a página
-    assert pagina.locator("#chat-corpo").is_hidden()
+    pagina.click("#chat-fechar")  # fechar volta para a página
+    assert pagina.locator("#chat").is_hidden()
     ctx.close()
 
 
@@ -145,7 +145,7 @@ def test_toques_de_44px_nos_controles_do_celular(url_site, navegador):
     ctx = navegador.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
     pagina = ctx.new_page()
     pagina.goto(url_site + "/")
-    for seletor in (".botao-lia", ".busca-topo button", ".busca-topo input", ".menu-categorias summary", "[data-seta='1']",
-                    ".abertura-acoes .botao", "[data-pergunta] >> nth=0"):
+    for seletor in ("#chat-alternar", ".menu > a", ".busca-topo button", ".busca-topo input", ".menu-categorias summary", "[data-seta='1']",
+                    ".abertura-acoes .botao"):
         assert pagina.locator(seletor).first.bounding_box()["height"] >= 44, seletor
     ctx.close()

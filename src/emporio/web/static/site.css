@@ -461,3 +461,22 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .chat-link:hover { color: var(--tinta); }
 .chat-carrinho { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--s2) var(--s4); border: 1.5px solid var(--ipe); border-radius: var(--raio);
   font: 700 .9375rem/1.2 var(--texto); text-decoration: none; cursor: pointer; }
+
+/* tabelas e listas das políticas, aviso de imagem, subtotal do carrinho e busca sem resultado */
+.tabela-rolavel { overflow-x: auto; margin: 0 0 var(--s4); border: 1px solid var(--cinza); border-radius: var(--raio); background: var(--creme-claro); }
+.tabela-politica { border-collapse: collapse; width: 100%; min-width: 30rem; font-variant-numeric: tabular-nums; }
+.tabela-politica th { background: var(--palco); color: var(--creme-claro); text-align: left; font-weight: 700; padding: var(--s3) var(--s4); }
+.tabela-politica td { padding: var(--s3) var(--s4); border-top: 1px solid var(--cinza); vertical-align: top; }
+.tabela-politica tbody tr:first-child td { border-top: 0; }
+.tabela-politica td:first-child { font-weight: 700; }
+.lista-politica { margin: 0 0 var(--s4); padding-left: var(--s6); display: grid; gap: var(--s2); }
+.produto-arte { position: relative; }
+.legenda-ilustrativa { position: absolute; left: var(--s3); bottom: var(--s3); padding: 2px var(--s2); border-radius: 3px; background: var(--palco); color: var(--creme-claro); font-size: .75rem; font-weight: 600; }
+.item-subtotal { margin: var(--s2) 0 0; color: var(--cinza-texto); }
+.item-subtotal strong { color: var(--tinta); font: 700 1.125rem var(--titulo); font-variant-numeric: tabular-nums; }
+.carrinho-total { margin: 0 0 var(--s2); padding-top: var(--s4); font-size: 1.125rem; border-top: 3px solid var(--palco); }
+.carrinho-total strong { font: 700 1.75rem/1.2 var(--titulo); font-variant-numeric: tabular-nums; }
+.busca-vazia .aviso { font-weight: 600; }
+.busca-vazia-caminhos { list-style: none; display: grid; gap: var(--s2); }
+.busca-vazia-caminhos li { padding-block: var(--s1); }
+.politicas-conteudo, .politica { min-width: 0; }

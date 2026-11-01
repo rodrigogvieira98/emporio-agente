@@ -419,7 +419,7 @@ def test_percurso_por_teclado_encontrar_condicoes_comprar_e_acompanhar(url_site,
     pagina.focus(".btn-comprar")
     pagina.keyboard.press("Enter")
     pagina.wait_for_url("**/carrinho")
-    pagina.focus("a:has-text('Ir para o checkout')")
+    pagina.focus("a:has-text('Finalizar pedido')")
     pagina.keyboard.press("Enter")
     pagina.wait_for_url("**/checkout**")
     assert "não gera cobrança nem entrega" in pagina.inner_text("main")  # entender o alcance da compra

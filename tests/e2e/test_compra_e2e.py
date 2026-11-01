@@ -77,7 +77,7 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     assert "Crafter HT-100" in pagina.inner_text("main") and "R$ 1.967,18" in pagina.inner_text("main")
     assert pagina.locator(".contagem-carrinho").inner_text() == "1"
     assert sem_rolagem_horizontal(pagina)
-    pagina.click("text=Ir para o checkout")
+    pagina.click("text=Finalizar pedido")
 
     pagina.wait_for_url("**/checkout")
     assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()  # falta o CEP

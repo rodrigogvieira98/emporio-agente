@@ -132,7 +132,7 @@ def test_lia_flutuante_comeca_fechada_com_sugestoes(cliente):
     html = cliente.get("/").text
     painel = html[html.index('id="chat"'):html.index('id="chat-alternar"')]
     assert re.search(r'id="chat"[^>]* hidden>', html)  # nunca abre sozinha
-    assert "assistente virtual" in painel and 'id="chat-fechar"' in painel
+    assert "assistente virtual" in painel and "chat-fechar" not in html
     assert len(re.findall(r"<button type=\"button\" data-pergunta=", painel)) == 3
     assert "Lia &middot; conversar" in html
 

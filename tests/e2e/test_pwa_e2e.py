@@ -124,19 +124,24 @@ def test_chat_nunca_fica_em_cache(url_site, navegador):
     ctx.close()
 
 
-def test_lia_em_390px_ocupa_a_tela_sem_rolagem_horizontal(url_site, navegador):
+def test_lia_em_390px_deixa_faixa_superior_sem_rolagem_horizontal(url_site, navegador):
     ctx = navegador.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
     pagina = ctx.new_page()
     pagina.goto(url_site + "/")
     pagina.click("#chat-alternar")
     caixa = pagina.locator("#chat").bounding_box()
-    assert caixa["x"] == 0 and caixa["width"] == 390 and caixa["height"] >= 840  # tela cheia
+    assert caixa["x"] == 0 and caixa["width"] == 390 and 600 <= caixa["height"] < 800  # painel com faixa superior livre
+    assert caixa["y"] >= 60
     assert pagina.evaluate("document.documentElement.scrollWidth") <= 390
     campo = pagina.locator("#chat-mensagem").bounding_box()
     assert campo["y"] + campo["height"] <= 844 and campo["height"] >= 44
     assert pagina.evaluate("getComputedStyle(document.querySelector('#chat-mensagem')).fontSize") == "16px"
     assert pagina.locator("#chat-enviar").bounding_box()["height"] >= 44
-    pagina.click("#chat-fechar")  # fechar volta para a página
+    assert pagina.locator("#chat-fechar").count() == 0  # sem botão Fechar
+    pagina.mouse.click(195, 20)  # fechar é tocar fora, na faixa da página
+    assert pagina.locator("#chat").is_hidden()
+    pagina.click("#chat-alternar")
+    pagina.keyboard.press("Escape")
     assert pagina.locator("#chat").is_hidden()
     ctx.close()
 

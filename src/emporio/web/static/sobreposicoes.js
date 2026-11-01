@@ -52,7 +52,6 @@
   document.addEventListener("click", function (e) {
     lista.forEach(function (o) {
       if (!ativo(o) || !o.aberto() || o.raiz.contains(e.target)) return;
-      if (document.documentElement.classList.contains("chat-tela-cheia") && o.raiz.hasAttribute("data-lia")) return;
       fechar(o, !interativo(e.target));
     });
   });

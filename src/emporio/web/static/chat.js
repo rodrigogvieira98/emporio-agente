@@ -10,7 +10,6 @@
     var raiz = document.getElementById("lia");
     var painel = document.getElementById("chat");
     var botao = document.getElementById("chat-alternar");
-    var fechar = document.getElementById("chat-fechar");
     var log = document.getElementById("chat-log");
     var form = document.getElementById("chat-form");
     var campo = document.getElementById("chat-mensagem");
@@ -52,7 +51,13 @@
     });
     function abrirChat() { Sobreposicoes.abrir(gestor); if (campo) campo.focus(); }
     botao.addEventListener("click", function () { if (aberto()) Sobreposicoes.fechar(gestor); else abrirChat(); });
-    if (fechar) fechar.addEventListener("click", function () { Sobreposicoes.fechar(gestor); });
+    // Celular: o toque na faixa da página acima do painel só fecha a Lia; não aciona o que está por baixo.
+    document.addEventListener("click", function (e) {
+      if (!aberto() || !html.classList.contains("chat-tela-cheia") || raiz.contains(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      Sobreposicoes.fechar(gestor);
+    }, true);
 
     function avisar(texto) {
       var p = document.createElement("p");
@@ -68,21 +73,53 @@
       log.scrollTop = log.scrollHeight;
       gravar(CHAVE_LOG, log.innerHTML);
     });
+    // Bolha otimista: a mensagem aparece no log ao enviar e o campo é limpo; falha desfaz as duas coisas.
+    var pendente = null;
+    function desfazerPendente() {
+      if (!pendente) return;
+      if (pendente.bolha.parentNode) pendente.bolha.parentNode.removeChild(pendente.bolha);
+      campo.value = pendente.texto;
+      pendente = null;
+    }
+    function semBolhaDoUsuario(html) {  // o servidor devolve a bolha do usuário para clientes sem JS; aqui ela já existe
+      var t = document.createElement("template");
+      t.innerHTML = html;
+      t.content.querySelectorAll(".msg.voce").forEach(function (n) { n.remove(); });
+      return t.innerHTML;
+    }
     document.body.addEventListener("htmx:beforeRequest", function (e) {
-      if (e.target === form && navigator.onLine === false) { e.preventDefault(); avisar(SEM_REDE); }
+      if (e.target !== form) return;
+      if (navigator.onLine === false) { e.preventDefault(); avisar(SEM_REDE); return; }
+      var texto = campo.value;
+      if (!texto.trim()) return;
+      var bolha = document.createElement("p");
+      bolha.className = "msg voce";
+      bolha.textContent = texto;
+      log.appendChild(bolha);
+      log.scrollTop = log.scrollHeight;
+      pendente = { bolha: bolha, texto: texto };
+      campo.value = "";
     });
     document.body.addEventListener("htmx:sendError", function (e) {
       if (e.target === form) avisar(SEM_REDE);  // rede caiu no envio: a Lia não responde de cache nem finge resposta
     });
     document.body.addEventListener("htmx:afterRequest", function (e) {
       if (e.target !== form) return;
-      var chegou = e.detail.xhr && e.detail.xhr.status !== 0;
-      if (chegou && e.detail.xhr.status !== 503) form.reset();  // ocupada ou sem rede: o texto fica no campo para reenviar
+      desfazerPendente();  // sem resposta aproveitada (sem rede, ocupada, inválida): a bolha sai e o texto volta ao campo
       campo.focus();
     });
     document.body.addEventListener("htmx:beforeSwap", function (e) {
       // respostas 422 e 503 do chat também trazem um fragmento com o aviso
-      if (e.detail.xhr && (e.detail.xhr.status === 422 || e.detail.xhr.status === 503) && e.detail.target === log) e.detail.shouldSwap = true;
+      if (e.detail.target !== log || !e.detail.xhr) return;
+      var status = e.detail.xhr.status;
+      if (status === 422 || status === 503) {
+        e.detail.shouldSwap = true;
+        desfazerPendente();
+        e.detail.serverResponse = semBolhaDoUsuario(e.detail.serverResponse);
+      } else if (status >= 200 && status < 300 && pendente) {
+        e.detail.serverResponse = semBolhaDoUsuario(e.detail.serverResponse);
+        pendente = null;  // a bolha otimista fica como a mensagem do cliente
+      }
     });
     // Sugestão e "Quero comprar" só preparam a conversa: abrem o painel, preenchem o campo e põem o foco nele.
     // A mensagem sai quando o cliente envia (Enter ou botão Enviar), e o texto pode ser editado antes.

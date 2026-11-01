@@ -9,7 +9,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from emporio.web.app import criar_app
-from test_web_home import _tokens, contraste
 
 WEB = Path(__file__).resolve().parents[1] / "src" / "emporio" / "web"
 CSS = (WEB / "static" / "site.css").read_text(encoding="utf-8")
@@ -30,24 +29,17 @@ def _regra(seletor: str) -> str:
     return " ".join(achados)
 
 
-# 1. Fechar do chat
+# 1. Sem botão Fechar: a Lia fecha por clique fora e Esc (gerenciador único), ou no botão da Lia
 
-def test_fechar_do_chat_tem_cor_propria_legivel_sobre_o_cabecalho():
-    t = _tokens()
-    topo = _regra(".chat-topo")
-    fundo = re.search(r"background:\s*var\(--([a-z-]+)\)", topo).group(1)
-    regra = _regra(".chat-fechar")
-    cor = re.search(r"(?<![-\w])color:\s*var\(--([a-z-]+)\)", regra)
-    assert cor, "o Fechar herda a cor do botão (tinta ou palco) e some no cabeçalho"
-    assert contraste(t[cor.group(1)], t[fundo]) >= 4.5
+def test_chat_nao_tem_botao_fechar_e_fecha_por_clique_fora_e_esc(cliente):
+    assert "chat-fechar" not in cliente.get("/").text and "chat-fechar" not in CSS
+    js = (WEB / "static" / "chat.js").read_text(encoding="utf-8")
+    assert "chat-fechar" not in js and "Sobreposicoes.registrar" in js
 
 
-def test_fechar_hover_mantem_contraste():
-    t = _tokens()
-    regra = _regra(".chat-fechar:hover")
-    fundo = re.search(r"background:\s*var\(--([a-z-]+)\)", regra).group(1)
-    cor = re.search(r"(?<![-\w])color:\s*var\(--([a-z-]+)\)", regra).group(1)
-    assert contraste(t[cor], t[fundo]) >= 4.5
+def test_toque_na_faixa_superior_do_celular_fecha_sem_acionar_o_que_esta_por_baixo():
+    js = (WEB / "static" / "chat.js").read_text(encoding="utf-8")
+    assert "stopPropagation" in js and "preventDefault" in js
 
 
 # 2. categoria em slug

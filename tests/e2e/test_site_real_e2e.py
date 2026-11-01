@@ -174,7 +174,8 @@ def test_lia_abre_conversa_e_fecha_sem_abrir_sozinha(url_site, navegador, largur
     assert pagina.locator("#chat").is_hidden()
     pagina.click("#chat-alternar")
     assert "EM-" in pagina.inner_text("#chat-log")
-    pagina.click("#chat-fechar")
+    assert pagina.locator("#chat-fechar").count() == 0  # sem botão Fechar
+    pagina.keyboard.press("Escape")
     assert pagina.locator("#chat").is_hidden() and _foco(pagina) == "chat-alternar"
     assert pagina.evaluate("document.documentElement.scrollWidth") <= largura
 
@@ -257,15 +258,16 @@ def test_lia_no_desktop_fecha_fora_e_com_esc_e_clique_dentro_nao_fecha(url_site,
     assert pagina.locator("#chat").is_hidden() and _foco(pagina) == "chat-alternar"
 
 
-def test_lia_em_tela_cheia_no_celular_fecha_pelo_botao_e_por_esc(url_site, navegador):
-    pagina = _pagina(navegador, 390, 800)
+def test_lia_no_celular_tem_faixa_superior_e_fecha_por_toque_fora_e_por_esc(url_site, navegador):
+    pagina = _pagina(navegador, 390, 800, has_touch=True, is_mobile=True)
     pagina.goto(url_site + "/")
     pagina.click("#chat-alternar")
     caixa = pagina.locator("#chat").bounding_box()
-    assert caixa["width"] >= 389 and caixa["height"] >= 790  # tela cheia
+    assert caixa["width"] >= 389 and 600 <= caixa["height"] < 780 and caixa["y"] >= 60  # painel com faixa superior livre
     campo = pagina.locator("#chat-mensagem").bounding_box()
     assert campo["y"] + campo["height"] <= 800  # campo acima da borda inferior
-    pagina.click("#chat-fechar")
+    assert pagina.locator("#chat-fechar").count() == 0  # sem botão Fechar
+    pagina.touchscreen.tap(195, 20)  # toque fora, na faixa da página
     assert pagina.locator("#chat").is_hidden()
     pagina.click("#chat-alternar")
     pagina.keyboard.press("Escape")

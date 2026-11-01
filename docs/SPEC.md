@@ -414,6 +414,24 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 
 **Não corrigir, e declarar como limitação no README:** marca divergente em sete produtos (os CSV ficam intactos), cabeçalhos de segurança, redirecionamento pelo cabeçalho Host, `/saude` com o nome do modelo, segredo e cookie seguro na publicação, e os demais achados baixos.
 
+## Conformidade com o manual (etapa 10)
+
+Lacunas encontradas pela auditoria de conformidade em 01/11/2026, no modo autônomo autorizado pelo Rodrigo. Corrigem a Lia para cumprir o manual; nenhuma regra nova de negócio. Revisão registrada: as menções a `requer_confirmacao` no frete de R$ 500,00 exato em seções anteriores estão superadas pela "Frete: decisão final".
+
+1. Parcelamento nunca vira nome de produto: "3x", "em 10x" e afins não entram na referência de produto; o produto em foco é mantido ("pode ser em 3x?" depois do Tagima calcula o Tagima). Crítico: hoje gera preço de outro produto.
+2. Exclusões do manual antes da regra genérica: queda e mau uso (8.3), setup ou personalização sob encomenda (4.4) e avaria no recebimento (5.2: recusar o recebimento e falar com a loja) recebem a regra própria, nunca a de troca por defeito ou preferência.
+3. Intenção privacidade: finalidades, não compartilhamento para marketing e exclusão a pedido (seção 9), com link para `/privacidade`. "Política de privacidade" deixa de ser fora de escopo.
+4. Empresa: fundação em 2008, razão social e CNPJ (1 e 1.2) respondem com os dados do manual. "Loja que venda pedal" recebe a resposta de acessórios.
+5. Arrependimento: a primeira resposta diz que vale para compra online; compra na loja física explica que a regra não se aplica e indica troca por defeito ou preferência quando couber, sem oferecer registro de devolução.
+6. Subtemas com resposta própria a partir das condições já no YAML: frete da devolução por conta da loja, defeito após 30 dias via fabricante com intermediação, sem rain check, débito de todas as bandeiras, prazo do PAC, como recebo o código de rastreio, grande porte com cotação individual, categoria sem produto à venda.
+7. Promoção no follow-up: "e no PIX tem mais desconto?" com produto em promoção em foco recalcula e lembra que o PIX não soma.
+8. Oferta de parcelas: "sim" mostra a maior quantidade de parcelas válida nas duas leituras da parcela mínima, não 12x inválido.
+9. Contatos com uma fonte só: Lia, faixa, rodapé e `/fale-conosco` usam o mesmo e-mail e os mesmos números. A ressalva das ambiguidades fica em `/politicas` e no README, não em toda resposta; o `tratamento` no YAML é ajustado para refletir isso, sem tocar no `texto:`.
+10. `consultar_pedido` devolve a data do pedido, e a Lia a usa para o prazo de troca por defeito.
+11. Fechamento cordial pergunta se precisa de mais alguma coisa quando a conversa não foi encerrada pelo cliente.
+
+Fica como limitação declarada no README: saudação pelo nome (escolha de privacidade), uso de `specs` em filtros e comparação, paginação de "mais opções" no chat.
+
 ## Identidade "Palco e madeira" (etapa 9)
 
 Escolha do Rodrigo em 01/11/2026 (opção A), depois de comparar a home com Constelação, Teclacenter, Mercadão da Música, 4 Music e Fender. Prevalece sobre a identidade "balcão" e a composição "Loja acolhedora" no visual; conteúdo, regras e fluxos não mudam.

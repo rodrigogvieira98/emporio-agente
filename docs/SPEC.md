@@ -66,6 +66,8 @@ Textos em `agente/respostas.py`, com fatos só de resultados de ferramenta. Pers
 
 Trace JSONL em `var/trace.jsonl` por turno, campo `origem` obrigatório (real, eval, demo), ferramentas, estados, ações, latência, tudo sem nome, telefone, e-mail ou final digitado.
 
+O resumo do chamado pode conter o relato livre do cliente, inclusive nome, porque é destinado à equipe. Telefone e e-mail continuam rejeitados no resumo. Trace, estado e execuções seguem sem nome. Decisão do Rodrigo em 31/10/2026, ao aprovar a mudança do teste de trace.
+
 CLI `python -m emporio.cli --origem demo`.
 
 ## Concisão e redundância

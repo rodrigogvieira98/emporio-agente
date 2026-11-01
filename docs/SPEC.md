@@ -444,6 +444,16 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Banner com cinco instrumentos (etapa 20)
+
+Pedido do Rodrigo em 01/11/2026. A foto única da abertura vira uma sequência de cinco fotos de instrumentos (violão, guitarra, baixo, teclado e bateria, ou ukulele), com transição automática suave a cada 6 segundos.
+
+- Fotos de licença livre (domínio público, CC0, CC BY ou CC BY-SA), de instrumento em destaque, fundo escuro ou de palco, sem pessoas identificáveis nem marcas em evidência; recortadas para o formato atual do banner, em WebP com até 120 KB cada, e créditos em `/creditos` e `docs/CREDITOS_IMAGENS.md`. Script de geração reproduzível, como o das fotos de produto.
+- Mesma estrutura do banner: título, texto e botão continuam; só a área da foto muda. Altura atual mantida.
+- Acessibilidade (WCAG 2.2.2): botão visível de pausar e retomar, pausa ao passar o mouse ou focar, sem autoplay com `prefers-reduced-motion` (mostra a primeira foto), sem anúncio repetido ao leitor de tela, `alt` descritivo em cada foto.
+- Desempenho: primeira foto carregada de imediato, as demais sob demanda; nada de recarregar a página; parar a troca quando a aba não está visível.
+- Teste: cinco fotos, troca automática, pausa e retomada, reduced-motion, sem rolagem horizontal em 360 e 1280 px, peso total das fotos do banner até 600 KB.
+
 ## Correções de causa para o novo congelamento (etapa 19)
 
 Aprovado pelo Rodrigo em 01/11/2026 com o novo prazo (terça, 03/11). O holdout original segue registrado; a versão final é medida pelo holdout 2, que nenhum implementador lê. Corrigir causas gerais, nunca frases de um caso.

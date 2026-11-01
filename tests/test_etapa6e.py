@@ -97,7 +97,7 @@ def test_botao_de_atualizar_fica_dentro_de_noscript(cliente):
 def test_bordas_da_faixa_de_campo_grande(cliente, cep, cotacao):
     comprar(cliente)
     html = checkout(cliente, forma="debito", cep=cep)
-    assert ("Frete calculado pela equipe" in html) is cotacao
+    assert ("Frete: Cotação com a equipe" in html) is cotacao
 
 
 def test_cep_da_loja_no_manual_e_campo_grande_sem_consulta(cliente, monkeypatch):
@@ -105,12 +105,12 @@ def test_cep_da_loja_no_manual_e_campo_grande_sem_consulta(cliente, monkeypatch)
     comprar(cliente)
     cep_loja = fato("empresa.endereco").valor["cep"]
     html = checkout(cliente, forma="debito", cep=cep_loja)
-    assert "Frete calculado pela equipe" not in html and "disabled" not in botao_registrar(html) and chamadas == []
+    assert "Frete: Cotação com a equipe" not in html and "disabled" not in botao_registrar(html) and chamadas == []
 
 
 def test_cep_com_ou_sem_hifen_vale_igual(cliente):
     comprar(cliente)
-    assert "Frete calculado pela equipe" not in checkout(cliente, forma="debito", cep="79002000")
+    assert "Frete: Cotação com a equipe" not in checkout(cliente, forma="debito", cep="79002000")
 
 
 @pytest.mark.parametrize("cep", ["", "123", "7900200", "790020000", "abcdefgh", "79002-00x"])
@@ -126,11 +126,11 @@ def test_cep_invalido_impede_finalizar(cliente, sql, cep):
 RECIFE = {"cep": "50030-230", "logradouro": "Rua da Aurora", "bairro": "Boa Vista", "localidade": "Recife", "uf": "PE"}
 
 
-def test_recife_vira_cotacao_mostra_endereco_e_grava_so_a_cidade(cliente, sql, monkeypatch):
+def test_recife_vira_frete_estimado_mostra_endereco_e_grava_so_a_cidade(cliente, sql, monkeypatch):
     externo(monkeypatch, resposta=RECIFE)
     comprar(cliente)
     html = checkout(cliente, forma="debito", cep="50030-230")
-    assert "Frete calculado pela equipe" in html
+    assert "Frete estimado (simulação):" in html
     assert "Rua da Aurora, Boa Vista, Recife/PE" in html  # endereço localizado na tela
     total = re.search(r'name="total_visto" value="(\d+)"', html).group(1)
     r = cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cep": "50030-230", "total_visto": total})
@@ -144,13 +144,13 @@ def test_campo_grande_de_outro_estado_nao_recebe_frete_da_cidade_base(cliente, m
     externo(monkeypatch, resposta={"logradouro": "Rua A", "bairro": "Centro", "localidade": "Campo Grande", "uf": "RN"})
     comprar(cliente)
     html = checkout(cliente, forma="debito", cep="59680-000")
-    assert "Frete calculado pela equipe" in html and "Campo Grande/RN" in html
+    assert "Frete estimado (simulação):" in html and "Campo Grande/RN" in html
 
 
 def test_cidade_base_com_uf_da_loja_usa_a_regra_da_cidade_base(cliente, monkeypatch):
     externo(monkeypatch, resposta={"logradouro": "Rua B", "bairro": "Centro", "localidade": "Campo Grande", "uf": "MS"})
     comprar(cliente)
-    assert "Frete calculado pela equipe" not in checkout(cliente, forma="debito", cep="79600-000")
+    assert "Frete: Cotação com a equipe" not in checkout(cliente, forma="debito", cep="79600-000")
 
 
 def test_cep_inexistente_bloqueia(cliente, sql, monkeypatch):
@@ -167,10 +167,10 @@ def test_servico_fora_do_ar_nao_bloqueia(cliente, monkeypatch, falha):
     externo(monkeypatch, erro=falha)
     comprar(cliente)
     fora = checkout(cliente, forma="debito", cep="50030-230")
-    assert "Não localizamos o endereço agora" in fora and "Frete calculado pela equipe" in fora
+    assert "Não localizamos o endereço agora" in fora and "Frete: Cotação com a equipe" in fora
     assert "disabled" not in botao_registrar(fora)
     dentro = checkout(cliente, forma="debito", cep="79002-000")  # contingência pela faixa
-    assert "Frete calculado pela equipe" not in dentro and "disabled" not in botao_registrar(dentro)
+    assert "Frete: Cotação com a equipe" not in dentro and "disabled" not in botao_registrar(dentro)
 
 
 def test_resposta_json_fora_do_formato_nao_bloqueia(cliente, monkeypatch):
@@ -325,4 +325,4 @@ def test_codigo_do_chat_nao_envia_ao_clicar_na_sugestao():
 def test_resumo_do_checkout_sem_frete_pede_o_cep_e_nao_a_cidade(cliente):
     comprar(cliente)
     html = checkout(cliente)
-    assert "informe o CEP" in html and "informe a cidade" not in html
+    assert "Frete: Informe o CEP" in html and "informe a cidade" not in html

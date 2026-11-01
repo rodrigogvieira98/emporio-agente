@@ -120,7 +120,7 @@ def test_frete_de_exatamente_o_limite_e_gratis_e_finalizavel(cliente, sql, tmp_p
     comprar(cliente, UKULELE_SOPRANO)
     params = {"forma": "debito", "cep": CEP_CAMPO_GRANDE}
     html = cliente.get("/checkout", params=params).text
-    assert "Frete a confirmar com a equipe" not in html and "Frete grátis" in html
+    assert "Frete a confirmar com a equipe" not in html and "Frete: Grátis" in html
     r = cliente.post("/checkout", data={**params, "parcelas": "1", "total_visto": str(base)})
     assert r.status_code == 303 and contar(sql, "pedidos_demo") == 1
 
@@ -133,7 +133,7 @@ def test_o_limite_exato_do_manual_na_ferramenta_e_gratis():
 def test_outra_cidade_mostra_frete_calculado_pela_equipe(cliente):
     comprar(cliente, TAKAMINE)
     html = cliente.get("/checkout", params={"forma": "debito", "cep": CEP_DOURADOS}).text
-    assert "Frete calculado pela equipe" in html and "calculado pela equipe" in html
+    assert "Frete: Cotação com a equipe" in html
 
 
 @pytest.mark.parametrize("produto", [DESCONTINUADO, ESGOTADO])

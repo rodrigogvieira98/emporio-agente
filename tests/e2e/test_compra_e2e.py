@@ -83,10 +83,10 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()  # falta o CEP
     pagina.select_option("select[name=forma]", "pix")
     pagina.fill("input[name=cep]", "79002-000")
-    pagina.wait_for_selector("#checkout-dinamico :text('Frete grátis')")  # recalcula sozinho, sem botão de atualizar
+    pagina.wait_for_selector("#checkout-dinamico :text('Frete: Grátis')")  # recalcula sozinho, sem botão de atualizar
     texto = pagina.inner_text("main")
     assert "R$ 1.967,18" in texto and "promoção -18%" in texto and "desconto do PIX" not in texto
-    assert "Frete grátis" in texto
+    assert "Frete: Grátis" in texto
     assert sem_rolagem_horizontal(pagina)
     pagina.locator("button:has-text('Registrar pedido')").click()
 

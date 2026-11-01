@@ -67,8 +67,9 @@ def _frete() -> str:
     cidade = _v("frete.cidade_base", "")
     return (f"Em {cidade}: frete grátis a partir de {_brl('frete.gratis_acima_centavos')} e taxa de "
             f"{_brl('frete.taxa_abaixo_centavos')} abaixo disso. "
-            "Para outras cidades, o frete é calculado pelo CEP de destino, peso e dimensões, "
-            "e instrumentos de grande porte podem ter cotação individual.")
+            "Para as demais cidades, o checkout mostra o frete estimado (simulação), calculado pelo CEP de destino, "
+            "peso e dimensões. É uma estimativa do protótipo, não a tarifa de uma transportadora, e instrumentos de "
+            "grande porte têm cotação individual.")
 
 
 def _prazo() -> str:
@@ -162,6 +163,15 @@ TEMAS_POLITICAS = (
 )
 
 
+def nota_do_tema(ancora: str) -> str:
+    """Nota escrita pelo site (não é texto do manual) sob um tema das políticas."""
+    if ancora != "entrega":
+        return ""
+    cidade = _v("frete.cidade_base", "")
+    return (f"Frete grátis e taxa fixa valem somente em {cidade}. As demais cidades seguem o frete estimado "
+            "(simulação) do checkout, calculado pelo CEP, peso e dimensões, sem ser a tarifa de uma transportadora.")
+
+
 def politicas() -> list[dict[str, Any]]:
     r = consultar_politica(temas=sorted(carregar_manual().temas_conhecidos()))
     if r.estado != "ok":
@@ -171,7 +181,7 @@ def politicas() -> list[dict[str, Any]]:
     for ancora, titulo, ids in TEMAS_POLITICAS:
         secoes = [por_id[i] for i in ids if i in por_id and por_id[i]["texto"]]
         if secoes:
-            saida.append({"ancora": ancora, "titulo": titulo, "secoes": secoes})
+            saida.append({"ancora": ancora, "titulo": titulo, "secoes": secoes, "nota": nota_do_tema(ancora)})
     return saida
 
 

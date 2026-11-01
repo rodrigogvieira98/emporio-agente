@@ -14,6 +14,7 @@
       {% if s.titulo != t.titulo %}<h3>{{ s.titulo }}</h3>{% endif %}
       <p class="texto-politica">{{ s.texto | quebras }}</p>
     {% endfor %}
+    {% if t.nota %}<p class="nota-politica">{{ t.nota }}</p>{% endif %}
   </section>
   {% endfor %}
   </div>

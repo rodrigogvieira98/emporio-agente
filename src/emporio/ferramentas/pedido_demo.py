@@ -9,6 +9,7 @@ import re
 
 from pydantic import field_validator
 
+from .. import dinheiro
 from ..dados import banco
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 
@@ -20,6 +21,19 @@ MOTIVO_NEGADO = "nao_foi_possivel_validar"
 
 def formatar_numero(identificador: int) -> str:
     return f"{PREFIXO}{identificador:04d}"
+
+
+def rotulos_frete(situacao: str | None, frete_centavos: int | None) -> dict[str, str]:
+    """Linha do frete e rótulo do total, os mesmos no checkout, na confirmação e na Lia."""
+    if situacao is None:
+        return {"linha": "Frete: Informe o CEP", "total": "Total dos produtos"}
+    if situacao == "gratis":
+        return {"linha": "Frete: Grátis", "total": "Total"}
+    if situacao == "taxa" and frete_centavos is not None:
+        return {"linha": f"Frete: {dinheiro.formatar(frete_centavos)}", "total": "Total"}
+    if situacao == "estimado" and frete_centavos is not None:
+        return {"linha": f"Frete estimado (simulação): {dinheiro.formatar(frete_centavos)}", "total": "Total estimado"}
+    return {"linha": "Frete: Cotação com a equipe", "total": "Total dos produtos"}
 
 
 def achar_numero(texto: str) -> str | None:
@@ -58,6 +72,7 @@ def consultar_pedido_demo(e: EntradaPedidoDemo) -> Resultado:
             return resultado("negado", motivo=MOTIVO_NEGADO)
         itens = conn.execute("SELECT * FROM itens_pedido_demo WHERE pedido_id = ? ORDER BY id",
                              (pedido["id"],)).fetchall()
+        rotulos = rotulos_frete(pedido["frete_situacao"], pedido["frete_centavos"])
         dados = {
             "demonstracao": True,
             "numero": pedido["numero"],
@@ -69,6 +84,7 @@ def consultar_pedido_demo(e: EntradaPedidoDemo) -> Resultado:
             "forma": pedido["forma"], "parcelas": pedido["parcelas"], "parcela_centavos": pedido["parcela_centavos"],
             "frete_situacao": pedido["frete_situacao"], "frete_centavos": pedido["frete_centavos"],
             "total_gravado_centavos": pedido["total_centavos"],
+            "frete_linha": rotulos["linha"], "total_rotulo": rotulos["total"],
             "aviso": pedido["aviso"], "criado_em": pedido["criado_em"],
         }
         return resultado("ok", dados, [Fonte(tipo="banco", referencia=f"pedidos_demo/{pedido['id']}")])

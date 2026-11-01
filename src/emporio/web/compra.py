@@ -14,29 +14,15 @@ from typing import Any
 
 from .. import config
 from ..dados import banco
+from ..ferramentas import cep as cep_mod
 from ..ferramentas.condicoes import calcular_condicoes
-from ..ferramentas.pedido_demo import AVISO_DEMO, formatar_numero
+from ..ferramentas.frete import estimar_frete
+from ..ferramentas.pedido_demo import AVISO_DEMO, formatar_numero, rotulos_frete
 from ..politicas.manual import fato
 from . import carrinho
-from . import cep as cep_mod
 
 FORMAS = ("pix", "debito", "credito", "boleto")
 FORMA_NEUTRA = "debito"
-
-ROTULO_FRETE = {
-    "gratis": "Frete grátis",
-    "taxa": "Frete",
-    "cotacao_necessaria": "Frete calculado pela equipe",
-}
-
-
-def _regiao_frete(situacao: str) -> str:
-    """Região explícita do frete: grátis e taxa valem na cidade-base do manual; cotação é para as demais."""
-    base = fato("frete.cidade_base")
-    if situacao == "cotacao_necessaria":
-        return "Em outras cidades"
-    return f"Em {base.valor}" if base else ""
-
 
 CIDADE_NAO_LOCALIZADA = "Cidade não localizada"
 
@@ -59,6 +45,29 @@ class CompraRecusada(Exception):
     def __init__(self, pendencias: list[str]):
         super().__init__("; ".join(pendencias))
         self.pendencias = pendencias
+
+
+def _frete(loc, cidade: str, itens: list[dict[str, Any]], goods: int, base_frete: int) -> dict[str, Any] | None:
+    """Frete do pedido: regra da loja na cidade-base e estimativa (simulação) fora dela. None se a ferramenta falhar."""
+    if cep_mod.eh_cidade_base(loc.cidade, loc.uf):
+        rf = calcular_condicoes(valor=goods, forma=FORMA_NEUTRA, cidade=cidade, valor_pedido=base_frete)
+        if rf.estado != "ok":
+            return None
+        f = rf.dados["frete"]
+        return {"situacao": f["situacao"], "taxa": f["taxa_centavos"], "informativas": []}
+    if loc.estado != "ok":  # serviço de CEP fora do ar: nada de valor inventado, a equipe cota
+        return {"situacao": "cotacao_necessaria", "taxa": None, "informativas": []}
+    re_ = estimar_frete(itens=[{"produto_id": i["produto_id"], "quantidade": i["quantidade"]} for i in itens],
+                        cep=loc.cep)
+    if re_.estado != "ok":
+        return None
+    if re_.dados["situacao"] != "estimado":
+        return {"situacao": "cotacao_individual", "taxa": None, "informativas": []}
+    principal = next(m for m in re_.dados["modalidades"] if m["principal"])
+    informativas = [{"nome": m["nome"], "valor": m["valor_centavos"]} for m in re_.dados["modalidades"]
+                    if not m["principal"]]
+    return {"situacao": "estimado", "taxa": principal["valor_centavos"], "principal": principal["nome"],
+            "informativas": informativas}
 
 
 def parcelas_max() -> int:
@@ -101,7 +110,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     itens = carrinho.listar(sessao)
     saida: dict[str, Any] = {
         "forma": forma, "parcelas": n, "cep": cep, "cidade": cidade or "", "localizacao": loc, "linhas": [], "vazio": not itens, "produtos_total": 0,
-        "frete": None, "total": 0, "total_com_frete_definido": False, "parcela": None, "permitido": "sim",
+        "frete": None, "falta_cep": False, "frete_linha": "", "total_rotulo": "Total", "total": 0, "total_com_frete_definido": False, "parcela": None, "permitido": "sim",
         "pendencias": [], "pode_finalizar": False, "aviso": AVISO_DEMO,
     }
     if not itens:
@@ -126,24 +135,24 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     total = goods
 
     if cidade:
-        rf = calcular_condicoes(valor=goods, forma=FORMA_NEUTRA, cidade=cidade, valor_pedido=base_frete)
-        if rf.estado != "ok":
+        frete = _frete(loc, cidade, itens, goods, base_frete)
+        if frete is None:
             pend.append("Não consegui calcular o frete agora. Tente de novo em instantes.")
         else:
-            frete = rf.dados["frete"]
-            saida["frete"] = {"situacao": frete["situacao"], "taxa": frete["taxa_centavos"],
-                              "rotulo": ROTULO_FRETE.get(frete["situacao"], frete["situacao"]),
-                              "regiao": _regiao_frete(frete["situacao"])}
-            if frete["taxa_centavos"] is not None:
-                total += frete["taxa_centavos"]
+            saida["frete"] = frete
+            if frete["taxa"] is not None:
+                total += frete["taxa"]
                 saida["total_com_frete_definido"] = True
     elif loc.estado == "inexistente":
         pend.append("CEP não encontrado. Confira os números ou use o link para descobrir o seu CEP.")
     elif cep:
         pend.append("O CEP precisa ter 8 números. Confira e tente de novo.")
     else:
-        pend.append("Informe o CEP de entrega para calcular o frete.")
+        saida["falta_cep"] = True  # não é erro: o resumo diz "Informe o CEP" e o botão fica desligado
     saida["total"] = total
+    rotulos = rotulos_frete(saida["frete"]["situacao"] if saida["frete"] else None,
+                            saida["frete"]["taxa"] if saida["frete"] else None)
+    saida["frete_linha"], saida["total_rotulo"] = rotulos["linha"], rotulos["total"]
 
     if forma == "credito":
         rc = calcular_condicoes(valor=total, forma="credito", parcelas=n)
@@ -159,7 +168,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
                 pend.append("Com esta quantidade de parcelas a parcela fica abaixo do mínimo da loja. "
                             "Escolha menos parcelas.")
     saida["pendencias"] = pend
-    saida["pode_finalizar"] = not pend
+    saida["pode_finalizar"] = not pend and not saida["falta_cep"]
     return saida
 
 

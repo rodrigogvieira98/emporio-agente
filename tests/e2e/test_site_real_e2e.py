@@ -424,7 +424,7 @@ def test_percurso_por_teclado_encontrar_condicoes_comprar_e_acompanhar(url_site,
     pagina.wait_for_url("**/checkout**")
     assert "não gera cobrança nem entrega" in pagina.inner_text("main")  # entender o alcance da compra
     pagina.fill("input[name=cep]", "79002-000")
-    pagina.wait_for_selector("#checkout-dinamico :text('Frete grátis')")
+    pagina.wait_for_selector("#checkout-dinamico :text('Frete: Grátis')")
     pagina.focus("button:has-text('Registrar pedido')")
     pagina.keyboard.press("Enter")
     pagina.wait_for_url("**/pedido/PED-*")

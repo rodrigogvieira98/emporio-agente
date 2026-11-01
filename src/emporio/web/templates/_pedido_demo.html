@@ -13,11 +13,8 @@
     {% endfor %}
   </ul>
   <dl class="resumo-total">
-    <div>
-      <dt>Frete</dt>
-      <dd>{% if d.frete_situacao == 'gratis' %}{{ 0 | brl }}{% elif d.frete_centavos is not none %}{{ d.frete_centavos | brl }}{% else %}calculado pela equipe{% endif %}</dd>
-    </div>
-    <div class="resumo-final"><dt>Total do pedido</dt><dd>{{ d.total_gravado_centavos | brl }}</dd></div>
+    <div class="resumo-frete"><dt>{{ d.frete_linha }}</dt><dd></dd></div>
+    <div class="resumo-final"><dt>{{ d.total_rotulo }}</dt><dd>{{ d.total_gravado_centavos | brl }}</dd></div>
     <div>
       <dt>Pagamento</dt>
       <dd>{{ rotulo_forma.get(d.forma, d.forma) }}{% if d.forma == 'credito' %}, {{ d.parcelas }}x de {{ d.parcela_centavos | brl }}{% endif %}</dd>

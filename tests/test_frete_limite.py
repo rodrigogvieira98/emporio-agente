@@ -74,7 +74,7 @@ def test_site_mostra_o_mesmo_frete_nas_formas_de_pagamento(cliente):
         cliente.post("/carrinho/adicionar", data={"produto_id": p, "quantidade": 1})
     pix = cliente.get("/checkout", params={"forma": "pix", "cep": CEP_CAMPO_GRANDE}).text
     boleto = cliente.get("/checkout", params={"forma": "boleto", "cep": CEP_CAMPO_GRANDE}).text
-    assert "Frete grátis" in pix and "Frete grátis" in boleto
+    assert "Frete: Grátis" in pix and "Frete: Grátis" in boleto
 
 
 def test_lia_e_ferramenta_dizem_o_mesmo_para_o_valor_do_pedido():

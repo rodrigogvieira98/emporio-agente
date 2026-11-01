@@ -23,8 +23,7 @@
     <label for="cep">CEP de entrega
       <input id="cep" name="cep" value="{{ c.cep }}" autocomplete="off" inputmode="numeric" maxlength="9" placeholder="Somente números"
              aria-describedby="cep-ajuda">
-      <small id="cep-ajuda" class="cep-ajuda">Usado só para localizar a entrega e calcular o frete.
-        <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">Não sei meu CEP</a></small>
+      <small id="cep-ajuda" class="cep-ajuda"><a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">Não sei meu CEP</a></small>
     </label>
     <noscript><button type="submit" formmethod="get" formaction="/checkout">Atualizar valores</button></noscript>
   </div>

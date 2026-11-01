@@ -6,7 +6,7 @@
     {% set loc = c.localizacao %}
     <p id="cep-endereco" class="cep-endereco">
       {% if loc.estado == 'ok' %}Entrega em: {{ loc.endereco }}{% if loc.contingencia %} (endereço não confirmado agora){% endif %}
-      {% elif loc.estado == 'indisponivel' %}Não localizamos o endereço agora. O frete será calculado pela equipe.{% endif %}
+      {% elif loc.estado == 'indisponivel' %}Não localizamos o endereço agora.{% endif %}
     </p>
     {% if c.linhas %}
     <ul class="resumo-linhas">
@@ -28,18 +28,12 @@
     {% if c.produtos_total %}
     <dl class="resumo-total">
       <div><dt>Produtos</dt><dd>{{ c.produtos_total | brl }}</dd></div>
-      <div>
-        <dt>{% if c.frete %}{{ c.frete.regiao }}: {{ c.frete.rotulo }}{% else %}Frete{% endif %}</dt>
-        <dd>
-          {% if not c.frete %}informe o CEP
-          {% elif c.frete.situacao == 'gratis' %}{{ 0 | brl }}
-          {% elif c.frete.taxa is not none %}{{ c.frete.taxa | brl }}
-          {% elif c.frete.situacao == 'requer_confirmacao' %}<span class="selo selo-confirmar">A confirmar com a equipe</span>
-          {% else %}a calcular{% endif %}
-        </dd>
-      </div>
+      <div class="resumo-frete"><dt>{{ c.frete_linha }}</dt><dd></dd></div>
+      {% if c.frete and c.frete.informativas %}
+      {% for o in c.frete.informativas %}<div class="resumo-frete resumo-frete-info"><dt>{{ o.nome }} estimado (simulação): {{ o.valor | brl }}. Informação, não entra no total.</dt><dd></dd></div>{% endfor %}
+      {% endif %}
       <div class="resumo-final">
-        <dt>{% if c.frete and c.frete.taxa is none %}Total dos produtos{% else %}Total{% endif %}</dt>
+        <dt>{{ c.total_rotulo }}</dt>
         <dd>{{ c.total | brl }}</dd>
       </div>
       {% if c.forma == 'credito' and c.parcela is not none %}

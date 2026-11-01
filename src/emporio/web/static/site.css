@@ -394,6 +394,10 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .resumo-total > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding-block: var(--s2); border-bottom: 1px dashed var(--cinza); }
 .resumo-total dt { color: var(--cinza-texto); }
 .resumo-total dd { margin: 0; text-align: right; font-weight: 600; }
+.nota-politica { margin-top: var(--s3); color: var(--cinza-texto); }
+.resumo-total .resumo-frete dd { display: none; }
+.resumo-total .resumo-frete dt { color: var(--tinta); font-weight: 600; }
+.resumo-total .resumo-frete-info dt { font-weight: 400; font-size: .875rem; color: var(--cinza-texto); }
 .resumo-total .resumo-final dt { color: var(--tinta); font-weight: 700; }
 .resumo-total .resumo-final dd { font: 700 1.625rem/1.2 var(--titulo); }
 .selo-confirmar { color: var(--alerta); border-color: var(--alerta); white-space: normal; text-align: right; }

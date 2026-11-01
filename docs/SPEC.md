@@ -278,7 +278,17 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 
 A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
 
-A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé deixa de repetir canais: a coluna "Atendimento" sai, assim como "Todos os canais", e ficam nome, endereço, "Comprar" e "Informações". Telefone, e-mail e WhatsApp com ícones continuam em `/fale-conosco`, onde "Onde estamos" vira "Horário de atendimento". O rótulo "Falar com a loja" deixa de existir.
+A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé deixa de repetir canais: a coluna "Atendimento" sai, assim como "Todos os canais", e ficam nome, endereço, "Comprar" e "Informações". O rótulo "Falar com a loja" deixa de existir.
+
+**Fale conosco sai do cabeçalho.** Decisão do Rodrigo. O link deixa o menu do cabeçalho, no computador e no celular. O acesso passa a ser pela faixa e por um link "Fale conosco" na coluna "Informações" do rodapé.
+
+**Página `/fale-conosco` refeita.** A versão atual foi reprovada pelo Rodrigo. Ela empilha blocos soltos, deixa metade da tela vazia e repete "Deixar uma mensagem". Novo desenho, na mesma linguagem visual da faixa:
+- título "Fale conosco" e uma frase curta;
+- card branco com três blocos e divisórias, igual ao da faixa: WhatsApp, Telefone e E-mail, cada um com ícone, rótulo claro e o dado do manual. Os rótulos "Conversar", "Ligar" e "Escrever" e o quarto card "Deixar uma mensagem" saem desta página;
+- abaixo, duas colunas alinhadas: à esquerda, card branco com o formulário "Envie uma mensagem"; à direita, card menor "Horário de atendimento" com as linhas do manual e a orientação de rastreio, com botão para `/rastreio`, sem endereço;
+- as colunas têm a mesma altura e nada fica vazio à direita. Campos e botão seguem a largura do card;
+- no celular, a ordem é canais, formulário e horário, sem rolagem horizontal, e o botão da Lia não cobre os canais nem o botão de envio ao final da rolagem;
+- a confirmação com protocolo continua funcionando na mesma página.
 
 **Sugestões da Lia não enviam sozinhas.** Clicar numa sugestão, ou em "Quero comprar com a Lia", abre o painel, preenche o campo e põe o foco nele. A mensagem só sai quando o cliente envia, com Enter ou com o botão Enviar, e o texto pode ser editado antes.
 

@@ -136,10 +136,10 @@ def test_mesmo_pedido_repetido_nao_duplica_chamado(sql):
 def test_fora_do_expediente_informa_horario_de_retorno(monkeypatch):
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-11-01T10:00:00")  # domingo
     (r,) = conversar("quero falar com um atendente")
-    assert "fora do expediente" in r.texto and "amanhã às 09:00" in r.texto
+    assert "fora do expediente" in r.texto and "amanhã às 9h" in r.texto
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-10-31T15:00:00")  # sábado à tarde
     (r2,) = conversar("quero falar com um atendente", conversa="c2")
-    assert "segunda-feira às 09:00" in r2.texto
+    assert "segunda-feira às 9h" in r2.texto
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-10-30T12:00:00")  # sexta ao meio-dia
     (r3,) = conversar("quero falar com um atendente", conversa="c3")
     assert "fora do expediente" not in r3.texto
@@ -148,7 +148,7 @@ def test_fora_do_expediente_informa_horario_de_retorno(monkeypatch):
 def test_saudacao_fora_do_expediente_e_com_nome_da_loja_vindo_do_manual(monkeypatch):
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-10-30T07:30:00")  # sexta cedo
     (r,) = conversar("bom dia")
-    assert "Lia" in r.texto and "assistente virtual" in r.texto and "hoje às 09:00" in r.texto
+    assert "Lia" in r.texto and "assistente virtual" in r.texto and "hoje às 9h" in r.texto
 
 
 # --- escopo, produtos e preços ------------------------------------------------------------
@@ -247,7 +247,7 @@ def test_pergunta_o_final_quando_so_veio_o_pedido():
 
 def test_horario_endereco_e_contato_vem_do_manual():
     h, e, c = conversar("qual o horário de funcionamento?", "onde fica a loja?", "qual o telefone?")
-    assert "09:00 às 18:00" in h.texto and "09:00 às 13:00" in h.texto and "calendário de feriados" in h.texto
+    assert "9h às 18h" in h.texto and "9h às 13h" in h.texto and "calendário de feriados" in h.texto
     assert "79202-333" in e.texto and "Campo Grande" in e.texto
     assert "(67) 3341-4444" in c.texto and "(67) 3321-4500" in c.texto and "não consigo confirmar" not in c.texto  # um canal de cada tipo, sem variantes
 
@@ -276,7 +276,7 @@ def test_frete_de_exatamente_500_e_gratis_sem_chamado(sql):
 def test_troca_de_assunto_guarda_o_anterior_e_oferece_retomar():
     r1, r2, r3 = conversar("quero devolver um produto", "qual o horário de vocês?", "sim")
     assert r1.estado == "aguardando:pedido"
-    assert "09:00" in r2.texto and "Quer retomar" in r2.texto and "devolução" in r2.texto
+    assert "9h" in r2.texto and "Quer retomar" in r2.texto and "devolução" in r2.texto
     estado = carregar_estado("c1")
     assert estado.objetivo == "devolucao" and estado.pendentes == []
     assert "número do pedido" in r3.texto and r3.estado == "aguardando:pedido"
@@ -397,7 +397,7 @@ def test_falha_de_ferramenta_aparece_ao_cliente_sem_inventar(tmp_path, monkeypat
     ruim.write_text("manual: {versao: '2.1'}\n", encoding="utf-8")
     monkeypatch.setenv("EMPORIO_MANUAL", str(ruim))
     (r,) = conversar("qual o horário?")
-    assert "problema" in r.texto and "09:00" not in r.texto and r.acoes[0]["estado"] == "falha"
+    assert "problema" in r.texto and "9h" not in r.texto and r.acoes[0]["estado"] == "falha"
 
 
 def test_falhas_seguidas_oferecem_registro_do_problema(tmp_path, monkeypatch, sql):
@@ -412,12 +412,12 @@ def test_falhas_seguidas_oferecem_registro_do_problema(tmp_path, monkeypatch, sq
 def test_yaml_alterado_muda_a_resposta_do_agente(tmp_path, monkeypatch):
     origem = config.caminho_manual().read_text(encoding="utf-8")
     (antes,) = conversar("qual o horário?", conversa="a")
-    assert "09:00 às 18:00" in antes.texto
+    assert "9h às 18h" in antes.texto
     alterado = tmp_path / "alterado.yaml"
     alterado.write_text(origem.replace('abre: "09:00", fecha: "18:00"', 'abre: "08:30", fecha: "19:00"'), encoding="utf-8")
     monkeypatch.setenv("EMPORIO_MANUAL", str(alterado))
     (depois,) = conversar("qual o horário?", conversa="b")
-    assert "08:30 às 19:00" in depois.texto and "09:00 às 18:00" not in depois.texto
+    assert "8h30 às 19h" in depois.texto and "9h às 18h" not in depois.texto
 
 
 def test_estado_persiste_entre_instancias_do_agente():

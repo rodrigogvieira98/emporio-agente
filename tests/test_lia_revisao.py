@@ -54,7 +54,7 @@ def test_despedida_com_assunto_pendente_nao_oferece_retomar():
 
 def test_agradecimento_junto_de_pergunta_nao_vira_despedida():
     (r,) = conversar("qual o horário de vocês? obrigado")
-    assert "09:00" in r.texto
+    assert "9h" in r.texto
 
 
 # 3. contexto: lista e pedido ------------------------------------------------------------------------
@@ -87,7 +87,7 @@ def test_cidade_fora_da_base_nao_pede_valor_e_campo_grande_pede():
 
 def test_horario_e_endereco_na_mesma_mensagem_respondem_os_dois():
     (r,) = conversar("qual o horário e o endereço de vocês?")
-    assert "09:00" in r.texto and "Estamos na" in r.texto
+    assert "9h" in r.texto and "Estamos na" in r.texto
 
 
 def test_pergunta_secundaria_nao_dispara_com_uma_so():

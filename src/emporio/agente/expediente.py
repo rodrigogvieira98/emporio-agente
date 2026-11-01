@@ -12,6 +12,12 @@ def _hora(texto: str) -> time:
     return time(int(h), int(m))
 
 
+def hora_br(hora: str) -> str:
+    """Formato do site: hora cheia vira "9h"; com minutos, "8h30"."""
+    h, m = hora.split(":")
+    return f"{int(h)}h" + ("" if int(m) == 0 else m)
+
+
 def _faixa_do_dia(funcionamento: list[dict[str, Any]], dia: int) -> tuple[time, time] | None:
     for f in funcionamento:
         if dia in f["dias"] and not f.get("fechado"):

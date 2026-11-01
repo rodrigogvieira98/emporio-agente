@@ -98,7 +98,7 @@ def _aviso_expediente(estado: Estado) -> str:
     ressalva = (" (pela regra de funcionamento; em feriado o horário pode mudar)"
                 if "feriados_sem_calendario" in _ambiguidades(estado) else "")
     return aviso(estado, "fora_do_expediente",
-                 f"No momento estamos fora do expediente. Voltamos {r['quando']} às {r['hora']}{ressalva}.",
+                 f"No momento estamos fora do expediente. Voltamos {r['quando']} às {expediente.hora_br(r['hora'])}{ressalva}.",
                  valor=f"{r['quando']} {r['hora']}")
 
 
@@ -139,7 +139,7 @@ def horario(e: Estado, p: dict) -> str:
     for faixa in c.get("horario.funcionamento", []):
         dias = expediente.descrever_dias(faixa["dias"])
         linhas.append(f"- {dias}: fechado" if faixa.get("fechado") else
-                      f"- {dias}: das {faixa['abre']} às {faixa['fecha']}")
+                      f"- {dias}: das {expediente.hora_br(faixa['abre'])} às {expediente.hora_br(faixa['fecha'])}")
     if not linhas:
         return sem_dado(e, p)
     if c.get("horario.feriados_fechado"):

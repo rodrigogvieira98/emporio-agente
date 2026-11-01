@@ -15,3 +15,5 @@
 
 - 01/11/2026, 19h58, medição congelada em 735bb85, a primeira leitura de `casos_frescos.jsonl`: controle 16/18, A (regras e redação `qwen3:4b`) 16/18, B (A com reserva) 17/18, 0 fatos críticos errados e 0 chamados indevidos em todos. Pela barra de `PREREGISTRO_RESERVA.md`, B não passa no item 3 (pedia ao menos 2 "não entendi" a menos; teve 1), então a reserva fica desligada na entrega (`EMPORIO_RESERVA=0`).
 - 01/11/2026, 20h05, depois de ver os frescos e antes do holdout: o caso f02 ("isso aqui é uma pessoa de verdade?") abriu chamado de atendente, defeito real; e f01 ("com quem estou falando?") não era entendido. Corrigido o vocabulário de identidade. A partir daqui os frescos deixam de ser às cegas: os números acima, medidos antes da correção, são os que valem para eles.
+
+- 01/11/2026, etapa 19, item 6, mudança de formato sem mudar o fato: a Lia passa a escrever o horário como o site ("das 9h às 18h", "amanhã às 9h"). Gabaritos d29, d59, d61 (dev) e c23 (conversas) exigiam "09:00" e passam a exigir "9h" (d29 e d61 também "13h" no lugar de "13:00"). Nenhum outro caso nem barra mudou; holdout, holdout 2 e frescos não foram abertos.

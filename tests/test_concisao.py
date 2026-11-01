@@ -45,7 +45,7 @@ def test_o_controle_sem_concisao_repete_e_a_metrica_enxerga(monkeypatch):
 
 def test_ao_perguntar_de_novo_o_cliente_recebe_o_fato_e_o_aviso_do_assunto():
     a, b = rodar(["qual o horário de vocês?", "qual o horário de vocês?"], concisao=True)
-    assert "09:00 às 18:00" in b.texto and "calendário de feriados" in b.texto and a.texto == b.texto
+    assert "9h às 18h" in b.texto and "calendário de feriados" in b.texto and a.texto == b.texto
 
 
 def test_fato_pedido_de_novo_aparece_inteiro():
@@ -60,7 +60,7 @@ def test_valor_que_mudou_reaparece(monkeypatch):
     a = agente.responder("c1", "quero falar com um atendente", "eval")
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-03-25T07:00:00")  # quarta cedo: volta hoje
     b = agente.responder("c1", "quero falar com um atendente", "eval")
-    assert "amanhã às 09:00" in a.texto and "hoje às 09:00" in b.texto
+    assert "amanhã às 9h" in a.texto and "hoje às 9h" in b.texto
 
 
 def test_ja_informados_guarda_entidade_atributo_e_valor_e_persiste():
@@ -95,7 +95,7 @@ def test_redacao_nao_repete_frase_livre_ja_dita_em_resposta_anterior():
     cliente.saidas[:] = [proposta(ferramenta="consultar_politica", temas=["horario"]), proposta(resposta="horario")]
     b = agente.responder("c1", "qual o horário de vocês?", "eval")
     assert a.texto.startswith("Claro, já te explico.") and not b.texto.startswith("Claro")
-    assert "09:00 às 18:00" in b.texto  # o bloco factual segue inteiro
+    assert "9h às 18h" in b.texto  # o bloco factual segue inteiro
 
 
 def test_remove_frase_repetida_dentro_do_turno_e_contra_respostas_anteriores():

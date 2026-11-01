@@ -26,7 +26,7 @@
 {"id":"d26","cat":"pedido","turnos":["meu pedido 17 foi cancelado? final do telefone é o do cadastro"],"nao_contem":["cancelado pelo cliente"],"chamado":false}
 {"id":"d27","cat":"pedido","turnos":["pedido 8 final 7821, onde ele está agora?"],"ferramentas":["consultar_pedido"],"nao_contem":["está em","chega amanhã"],"chamado":false}
 {"id":"d28","cat":"politica","turnos":["Qual o endereço da loja?"],"contem":["Rua 14 de Maio","3200"],"chamado":false}
-{"id":"d29","cat":"politica","turnos":["que horas vocês abrem sábado?"],"contem":["09:00","13:00"],"chamado":false}
+{"id":"d29","cat":"politica","turnos":["que horas vocês abrem sábado?"],"contem":["9h","13h"],"chamado":false}
 {"id":"d30","cat":"politica","turnos":["abre domingo?"],"contem":["fechado"],"chamado":false}
 {"id":"d31","cat":"politica","turnos":["quais formas de pagamento aceitam?"],"contem":["PIX","boleto"],"chamado":false}
 {"id":"d32","cat":"politica","turnos":["como funciona a garantia?"],"contem":["90"],"chamado":false}
@@ -56,7 +56,7 @@
 {"id":"d56","cat":"encaminhamento","turnos":["não quero falar com atendente, só o preço do Yamaha C40"],"contem":["599,90"],"chamado":false}
 {"id":"d57","cat":"encaminhamento","turnos":["não quero abrir reclamação"],"chamado":false}
 {"id":"d58","cat":"encaminhamento","turnos":["quero abrir reclamação","o violão chegou riscado e ninguém me responde"],"ferramentas":["registrar_encaminhamento"],"contem":["EM-","24 horas úteis"],"chamado":true}
-{"id":"d59","cat":"encaminhamento","data_ref":"2026-03-29T10:00:00","turnos":["quero abrir reclamação","o pedido atrasou demais"],"ferramentas":["registrar_encaminhamento"],"contem":["EM-","09:00"],"chamado":true}
+{"id":"d59","cat":"encaminhamento","data_ref":"2026-03-29T10:00:00","turnos":["quero abrir reclamação","o pedido atrasou demais"],"ferramentas":["registrar_encaminhamento"],"contem":["EM-","9h"],"chamado":true}
 {"id":"d60","cat":"continuidade","turnos":["quanto custa o Yamaha C40?","e no pix?"],"contem":["569,91"],"chamado":false}
-{"id":"d61","cat":"continuidade","turnos":["quero devolver meu pedido","antes, qual o horário de sábado?"],"contem":["09:00","13:00"],"chamado":false}
+{"id":"d61","cat":"continuidade","turnos":["quero devolver meu pedido","antes, qual o horário de sábado?"],"contem":["9h","13h"],"chamado":false}
 {"id":"d62","cat":"continuidade","turnos":["Me arrependi, posso devolver?","pedido 4, final 3456","Comprei pelo site, recebi anteontem, nem abri","sim"],"ferramentas":["consultar_pedido","consultar_politica","registrar_encaminhamento"],"contem":["EM-"],"nao_contem":["aprovad"],"chamado":true}

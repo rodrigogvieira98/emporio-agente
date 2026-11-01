@@ -72,7 +72,7 @@ def test_pergunta_diferente_zera_a_contagem(sql):
 # 2. texto do modelo duplicando o bloco -------------------------------------------------------
 
 def test_frase_do_modelo_que_repete_o_bloco_sai_e_o_bloco_fica():
-    bloco = "Nosso horário de funcionamento:\n- sábado: das 09:00 às 13:00\nAgora a loja está aberta."
+    bloco = "Nosso horário de funcionamento:\n- sábado: das 9h às 13h\nAgora a loja está aberta."
     assert repete_o_bloco("A loja está aberta.", bloco)
     assert not repete_o_bloco("Qualquer coisa é só chamar.", bloco)
     r = Redator("falso:1b", ClienteFalso({"abertura": None, "fechamento": "A loja está aberta."}))

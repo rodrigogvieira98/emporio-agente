@@ -159,7 +159,7 @@ def test_desabafo_com_pedido_pede_numero_e_final():
 
 def test_desabafo_com_horario_responde_o_horario():
     (r,) = conversar("que absurdo, qual o horário?")
-    assert "09:00 às 18:00" in r.texto and "Posso registrar uma reclamação" not in r.texto
+    assert "9h às 18h" in r.texto and "Posso registrar uma reclamação" not in r.texto
 
 
 def test_reclamacao_sobre_produto_continua_reclamacao():

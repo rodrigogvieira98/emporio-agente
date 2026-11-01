@@ -20,7 +20,7 @@
 {"id":"c20","cat":"reembolso","turnos":["comprei há 10 dias e quero devolver","e se o produto veio com defeito?","em quanto tempo recebo o dinheiro?"],"contem":["10 dias úteis"],"nao_contem":["Parece que não","registrar","Não entendi"],"chamado":false}
 {"id":"c21","cat":"frete","turnos":["entrega em Recife?"],"contem":["calculado pela equipe"],"nao_contem":["valor aproximado do pedido"],"chamado":false}
 {"id":"c22","cat":"frete","turnos":["entrega em Recife?","e em Campo Grande?"],"contem":["valor aproximado do pedido"],"nao_contem":["calculado pela equipe"],"chamado":false}
-{"id":"c23","cat":"duas_perguntas","turnos":["quanto custa uma bateria e qual o horário de vocês?"],"ferramentas":["buscar_produtos","consultar_politica"],"contem":["Yamaha Kit 1","09:00"],"nao_contem":["Qualquer dúvida","fique à vontade"],"chamado":false}
+{"id":"c23","cat":"duas_perguntas","turnos":["quanto custa uma bateria e qual o horário de vocês?"],"ferramentas":["buscar_produtos","consultar_politica"],"contem":["Yamaha Kit 1","9h"],"nao_contem":["Qualquer dúvida","fique à vontade"],"chamado":false}
 {"id":"c24","cat":"duas_perguntas","turnos":["qual o endereço e o telefone de vocês?"],"contem":["Rua 14 de Maio","Telefone"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c25","cat":"proporcional","turnos":["aceitam boleto"],"contem":["Boleto"],"nao_contem":["PIX:","Cartão de débito","Parcela mínima","combinar formas"],"chamado":false}
 {"id":"c26","cat":"proporcional","turnos":["vocês parcelam"],"contem":["12x","Parcela mínima","R$ 100,00 por parcela"],"nao_contem":["PIX:","Boleto:","Cartão de débito"],"chamado":false}

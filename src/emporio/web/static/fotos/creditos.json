@@ -206,5 +206,57 @@
     "link_licenca": "https://creativecommons.org/licenses/by/3.0",
     "link_origem": "https://commons.wikimedia.org/wiki/File:Kytara_a_ruka.jpg",
     "alteracoes": "Recortada e ajustada ao quadro 4:3."
+  },
+  {
+    "chave": "banner-guitarra",
+    "arquivo": "banner-guitarra.webp",
+    "largura": 800,
+    "altura": 600,
+    "alt": "Guitarra elétrica vermelha de corpo único com ferragens douradas, sobre fundo preto",
+    "titulo": "Epiphone Les Paul Standard Ltd. Candy Apple Red finish with Gold hardware body",
+    "autor": "John Verive",
+    "licenca": "CC BY-SA 2.0",
+    "link_licenca": "https://creativecommons.org/licenses/by-sa/2.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Epiphone_Les_Paul_Standard_Ltd._Candy_Apple_Red_finish_with_Gold_hardware_body.jpg",
+    "alteracoes": "Recortada e ajustada ao quadro 4:3."
+  },
+  {
+    "chave": "banner-baixo",
+    "arquivo": "banner-baixo.webp",
+    "largura": 800,
+    "altura": 600,
+    "alt": "Corpo de um baixo elétrico de quatro cordas em laranja, com captador listrado",
+    "titulo": "Kay Electric Bass Guitar",
+    "autor": "Melissa Ursula Dawn Goldsmith",
+    "licenca": "CC BY-SA 4.0",
+    "link_licenca": "https://creativecommons.org/licenses/by-sa/4.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Kay_Electric_Bass_Guitar.jpg",
+    "alteracoes": "Recortada e ajustada ao quadro 4:3."
+  },
+  {
+    "chave": "banner-teclado",
+    "arquivo": "banner-teclado.webp",
+    "largura": 800,
+    "altura": 600,
+    "alt": "Sintetizador com teclas e painel de botões, visto em perspectiva",
+    "titulo": "Schmidt Eightvoice Polyphonic Synthesizer - right angled (2016-04-07 13.17.24 by kpr2) Synthesizer-1515574",
+    "autor": "Klaus P. Rausch from Wiesbaden, Deutschland",
+    "licenca": "CC0",
+    "link_licenca": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Schmidt_Eightvoice_Polyphonic_Synthesizer_-_right_angled_(2016-04-07_13.17.24_by_kpr2)_Synthesizer-1515574.jpg",
+    "alteracoes": "Recortada e ajustada ao quadro 4:3."
+  },
+  {
+    "chave": "banner-bateria",
+    "arquivo": "banner-bateria.webp",
+    "largura": 800,
+    "altura": 600,
+    "alt": "Bateria preta com tons e pratos, em estúdio escuro",
+    "titulo": "Drum set takes center stage in a well-lit studio filled with musical energy",
+    "autor": "Shixart1985",
+    "licenca": "CC BY 2.0",
+    "link_licenca": "https://creativecommons.org/licenses/by/2.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Drum_set_takes_center_stage_in_a_well-lit_studio_filled_with_musical_energy.jpg",
+    "alteracoes": "Recortada e ajustada ao quadro 4:3."
   }
 ]

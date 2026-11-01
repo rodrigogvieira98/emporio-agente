@@ -23,7 +23,19 @@
       <p class="abertura-linha">Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço claro e as condições de pagamento de cada produto.</p>
       <p class="abertura-acoes"><a class="botao botao-cheio botao-grande" href="/catalogo">Explorar instrumentos</a></p>
     </div>
-    {% if abertura %}<div class="abertura-foto"><img src="{{ abertura.src }}" width="{{ abertura.largura }}" height="{{ abertura.altura }}" alt="{{ abertura.alt }}" decoding="async"></div>{% endif %}
+    {% if banner %}
+    <div class="abertura-foto banner" data-banner role="group" aria-roledescription="carrossel" aria-label="Instrumentos em destaque">
+      <ul class="banner-lista">
+      {% for f in banner %}
+        <li class="banner-slide{{ ' e-ativo' if loop.first }}" data-slide{% if not loop.first %} aria-hidden="true"{% endif %}>
+          {% if loop.first %}<img src="{{ f.src }}" width="{{ f.largura }}" height="{{ f.altura }}" alt="{{ f.alt }}" decoding="async" fetchpriority="high">
+          {% else %}<img data-src="{{ f.src }}" width="{{ f.largura }}" height="{{ f.altura }}" alt="{{ f.alt }}" decoding="async">{% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+      {% if banner | length > 1 %}<button type="button" class="banner-pausa" data-pausa aria-pressed="false" aria-label="Pausar a troca de fotos" hidden><span class="banner-pausa-icone" aria-hidden="true"></span></button>{% endif %}
+    </div>
+    {% endif %}
   </div>
 </section>
 

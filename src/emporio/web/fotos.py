@@ -106,3 +106,12 @@ def foto_da_categoria(categoria: str | None) -> dict[str, Any] | None:
 
 def foto_de_abertura() -> dict[str, Any] | None:
     return _ficha("abertura")
+
+
+# banner da home: a abertura (violão) e mais quatro instrumentos, nesta ordem
+CHAVES_DO_BANNER = ("abertura", "banner-guitarra", "banner-baixo", "banner-teclado", "banner-bateria")
+
+
+def fotos_do_banner() -> list[dict[str, Any]]:
+    """As fotos do banner que existem em `creditos.json`, na ordem de exibição (a primeira carrega de imediato)."""
+    return [f for f in (_ficha(c) for c in CHAVES_DO_BANNER) if f]

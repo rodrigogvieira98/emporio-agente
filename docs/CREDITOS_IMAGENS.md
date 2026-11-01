@@ -20,6 +20,10 @@ Fotografias do Wikimedia Commons, em licença livre. Gerado por `python -m empor
 | ukulele-1.webp | Lardyfatboy | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [página](https://commons.wikimedia.org/wiki/File:Soprano_Ukulele.JPG) | Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto. |
 | ukulele-2.webp | Lardyfatboy | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [página](https://commons.wikimedia.org/wiki/File:Tenor_Ukulele.JPG) | Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto. |
 | abertura.webp | Honza Groh | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0) | [página](https://commons.wikimedia.org/wiki/File:Kytara_a_ruka.jpg) | Recortada e ajustada ao quadro 4:3. |
+| banner-guitarra.webp | John Verive | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [página](https://commons.wikimedia.org/wiki/File:Epiphone_Les_Paul_Standard_Ltd._Candy_Apple_Red_finish_with_Gold_hardware_body.jpg) | Recortada e ajustada ao quadro 4:3. |
+| banner-baixo.webp | Melissa Ursula Dawn Goldsmith | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [página](https://commons.wikimedia.org/wiki/File:Kay_Electric_Bass_Guitar.jpg) | Recortada e ajustada ao quadro 4:3. |
+| banner-teclado.webp | Klaus P. Rausch from Wiesbaden, Deutschland | [CC0](http://creativecommons.org/publicdomain/zero/1.0/deed.en) | [página](https://commons.wikimedia.org/wiki/File:Schmidt_Eightvoice_Polyphonic_Synthesizer_-_right_angled_(2016-04-07_13.17.24_by_kpr2)_Synthesizer-1515574.jpg) | Recortada e ajustada ao quadro 4:3. |
+| banner-bateria.webp | Shixart1985 | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0) | [página](https://commons.wikimedia.org/wiki/File:Drum_set_takes_center_stage_in_a_well-lit_studio_filled_with_musical_energy.jpg) | Recortada e ajustada ao quadro 4:3. |
 
 ## Retrato da Lia
 

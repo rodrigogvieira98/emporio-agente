@@ -307,7 +307,7 @@ def criar_app(agente: Any = None) -> FastAPI:
         destaques = home.destaques()
         return pagina(request, "inicio.html", destaques=destaques, grade=home.grade({d["id"] for d in destaques}),
                       categorias_home=home.categorias(), faq=conteudo.perguntas(somente_principais=True),
-                      abertura=fotos.foto_de_abertura(),
+                      banner=fotos.fotos_do_banner(),
                       descricao="Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço claro e as condições "
                                 "de pagamento de cada produto.")
 

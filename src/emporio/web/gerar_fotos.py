@@ -23,6 +23,7 @@ from typing import Any
 
 SAIDA = Path(__file__).resolve().parent / "static" / "fotos"
 LARGURA, ALTURA, LIMITE_BYTES = 800, 600, 200 * 1024
+LIMITE_BANNER = 120 * 1024
 API = "https://commons.wikimedia.org/w/api.php"
 LICENCAS_LIVRES = re.compile(r"^(CC BY(-SA)? \d\.\d|CC0.*|Public domain.*|PD.*)$", re.I)
 
@@ -61,6 +62,19 @@ FOTOS: tuple[dict[str, Any], ...] = (
      "alt": "Ukulele de madeira escura de tom mogno, de frente"},
     {"chave": "abertura", "titulo": "Kytara a ruka.jpg", "giro": 0, "recorte": (0.0, 0.30, 1.0, 0.80), "cobrir": True,
      "alt": "Mão tocando as cordas de um violão de acabamento sunburst"},
+    # banner da home (etapa 20): instrumento em destaque sobre fundo escuro, sem pessoa identificável, até 120 KB cada
+    {"chave": "banner-guitarra", "titulo": "Epiphone Les Paul Standard Ltd. Candy Apple Red finish with Gold hardware body.jpg", "giro": 0,
+     "recorte": (0.0, 0.30, 1.0, 0.86), "cobrir": True, "limite": LIMITE_BANNER,
+     "alt": "Guitarra elétrica vermelha de corpo único com ferragens douradas, sobre fundo preto"},
+    {"chave": "banner-baixo", "titulo": "Kay Electric Bass Guitar.jpg", "giro": 0,
+     "recorte": (0.0, 0.0, 1.0, 0.50), "cobrir": True, "limite": LIMITE_BANNER,
+     "alt": "Corpo de um baixo elétrico de quatro cordas em laranja, com captador listrado"},
+    {"chave": "banner-teclado", "titulo": "Schmidt Eightvoice Polyphonic Synthesizer - right angled (2016-04-07 13.17.24 by kpr2) Synthesizer-1515574.jpg", "giro": 0,
+     "recorte": (0.34, 0.30, 1.0, 1.0), "cobrir": True, "limite": LIMITE_BANNER,
+     "alt": "Sintetizador com teclas e painel de botões, visto em perspectiva"},
+    {"chave": "banner-bateria", "titulo": "Drum set takes center stage in a well-lit studio filled with musical energy.jpg", "giro": 0,
+     "recorte": (0.14, 0.0, 1.0, 0.86), "cobrir": True, "limite": LIMITE_BANNER,
+     "alt": "Bateria preta com tons e pratos, em estúdio escuro"},
 )
 
 
@@ -96,6 +110,14 @@ def metadados(titulos: list[str]) -> dict[str, dict[str, str]]:
             "licenca": licenca, "link_licenca": m.get("LicenseUrl", {}).get("value", ""),
             "link_origem": info["descriptionurl"]}
     return saida
+
+
+def baixar(titulo: str) -> bytes:
+    """Original reduzido a 2400 px de largura (o suficiente para o recorte de 800x600), pela API do Commons."""
+    consulta = urllib.parse.urlencode({"action": "query", "format": "json", "prop": "imageinfo", "iiprop": "url",
+                                       "iiurlwidth": 2400, "titles": "File:" + titulo})
+    pagina = next(iter(json.loads(_pedir(f"{API}?{consulta}"))["query"]["pages"].values()))
+    return _pedir(pagina["imageinfo"][0]["thumburl"])
 
 
 def _fundo_branco(im, tolerancia: int = 28, todas_as_bordas: bool = False):
@@ -175,10 +197,10 @@ def _tapar(quadro, caixa: tuple[int, int, int, int]) -> None:
     ImageDraw.Draw(quadro).rectangle(caixa, fill=cor)
 
 
-def gravar(im, destino: Path) -> int:
-    for qualidade in (86, 80, 74, 68, 60, 50):
+def gravar(im, destino: Path, limite: int = LIMITE_BYTES) -> int:
+    for qualidade in (86, 80, 74, 68, 60, 50, 42):
         im.save(destino, "WEBP", quality=qualidade, method=6)
-        if destino.stat().st_size <= LIMITE_BYTES:
+        if destino.stat().st_size <= limite:
             break
     return destino.stat().st_size
 
@@ -187,13 +209,18 @@ def main(pasta: Path) -> None:
     SAIDA.mkdir(parents=True, exist_ok=True)
     meta = metadados([f["titulo"] for f in FOTOS])
     creditos = []
+    antigos = {c["chave"]: c for c in json.loads((SAIDA / "creditos.json").read_text(encoding="utf-8"))}         if (SAIDA / "creditos.json").exists() else {}
     for f in FOTOS:
         origem = pasta / f["titulo"].replace(" ", "_").replace('"', "")[-70:]
+        if not origem.exists() and f.get("limite"):
+            origem.write_bytes(baixar(f["titulo"]))  # fotos do banner: baixa sozinho um original de 2400 px
         if not origem.exists():
-            print("sem original:", origem.name)
+            print("sem original (mantém a foto e o crédito atuais):", origem.name)
+            if f["chave"] in antigos:
+                creditos.append(antigos[f["chave"]])
             continue
         arquivo = f["chave"] + ".webp"
-        tamanho = gravar(processar(origem, f), SAIDA / arquivo)
+        tamanho = gravar(processar(origem, f), SAIDA / arquivo, f.get("limite", LIMITE_BYTES))
         m = meta[f["titulo"]]
         creditos.append({"chave": f["chave"], "arquivo": arquivo, "largura": LARGURA, "altura": ALTURA, "alt": f["alt"],
                          "titulo": f["titulo"].removesuffix(".jpg").removesuffix(".png").removesuffix(".JPG"),
@@ -212,6 +239,10 @@ def main(pasta: Path) -> None:
     for c in creditos:
         linhas.append(f"| {c['arquivo']} | {c['autor'].replace('|', '/')} | [{c['licenca']}]({c['link_licenca']}) | "
                       f"[página]({c['link_origem']}) | {c['alteracoes']} |")
+    linhas += ["", "## Retrato da Lia", "",
+               "`lia-96.webp` e `lia-192.webp`: retrato gerado por inteligência artificial (imagem definida pelo Rodrigo em "
+               "01/11/2026), recortado no rosto e ombros. A pessoa retratada é fictícia; a Lia é uma assistente virtual. "
+               "O original não faz parte do repositório."]
     doc.write_text("\n".join(linhas) + "\n", encoding="utf-8")
 
 

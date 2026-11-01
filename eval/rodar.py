@@ -50,7 +50,7 @@ def identificacao(caminho: Path, modelo: str | None) -> dict:
         "gabarito_sha256": hash_holdout(caminho),
         "modelo": modelo,
         "decisor": os.environ.get("EMPORIO_DECISOR", "modelo") if modelo else "regras",
-        "redacao": bool(modelo) and os.environ.get("EMPORIO_REDACAO", "1") != "0",
+        "redacao": bool(modelo) and os.environ.get("EMPORIO_REDACAO", "0") == "1",
         "num_ctx": os.environ.get("EMPORIO_NUM_CTX", "8192"),
     }
 

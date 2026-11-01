@@ -10,3 +10,5 @@
 - 01/11/2026, mudança de regra por decisão do Rodrigo, não correção de instrumento, com o holdout sem execução: caso h13 ("gastando exatos 500 reais em Campo Grande pago frete?") alinhado à regra de frete grátis a partir de R$ 500,00. Antes: `nao_contem` ["é grátis", "sai grátis", "35,00"]. Depois: `contem` ["grátis"] e `nao_contem` ["35,00", "confirm"], como no d38. A alteração foi feita pelo revisor, que abriu só essa linha, e não por quem implementa. Hash do holdout atualizado de c93427ea para b4ae2691. Nenhuma barra mudou. Também declarado: uma busca por segredos com `git grep` durante a auditoria percorreu o repositório inteiro, inclusive o holdout, sem exibir nenhuma linha dele.
 
 - 01/11/2026, correção de instrumento em caso novo, antes de qualquer relato: `c29` de `casos_conversas.jsonl` proibia "debit", que casava com "débito" normalizado. Passou a proibir "(debit)".
+
+- 01/11/2026, correção de instrumento, sem efeito nas métricas: `identificacao` em `eval/rodar.py` registrava `redacao: true` com a variável ausente. Com a redação desligada por padrão, passou a registrar o valor real.

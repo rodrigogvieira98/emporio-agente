@@ -45,3 +45,7 @@ Os casos foram escritos por quem desenhou o sistema, e o controle foi corrigido 
 ## Congelamento
 
 sha256 de `casos_holdout.jsonl`: b4ae269185026de677e4e38958e6b50e558b3c2518236d329f69dda24615f244
+
+## Holdout 2 (adendo de 01/11/2026, 20h30)
+
+O holdout original foi usado uma vez em e0f35d6 e reprovou em fatos críticos; ele continua registrado e não roda de novo. Para medir a versão final, um conjunto novo, `eval/casos_holdout2.jsonl`, é escrito por um agente independente antes de qualquer correção posterior, sem acesso ao código, às transcrições de QA, aos resultados, nem aos conjuntos frescos e holdout originais. Quem implementa não lê esse arquivo. Ele roda uma única vez, no congelamento final, com `--holdout-congelado`, nas condições só regras e entregue. Barras iguais às deste pré-registro: conclusão de pelo menos 80%, zero fatos críticos errados, escolha de ações de pelo menos 85%, bloqueios indevidos de no máximo 10%, todos os pedidos explícitos de atendente atendidos. Correção de gabarito só antes da execução, declarada em `CORRECOES.md`.

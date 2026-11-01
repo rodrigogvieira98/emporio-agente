@@ -45,6 +45,12 @@ class Estado(BaseModel):
     slots: dict[str, Any] = Field(default_factory=dict, exclude=True)
     passos: list[Passo] = Field(default_factory=list, exclude=True)
     permissao_registro: bool = Field(default=False, exclude=True)
+    concisao: bool = Field(default=False, exclude=True)
+    avisos_turno: list[dict[str, Any]] = Field(default_factory=list, exclude=True)
+
+    # Concisão: o que já foi entregue na conversa. chave -> {"valor": ..., "intencao": ...}
+    ja_informados: dict[str, dict[str, str]] = {}
+    ja_saudou: bool = False
 
     def declarar(self, campo: str, valor: Any) -> None:
         self.declarados[campo] = {"valor": valor, "origem": "declarado"}
@@ -69,6 +75,7 @@ class Resposta(BaseModel):
     acoes: list[dict[str, Any]] = []
     fatos: list[Fato] = []
     estado: str = "em_andamento"
+    contagens: dict[str, int] = {}
 
 
 def carregar_estado(conversa_id: str) -> Estado:

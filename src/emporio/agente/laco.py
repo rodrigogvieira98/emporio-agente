@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
+from collections import Counter
 from typing import Any
 
 from pydantic import ValidationError
@@ -17,6 +19,8 @@ from ..ferramentas.politica import consultar_politica
 from ..ferramentas.promocoes import listar_promocoes
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from . import respostas, trace
+from .concisao import deduplicar_frases, registrar_entregas, respostas_anteriores
+from .redacao import Redator
 from .decisor import Decisor
 from .estado import ORIGENS, Acao, Estado, Passo, Resposta, carregar_estado, para_json, salvar_estado
 from .fatos import fatos_do_resultado
@@ -36,8 +40,14 @@ LIMPAR_AO_CONCLUIR = ("proposta", "regra", "relato", "registro_explicito", "opco
 
 
 class Agente:
-    def __init__(self, decisor: Decisor | None = None) -> None:
+    """decisor: quem propõe as ações (padrão: regras). redator: texto livre curto ao redor dos blocos
+    (opcional). concisao: liga a supressão de avisos repetidos, saudação única e frases repetidas."""
+
+    def __init__(self, decisor: Decisor | None = None, redator: Redator | None = None,
+                 concisao: bool = False) -> None:
         self.decisor: Decisor = decisor or RegrasDecisor()
+        self.redator = redator
+        self.concisao = concisao
 
     def responder(self, conversa_id: str, mensagem: str, origem: str) -> Resposta:
         if origem not in ORIGENS:
@@ -45,8 +55,12 @@ class Agente:
         inicio = time.perf_counter()
         estado = carregar_estado(conversa_id)
         antes = estado.resumo_curto()
+        estado.concisao = self.concisao
         perceber(estado, mensagem)
         completar_datas(estado)
+        contagens: Counter[str] = Counter()
+        telemetria: list[dict[str, Any]] = []
+        mensagem_limpa = limpar_pii(mensagem, estado, mensagem)
 
         acoes: list[dict[str, Any]] = []
         passos_trace: list[dict[str, Any]] = []
@@ -68,6 +82,7 @@ class Agente:
                 if bloqueio:
                     passos_trace.append({"passo": numero, "tipo": acao.tipo, "ferramenta": acao.ferramenta,
                                          "bloqueado": bloqueio})
+                    contagens[f"bloqueio_{bloqueio}"] += 1
                     if bloqueio == "sem_permissao":
                         acao = pedir_permissao(estado, acao)
                     else:
@@ -88,8 +103,24 @@ class Agente:
                     continue
             # responder ou perguntar: fecha o turno
             chave_final = acao.resposta
-            texto = respostas.renderizar(chave_final, estado, acao.parametros)
+            try:
+                texto = respostas.renderizar(chave_final, estado, acao.parametros)
+            except Exception:  # noqa: BLE001 - decisor propôs resposta que não renderiza: nunca chega ao cliente
+                log.exception("resposta nao renderiza: %s", chave_final)
+                contagens["resposta_nao_renderiza"] += 1
+                chave_final, acao = "falha_ferramenta", Acao(tipo="responder", resposta="falha_ferramenta")
+                texto = respostas.renderizar(chave_final, estado, {})
+            if self.redator is not None and chave_final != "saudacao":
+                permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
+                texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,
+                                              respostas_anteriores(conversa_id) if self.concisao else [])
             texto, concluiu = fechar_turno(estado, acao, texto)
+            if chave_final == "saudacao":
+                estado.ja_saudou = True
+            if self.concisao:
+                # só dentro do turno: o bloco factual de uma pergunta repetida precisa sair inteiro
+                texto, removidas = deduplicar_frases(texto, [])
+                contagens["frases_removidas"] += removidas
             acoes.append({"tipo": acao.tipo, "resposta": chave_final})
             passos_trace.append({"passo": numero, "tipo": acao.tipo, "resposta": chave_final})
             break
@@ -102,6 +133,12 @@ class Agente:
             texto = respostas.renderizar(chave_final, estado, {})
             motivo_saida = motivo_saida if motivo_saida != "ok" else "sem_resposta"
 
+        contagens.update(registrar_entregas(estado, texto, fatos))
+        for fonte in (self.decisor, self.redator):
+            if fonte is not None and hasattr(fonte, "drenar"):
+                t, c = fonte.drenar()
+                telemetria += [limpar_pii(x, estado, mensagem) for x in t]
+                contagens.update(c)
         salvar_estado(conversa_id, estado)
         gravar_mensagem(conversa_id, estado.turno, texto, origem)
         latencia = int((time.perf_counter() - inicio) * 1000)
@@ -111,10 +148,13 @@ class Agente:
                 "ts": config.agora().isoformat(), "conversa": conversa_id, "turno": estado.turno, "origem": origem,
                 "intencao": estado.intencao, "resposta": chave_final, "motivo_saida": motivo_saida,
                 "estado_antes": antes, "estado_depois": estado.resumo_curto(), "passos": passos_trace,
-                "acoes": acoes, "estado_resposta": estado_resposta, "latencia_ms": latencia})
+                "acoes": acoes, "estado_resposta": estado_resposta, "latencia_ms": latencia,
+                "modelo": getattr(self.decisor, "modelo", None), "concisao": self.concisao,
+                "contagens": dict(contagens), "telemetria_modelo": telemetria,
+                "tokens": sum(x.get("tokens_prompt", 0) + x.get("tokens_resposta", 0) for x in telemetria)})
         except OSError:
             log.exception("nao foi possivel gravar o trace")
-        return Resposta(texto=texto, acoes=acoes, fatos=fatos, estado=estado_resposta)
+        return Resposta(texto=texto, acoes=acoes, fatos=fatos, estado=estado_resposta, contagens=dict(contagens))
 
 
 # --- validação e execução ------------------------------------------------------------------
@@ -266,3 +306,27 @@ def classificar_estado(estado: Estado, acoes: list[dict[str, Any]], concluiu: bo
     if estado.aguardando:
         return f"aguardando:{estado.aguardando}"
     return "concluido" if concluiu else "em_andamento"
+
+
+# --- dado pessoal fora do trace -------------------------------------------------------------
+
+NOME_DITO = re.compile(r"(?:sou|me chamo|meu nome (?:e|é)|aqui (?:e|é))\s+([A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+){0,3})", re.I)
+
+
+def limpar_pii(valor: Any, estado: Estado, mensagem: str) -> Any:
+    """Tira telefone, e-mail, final digitado e nome dito pelo cliente de qualquer texto que vá para o trace."""
+    from ..ferramentas.encaminhamento import mascarar_dado_pessoal
+
+    if isinstance(valor, dict):
+        return {k: limpar_pii(v, estado, mensagem) for k, v in valor.items()}
+    if isinstance(valor, list):
+        return [limpar_pii(v, estado, mensagem) for v in valor]
+    if not isinstance(valor, str):
+        return valor
+    texto = mascarar_dado_pessoal(valor)
+    final = estado.slots.get("final_telefone")
+    if final:
+        texto = texto.replace(final, "[final]")
+    for nome in NOME_DITO.findall(mensagem):
+        texto = re.sub(re.escape(nome.strip()), "[nome]", texto, flags=re.I)
+    return texto

@@ -78,7 +78,24 @@ def _aviso_expediente(estado: Estado) -> str:
     if sit["aberto"] or not sit["retorno"]:
         return ""
     r = sit["retorno"]
-    return f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}."
+    return aviso(estado, "fora_do_expediente",
+                 f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}.",
+                 valor=f"{r['quando']} {r['hora']}")
+
+
+def aviso(e: Estado, id_: str, texto: str, valor: str = "", proprio: bool = False) -> str:
+    """Aviso que acompanha uma resposta. Com a concisão ligada, não reaparece sem pedido do cliente.
+
+    Reaparece se o valor mudou, ou se o aviso é parte do assunto e o cliente perguntou o mesmo assunto de novo
+    (proprio=True). Aviso acessório (formato de preço, expediente) só volta se o valor mudar."""
+    chave = f"aviso:{id_}"
+    anterior = e.ja_informados.get(chave)
+    repetido = anterior is not None and anterior["valor"] == valor
+    pediu_de_novo = repetido and proprio and anterior["intencao"] == (e.intencao or "")
+    omitir = e.concisao and repetido and not pediu_de_novo
+    e.avisos_turno.append({"chave": chave, "valor": valor, "reapresentado": repetido and not pediu_de_novo,
+                           "omitido": omitir})
+    return "" if omitir else texto
 
 
 # --- textos --------------------------------------------------------------------------------
@@ -86,10 +103,13 @@ def _aviso_expediente(estado: Estado) -> str:
 def saudacao(e: Estado, p: dict) -> str:
     nome = _condicoes(e).get("empresa.nome_fantasia")
     de = f" da {nome}" if nome else ""
-    txt = (f"Oi! Eu sou a Lia, assistente virtual{de}. Posso ajudar com produtos, preços, pedidos, trocas e "
-           "devoluções. Como posso ajudar?")
-    aviso = _aviso_expediente(e)
-    return f"{txt} {aviso}".strip()
+    if e.concisao and e.ja_saudou:  # saudação no máximo uma vez por conversa
+        txt = "Em que posso ajudar?"
+    else:
+        txt = (f"Oi! Eu sou a Lia, assistente virtual{de}. Posso ajudar com produtos, preços, pedidos, trocas e "
+               "devoluções. Como posso ajudar?")
+    expediente_txt = _aviso_expediente(e)
+    return f"{txt} {expediente_txt}".strip()
 
 
 def horario(e: Estado, p: dict) -> str:
@@ -107,9 +127,15 @@ def horario(e: Estado, p: dict) -> str:
     if c.get("horario.datas_especiais_podem_estender"):
         txt += "\nEm datas especiais o horário pode ser estendido."
     if "feriados_sem_calendario" in _ambiguidades(e):
-        txt += "\nEu não tenho o calendário de feriados, então em feriado vale confirmar com a equipe."
+        a = aviso(e, "feriados_sem_calendario",
+                  "Eu não tenho o calendário de feriados, então em feriado vale confirmar com a equipe.", proprio=True)
+        txt += ("\n" + a) if a else ""
     sit = expediente.situacao(c["horario.funcionamento"], config.agora())
-    txt += "\nAgora a loja está aberta." if sit["aberto"] else "\n" + _aviso_expediente(e)
+    if sit["aberto"]:
+        txt += "\nAgora a loja está aberta."
+    else:
+        a = _aviso_expediente(e)
+        txt += ("\n" + a) if a else ""
     return txt
 
 
@@ -141,8 +167,10 @@ def contato(e: Estado, p: dict) -> str:
     txt = "Estes são os contatos que constam no manual da loja:\n" + "\n".join(linhas)
     amb = _ambiguidades(e)
     if "telefone_whatsapp" in amb or "email" in amb:
-        txt += ("\nO manual traz mais de um número e mais de uma grafia de e-mail, e eu não consigo confirmar "
-                "qual é o oficial. Se não funcionar, posso pedir para a equipe confirmar.")
+        a = aviso(e, "contato_ambiguo",
+                  "O manual traz mais de um número e mais de uma grafia de e-mail, e eu não consigo confirmar "
+                  "qual é o oficial. Se não funcionar, posso pedir para a equipe confirmar.", proprio=True)
+        txt += ("\n" + a) if a else ""
     return txt
 
 
@@ -165,8 +193,9 @@ def pagamento(e: Estado, p: dict) -> str:
                   for f in c["pagamento.parcelamento_faixas"]]
         txt += "\nParcela mínima por faixa: " + "; ".join(faixas) + "."
     if "parcela_minima" in _ambiguidades(e) and "pagamento.credito_parcela_minima_tabela_centavos" in c:
-        txt += (f" A tabela de pagamento fala em {formatar(c['pagamento.credito_parcela_minima_tabela_centavos'])} "
-                "por parcela, então em casos de limite a equipe confirma.")
+        txt += aviso(e, "parcela_minima_duas_leituras",
+                     f" A tabela de pagamento fala em {formatar(c['pagamento.credito_parcela_minima_tabela_centavos'])} "
+                     "por parcela, então em casos de limite a equipe confirma.", proprio=True)
     return txt + "\nSe quiser, me diga o produto e o número de parcelas que eu calculo."
 
 
@@ -231,7 +260,8 @@ def garantia_info(e: Estado, p: dict) -> str:
         txt += (f" Para troca por defeito, o prazo é de {defeito['prazo_dias']} dias {defeito['tipo_dias']} contados da "
                 f"{defeito['marco_inicial']}.")
     if "prazo_30_x_90" in _ambiguidades(e):
-        txt += " O manual não explica como esses dois prazos se combinam, então a equipe confirma o seu caso."
+        txt += aviso(e, "prazo_30_x_90",
+                     " O manual não explica como esses dois prazos se combinam, então a equipe confirma o seu caso.", proprio=True)
     fab = c.get("garantia.fabricante_prazo_meses")
     if fab:
         txt += (f" Os fabricantes costumam ter garantia própria, de {fab['min']} meses a {fab['max'] // 12} anos, "
@@ -261,7 +291,8 @@ def busca(e: Estado, p: dict) -> str:
     n = d["total_encontrado"]
     cab = (f"Encontrei {n} " + ("opção disponível" if n == 1 else "opções disponíveis")
            + (f", do menor para o maior preço (mostrando {mostrados}):" if d["total_encontrado"] > mostrados else ":"))
-    return cab + "\n" + "\n".join(linhas) + "\nOs valores são o preço de tabela. Quer ver as condições de algum deles?"
+    a = aviso(e, "valores_de_tabela", "Os valores são o preço de tabela.")
+    return cab + "\n" + "\n".join(linhas) + "\n" + (a + " " if a else "") + "Quer ver as condições de algum deles?"
 
 
 def pedir_categoria(e: Estado, p: dict) -> str:
@@ -322,7 +353,8 @@ def promocoes(e: Estado, p: dict) -> str:
         else:
             linhas.append(f"- {i['produto_nome']}: de {formatar(i['original_centavos'])} por "
                           f"{formatar(i['final_centavos'])} ({i['percentual']}% de desconto){extra}")
-    return "Promoções ativas no sistema:\n" + "\n".join(linhas) + "\nO desconto do PIX não soma com preço promocional."
+    a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com preço promocional.")
+    return "Promoções ativas no sistema:\n" + "\n".join(linhas) + (("\n" + a) if a else "")
 
 
 def recusa_manipulacao(e: Estado, p: dict) -> str:
@@ -355,8 +387,9 @@ def preco(e: Estado, p: dict) -> str:
     nome = d["produto_nome"]
     partes = []
     if d.get("percentual"):
+        a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com promoção.")
         partes.append(f"{nome}: preço de tabela {formatar(d['original_centavos'])}, promoção de {d['percentual']}% "
-                      f"e preço final {formatar(d['final_centavos'])}. O desconto do PIX não soma com promoção.")
+                      f"e preço final {formatar(d['final_centavos'])}." + (" " + a if a else ""))
     elif d["forma"] == "pix":
         partes.append(f"{nome}: preço de tabela {formatar(d['original_centavos'])}. No PIX "
                       f"({d.get('pix_percentual')}% de desconto) fica {formatar(d['final_centavos'])}.")

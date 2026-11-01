@@ -265,6 +265,13 @@ def _aplicar_slots(estado: Estado) -> None:
     for campo in ("canal_compra", "estado_produto"):
         if campo in s and estado.objetivo in POSVENDA | {"garantia"}:
             estado.declarar(campo, s[campo])
+    # "sim" ou "não" só vale como resposta quando a única coisa perguntada foi o estado do produto
+    if (estado.aguardando == "dados_posvenda" and estado.objetivo in POSVENDA | {"garantia"}
+            and estado.ultima_pergunta.get("campos") == ["estado_produto"] and "estado_produto" not in s):
+        if s["afirmativo"] and not s["negativo"]:
+            estado.declarar("estado_produto", "na embalagem original, sem sinais de uso")
+        elif s["negativo"]:
+            estado.declarar("estado_produto", "com sinais de uso ou sem a embalagem original")
     if estado.objetivo in ("defeito", "garantia") and estado.declarado("descricao_defeito") is None:
         so_dado = any(k in s for k in ("canal_compra", "estado_produto")) or bool(s.get("datas"))
         if (s.get("nova") == "defeito" and s["palavras"] >= 4) or (

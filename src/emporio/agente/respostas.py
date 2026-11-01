@@ -462,7 +462,8 @@ def _forma_pedido(bruto: str) -> str:
 def pedir_dados_posvenda(e: Estado, p: dict) -> str:
     ped = e.coletados["pedido"]
     campos = [CAMPOS.get(c, c) for c in p["campos"]]
-    return (f"Encontrei o pedido {ped['pedido_id']}. Para organizar sua solicitação, me conta: {_lista(campos)}.")
+    achei = aviso(e, "pedido_encontrado", f"Encontrei o pedido {ped['pedido_id']}.", str(ped["pedido_id"]))
+    return f"{achei} Para organizar sua solicitação, me conta: {_lista(campos)}.".strip()
 
 
 def propor_posvenda(e: Estado, p: dict) -> str:
@@ -555,6 +556,17 @@ def sem_dado(e: Estado, p: dict) -> str:
             f"Quer que eu registre a dúvida para a equipe? {CONFIRMA}")
 
 
+def perguntas_repetidas(e: Estado, p: dict) -> str:
+    return ("Parece que não estou conseguindo avançar com essa informação, desculpa. "
+            f"Posso registrar o seu caso para a equipe te ajudar? {CONFIRMA}")
+
+
+def atendente_ja_registrado(e: Estado, p: dict) -> str:
+    txt = (f"Você já tem um chamado registrado, protocolo {p['protocolo']}. "
+           "Ele já está na fila da equipe, então não abri outro.")
+    return f"{txt} {_aviso_expediente(e)}".strip()
+
+
 def confirmar_registro(e: Estado, p: dict) -> str:
     return f"Posso registrar isso para a equipe? {CONFIRMA}"
 
@@ -585,7 +597,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         status_pedido, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
-        recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral)
+        recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
+        atendente_ja_registrado)
 }
 
 

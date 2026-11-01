@@ -39,6 +39,8 @@ class Estado(BaseModel):
     acoes_concluidas: list[str] = []
     aguardando: str | None = None
     turno: int = 0
+    # Última pergunta de dado feita ao cliente: {"chave", "campos", "vezes"}. Vazio se o último turno não perguntou.
+    ultima_pergunta: dict[str, Any] = {}
 
     # Transitórios do turno: nunca persistidos (inclui o final de telefone digitado).
     intencao: str | None = Field(default=None, exclude=True)

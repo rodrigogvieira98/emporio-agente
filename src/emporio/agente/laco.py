@@ -102,6 +102,7 @@ class Agente:
                                          "args": trace.sanitizar_args(passo.args)})
                     continue
             # responder ou perguntar: fecha o turno
+            acao = limitar_repeticao(acao, estado)
             chave_final = acao.resposta
             try:
                 texto = respostas.renderizar(chave_final, estado, acao.parametros)
@@ -274,13 +275,42 @@ def completar_datas(estado: Estado) -> None:
 
 # --- fechamento do turno --------------------------------------------------------------------
 
+MAX_REPETICOES_PERGUNTA = 2  # a mesma pergunta de dado, no máximo 2 vezes seguidas
+
+
+def _assinatura(acao: Acao) -> dict[str, Any]:
+    return {"chave": acao.resposta, "campos": list(acao.parametros.get("campos", []))}
+
+
+def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:
+    """A terceira pergunta igual seguida vira oferta de registro para a equipe, em vez de outro laço."""
+    if acao.tipo != "perguntar":
+        return acao
+    anterior = estado.ultima_pergunta
+    assinatura = _assinatura(acao)
+    if (anterior and anterior.get("vezes", 0) >= MAX_REPETICOES_PERGUNTA
+            and {k: anterior.get(k) for k in assinatura} == assinatura):
+        resumo = (f"Cliente nao conseguiu responder a mesma pergunta ({assinatura['chave']}) apos "
+                  f"{MAX_REPETICOES_PERGUNTA} tentativas. Assunto: {estado.objetivo}.")
+        pedido = estado.coletados.get("pedido")
+        if pedido:
+            resumo += f" Pedido consultado: {pedido['pedido_id']}."
+        return Acao(tipo="responder", resposta="perguntas_repetidas",
+                    parametros={"propor_registro": {"tipo": "atendente", "resumo": resumo}})
+    return acao
+
+
 def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
     p = acao.parametros
     chave = acao.resposta
     estado.incompreensoes = estado.incompreensoes + 1 if chave == "nao_entendi" else 0
     if acao.tipo == "perguntar":
+        assinatura = _assinatura(acao)
+        igual = {k: estado.ultima_pergunta.get(k) for k in assinatura} == assinatura
+        estado.ultima_pergunta = {**assinatura, "vezes": estado.ultima_pergunta.get("vezes", 0) + 1 if igual else 1}
         estado.aguardando = p["aguardando"]
         return texto, False
+    estado.ultima_pergunta = {}
     if p.get("propor_registro"):
         estado.coletados["proposta"] = p["propor_registro"]
         estado.aguardando = "confirmacao_registro"

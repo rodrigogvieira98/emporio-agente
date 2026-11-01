@@ -126,9 +126,9 @@ def test_pedido_de_atendente_registra_e_negacao_nao_encaminha(sql):
 
 def test_mesmo_pedido_repetido_nao_duplica_chamado(sql):
     conversar("quero falar com um atendente", "quero falar com um atendente")
-    assert len(protocolos(sql)) == 2  # dois pedidos distintos geram dois chamados
+    assert len(protocolos(sql)) == 1  # mesma conversa, chamado em aberto: o segundo pedido informa o protocolo
     r = conversar("sim", conversa="c9")[0]
-    assert len(protocolos(sql)) == 2 and "Não entendi" in r.texto
+    assert len(protocolos(sql)) == 1 and "Não entendi" in r.texto
 
 
 def test_fora_do_expediente_informa_horario_de_retorno(monkeypatch):

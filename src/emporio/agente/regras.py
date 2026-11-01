@@ -304,6 +304,11 @@ class RegrasDecisor:
     def _i_pedir_atendente(self, estado: Estado) -> Acao:
         if estado.slots.get("nega_atendente"):
             return responder("negacao_atendente")
+        aberto = [a.split(":", 1)[1] for a in estado.acoes_concluidas if a.startswith("chamado:")]
+        if aberto and resultado_de(estado, "registrar_encaminhamento") is None:  # já há chamado em aberto: não abre outro
+            if resultado_de(estado, "consultar_politica", temas=["horario"]) is None:
+                return ferramenta("consultar_politica", temas=["horario"])
+            return responder("atendente_ja_registrado", protocolo=aberto[-1])
         resumo = "Cliente pediu atendimento humano."
         if estado.pendentes:
             resumo += f" Assunto anterior: {estado.pendentes[-1]['objetivo']}."

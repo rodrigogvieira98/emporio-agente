@@ -85,7 +85,8 @@ CANAL_ONLINE = re.compile(r"\b(online|on-line|site|internet|app|aplicativo|pelo 
 CANAL_LOJA = re.compile(r"\b(na loja|loja fisica|presencial|presencialmente|fisica|no balcao)\b")
 ESTADO_BOM = re.compile(
     r"\b(lacrad\w*|na caixa|embalagem original|na embalagem|sem uso|nunca usad\w*|novo|nova|intact\w*|"
-    r"sem abrir|fechad\w*|perfeito estado)\b")
+    r"sem abrir|fechad\w*|perfeito estado|nem abri|nao abri|nunca abri|nem usei|nao usei|nunca usei|nem usad\w*|"
+    r"sem nenhum uso|zerad\w*)\b")
 ESTADO_RUIM = re.compile(
     r"\b(usad\w*|riscad\w*|arranhad\w*|sem caixa|sem embalagem|aberto|aberta|amassad\w*|ja toquei|ja usei)\b")
 

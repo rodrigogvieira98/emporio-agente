@@ -1,0 +1,40 @@
+# Sobe o site (porta 8000) e o Ollama. O modelo e baixado por um servico de uma vez e a app responde sem esperar.
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      EMPORIO_MODELO: ${EMPORIO_MODELO:-qwen2.5:3b}
+      EMPORIO_DECISOR: regras
+      EMPORIO_LLM_TIMEOUT: ${EMPORIO_LLM_TIMEOUT:-60}
+      EMPORIO_SEGREDO: ${EMPORIO_SEGREDO:-}
+    volumes:
+      - dados:/dados
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - modelos:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  baixar-modelo:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${EMPORIO_MODELO:-qwen2.5:3b}"]
+    restart: "no"
+
+volumes:
+  dados:
+  modelos:

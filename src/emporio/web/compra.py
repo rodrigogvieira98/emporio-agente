@@ -120,11 +120,13 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
         saida["pendencias"] = pend
         return saida
     goods = sum(l["subtotal"] for l in linhas)
+    # base do frete: promoções valem, o desconto do PIX não (a forma de pagamento nunca muda o frete)
+    base_frete = sum((l["original"] if l["pix_aplicado"] else l["final_unit"]) * l["quantidade"] for l in linhas)
     saida["produtos_total"] = goods
     total = goods
 
     if cidade:
-        rf = calcular_condicoes(valor=goods, forma=FORMA_NEUTRA, cidade=cidade, valor_pedido=goods)
+        rf = calcular_condicoes(valor=goods, forma=FORMA_NEUTRA, cidade=cidade, valor_pedido=base_frete)
         if rf.estado != "ok":
             pend.append("Não consegui calcular o frete agora. Tente de novo em instantes.")
         else:

@@ -112,6 +112,7 @@ def calcular_condicoes(e: EntradaCondicoes) -> Resultado:
     dados["permitido"] = permitido
 
     if e.cidade is not None:
-        base = e.valor_pedido if e.valor_pedido is not None else final
+        # o limite do frete olha os produtos com promoção e antes do desconto do PIX; a forma nunca muda o frete
+        base = e.valor_pedido if e.valor_pedido is not None else (final if promo is not None else original)
         dados["frete"] = _frete(e.cidade, base, fontes)
     return resultado("ok", dados, fontes)

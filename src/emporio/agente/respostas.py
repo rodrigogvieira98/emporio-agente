@@ -223,7 +223,8 @@ def frete_info(e: Estado, p: dict) -> str:
     prazo = c.get("frete.prazo_dias_uteis", {})
     base = c.get("frete.cidade_base", "a cidade da loja")
     txt = (f"Para {base}: frete grátis em pedidos a partir de {formatar(c['frete.gratis_acima_centavos'])}; abaixo "
-           f"disso, taxa fixa de {formatar(c['frete.taxa_abaixo_centavos'])}.")
+           f"disso, taxa fixa de {formatar(c['frete.taxa_abaixo_centavos'])}. O valor considera as promoções e é "
+           "contado antes do desconto do PIX.")
     if prazo:
         txt += f" Prazo de {prazo['min']} a {prazo['max']} dias úteis."
     mods = c.get("frete.outras_cidades_modalidades", [])

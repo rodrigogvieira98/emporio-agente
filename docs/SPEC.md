@@ -376,6 +376,16 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 - O botão "Quero comprar com a Lia" da página do produto segue o mesmo fluxo, preenchendo o campo sem enviar.
 - A conversa salva no navegador mantém os links funcionando depois de mudar de página.
 
+**Lia aquece o lead.** Objetivo pedido pelo Rodrigo: além de responder, a Lia conduz o interesse até a compra, como vendedora consultiva e sem pressão. Implementado por regras, com fatos vindos só das ferramentas.
+
+- Qualificação: em busca ampla sem filtro ("quero uma guitarra"), mostra a lista e faz uma pergunta curta sobre nível, uso ou orçamento. A resposta do cliente refina a busca. No máximo uma pergunta por resposta e uma rodada de qualificação por assunto.
+- Recomendação: depois de saber a faixa ou o nível, destaca uma opção com motivo verificável no dado: cabe no orçamento, está em promoção, é a mais barata, ou categoria indicada no próprio catálogo. Nunca "mais vendido", "melhor" ou opinião sem dado.
+- Valor: em produto de interesse, cita a condição real que ajuda, uma por vez: promoção ativa, PIX, parcelas sem juros que atendam à parcela mínima, ou frete grátis em Campo Grande quando se aplicar.
+- Objeção: "tá caro" oferece opção mais barata da categoria, promoção ativa ou parcelamento, sem desconto inventado. "Vou pensar" responde com respeito, envia o link do produto e não insiste.
+- Próximo passo: resposta sobre produto termina com um passo claro, ligado aos links e ao botão de carrinho.
+- Limites: sem urgência ou escassez falsa ("últimas unidades", "só hoje"), sem pedir telefone ou e-mail para vender, sem abrir chamado sem consentimento. Cliente frustrado ou irritado não recebe oferta. Recusa, escopo, reclamação, pedido e devolução não recebem oferta. Uma oferta recusada não se repete no assunto.
+- Trace registra a etapa (`interesse`, `qualificado`, `pronto`), sem texto do cliente.
+
 **Auditoria: corrigir.**
 1. POST sem cookie válido não emite cookie novo, e as ações POST conferem `Origin`.
 2. Falhas de rastreio contam por pedido e por IP, com janela de tempo, no site e na Lia.

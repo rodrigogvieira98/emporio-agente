@@ -63,3 +63,58 @@ def test_urls_estaticas_versionadas_e_precache_com_reload(servidor_movel, movel)
     pagina.wait_for_function("caches.keys().then(k => k.length > 0)")
     chaves = pagina.evaluate("caches.keys().then(async ks => (await (await caches.open(ks[0])).keys()).map(r => new URL(r.url).pathname))")
     assert "/static/site.css" in chaves and "/static/formularios.js" in chaves and "/static/lia-96.webp" in chaves
+
+
+def test_lia_esconde_sugestoes_com_campo_em_foco_e_apos_primeira_mensagem(servidor_movel, movel):
+    pagina, _, _ = movel
+    pagina.goto(servidor_movel + "/")
+    pagina.tap("#chat-alternar")
+    pagina.wait_for_selector("#chat:not([hidden])")
+    pagina.locator("#chat-mensagem").blur()
+    assert pagina.locator(".chat-sugestoes").is_visible()
+    pagina.locator("#chat-mensagem").focus()
+    assert pagina.locator(".chat-sugestoes").is_hidden()
+    pagina.locator("#chat-mensagem").blur()
+    pagina.evaluate("document.querySelector('#chat-log').insertAdjacentHTML('beforeend', '<p class=\"msg voce\">oi</p>')")
+    pagina.evaluate("document.querySelector('#chat-corpo').classList.add('ja-conversou')")
+    assert pagina.locator(".chat-sugestoes").is_hidden()
+
+
+@pytest.mark.parametrize("altura", [380, 300])
+def test_lia_cabe_na_area_visivel_com_teclado_e_em_paisagem(servidor_movel, largura, altura):
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        nav = p.chromium.launch()
+        try:
+            for vp in ({"width": largura, "height": altura}, {"width": 844, "height": 390}):
+                ctx = nav.new_context(viewport=vp, has_touch=True, is_mobile=True)
+                pagina = ctx.new_page()
+                pagina.goto(servidor_movel + "/")
+                pagina.tap("#chat-alternar")
+                pagina.wait_for_selector("#chat:not([hidden])")
+                m = pagina.evaluate("""() => { const r = document.querySelector('#chat').getBoundingClientRect(),
+                    f = document.querySelector('#chat-form').getBoundingClientRect();
+                    return {topo: r.top, base: r.bottom, form_base: f.bottom, h: innerHeight, scroll: document.scrollingElement.scrollHeight <= innerHeight || getComputedStyle(document.body).overflow === 'hidden'}; }""")
+                assert m["topo"] >= 0 and m["base"] <= m["h"] + 1 and m["form_base"] <= m["h"] + 1, (vp, m)
+                ctx.close()
+        finally:
+            nav.close()
+
+
+def test_lia_prende_o_foco_e_camada_absorve_o_toque_na_faixa(servidor_movel, movel):
+    pagina, _, _ = movel
+    pagina.goto(servidor_movel + "/")
+    pagina.tap("#chat-alternar")
+    pagina.wait_for_selector("#chat:not([hidden])")
+    for _ in range(14):
+        pagina.keyboard.press("Tab")
+        assert pagina.evaluate("document.getElementById('lia').contains(document.activeElement)")
+    for _ in range(14):
+        pagina.keyboard.press("Shift+Tab")
+        assert pagina.evaluate("document.getElementById('lia').contains(document.activeElement)")
+    topo = pagina.evaluate("document.elementFromPoint(40, 20).id")
+    assert topo == "lia-camada"
+    url = pagina.url
+    pagina.touchscreen.tap(40, 20)
+    pagina.wait_for_selector("#chat", state="hidden")
+    assert pagina.url == url

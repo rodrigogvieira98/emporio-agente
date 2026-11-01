@@ -18,7 +18,7 @@
     var salvo = ler(CHAVE_LOG);
     if (salvo) log.innerHTML = salvo;
 
-    var celular = window.matchMedia("(max-width: 767px)");
+    var celular = window.matchMedia("(max-width: 767px), (max-height: 520px) and (pointer: coarse)");  // celular em pé ou deitado
     var html = document.documentElement;
     function aberto() { return !painel.hidden; }
     function aplicar(abrir) {
@@ -32,7 +32,7 @@
     // Teclado virtual: o campo fica colado ao teclado seguindo a área visível (iOS não redimensiona o layout).
     var vv = window.visualViewport;
     function ajustarAltura() {
-      if (vv && celular.matches && aberto()) {
+      if (vv && aberto()) {  // qualquer orientação: o painel nunca passa da área visível
         html.style.setProperty("--altura-visivel", vv.height + "px");
         html.style.setProperty("--topo-visivel", vv.offsetTop + "px");
       } else {
@@ -49,6 +49,30 @@
       abrir: function () { aplicar(true); },
       fechar: function () { aplicar(false); }
     });
+    // Sugestões saem de cena com o campo em foco (o teclado ocupa a tela) e depois da primeira mensagem do cliente.
+    var corpo = document.getElementById("chat-corpo");
+    function marcarConversa() {
+      var conversou = !!log.querySelector(".msg.voce");
+      if (corpo) corpo.classList.toggle("ja-conversou", conversou);
+    }
+    marcarConversa();
+    if (campo && corpo) {
+      campo.addEventListener("focus", function () { corpo.classList.add("campo-em-foco"); });
+      campo.addEventListener("blur", function () { corpo.classList.remove("campo-em-foco"); });
+    }
+    // Foco contido na Lia aberta em tela cheia: Tab e Shift+Tab circulam só pelo painel.
+    painel.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab" || !aberto() || !html.classList.contains("chat-tela-cheia")) return;
+      var itens = Array.prototype.filter.call(painel.querySelectorAll("a[href], button, input, select, textarea, [tabindex]:not([tabindex='-1'])"),
+        function (n) { return !n.disabled && n.offsetParent !== null; });
+      if (!itens.length) return;
+      var primeiro = itens[0], ultimo = itens[itens.length - 1];
+      if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+    });
+    var camada = document.getElementById("lia-camada");
+    if (camada) camada.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); Sobreposicoes.fechar(gestor); });
+
     function abrirChat() { Sobreposicoes.abrir(gestor); if (campo) campo.focus(); }
     botao.addEventListener("click", function () { if (aberto()) Sobreposicoes.fechar(gestor); else abrirChat(); });
     // Celular: o toque na faixa da página acima do painel só fecha a Lia; não aciona o que está por baixo.
@@ -78,6 +102,7 @@
     function desfazerPendente() {
       if (!pendente) return;
       if (pendente.bolha.parentNode) pendente.bolha.parentNode.removeChild(pendente.bolha);
+      marcarConversa();
       campo.value = pendente.texto;
       pendente = null;
     }
@@ -98,6 +123,7 @@
       log.appendChild(bolha);
       log.scrollTop = log.scrollHeight;
       pendente = { bolha: bolha, texto: texto };
+      if (corpo) corpo.classList.add("ja-conversou");
       campo.value = "";
     });
     document.body.addEventListener("htmx:sendError", function (e) {

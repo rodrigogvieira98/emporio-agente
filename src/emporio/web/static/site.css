@@ -341,12 +341,22 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .chat-espera { margin: 0; padding: 0 var(--s3) var(--s2); color: var(--cinza-texto); font-size: .8125rem; }
 .htmx-indicator { display: none; }
 .htmx-request.htmx-indicator, .htmx-request .htmx-indicator { display: block; }
-.chat-corpo { display: block; }
+.chat { display: flex; flex-direction: column; max-height: calc(var(--altura-visivel, 100dvh) - 2 * var(--s4)); }
+.chat[hidden] { display: none; }
+.chat-corpo { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat-topo, .chat-sugestoes, .chat-form, .chat-espera { flex: none; }
+.chat-log { flex: 1 1 17rem; height: auto; min-height: 4.5rem; }
+.chat-corpo.campo-em-foco .chat-sugestoes, .chat-corpo.ja-conversou .chat-sugestoes { display: none; }
+.lia-camada { display: none; }
+html.chat-tela-cheia .lia-camada { display: block; position: fixed; left: 0; right: 0; top: 0; height: calc(var(--topo-visivel, 0px) + var(--faixa-chat)); z-index: 79; background: transparent; touch-action: none; }
+@media (max-height: 520px) { :root.chat-tela-cheia { --faixa-chat: 2.75rem; } }
 @media (max-width: 767px) {
   .lia-botao span { font-size: .9375rem; }
   /* só o retrato: o botão não cobre rótulos nem links no rodapé da página; o nome acessível continua no texto */
   .lia-botao { padding: var(--s1); }
   .lia-botao span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 767px), (max-height: 520px) and (pointer: coarse) {
   html.chat-tela-cheia, html.chat-tela-cheia body { overflow: hidden; }
   /* celular: o painel não cobre a tela; a faixa superior da página fica visível e um toque nela fecha a Lia */
   html.chat-tela-cheia { --faixa-chat: 4.5rem; }

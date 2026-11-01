@@ -26,11 +26,11 @@ def faixa(html: str) -> str:
     return html[i:html.index("</section>", i)]
 
 
-def test_faixa_traz_endereco_resumido_derivado_do_manual(cliente):
+def test_faixa_sem_endereco_e_com_o_horario_derivado_do_manual(cliente):
     e = fato("empresa.endereco").valor
     f = faixa(cliente.get("/").text)
-    assert f"{e['logradouro']}, {e['numero']}, {e['cidade']}/{e['uf']}" in f
-    assert e["cep"] not in f and e["bairro"] not in f
+    assert e["logradouro"] not in f and e["cep"] not in f and e["bairro"] not in f
+    assert "09:00" in f
 
 
 def test_botao_da_faixa_vai_a_fale_conosco_e_a_pagina_responde(cliente):

@@ -23,6 +23,7 @@
       {% if c.link %}<a class="enviar-email" href="{{ c.link }}">Enviar e-mail</a>{% endif %}
       {% elif c.link %}<a class="bloco-fone" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>{{ c.valor }}</a>
       {% else %}<p class="bloco-fone">{{ c.valor }}</p>{% endif %}
+      {% if c.chave in ('conversar', 'ligar') %}<p class="bloco-nota">{{ faixa_contato().horario }}</p>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -52,8 +53,8 @@
   </section>
 
   <aside class="cartao fc-horario" aria-labelledby="t-onde">
-    <h2 id="t-onde">Onde estamos e horários</h2>
-    <address class="fc-endereco"><p>{{ L.endereco }}</p></address>
+    <h2 id="t-onde">Horário de atendimento</h2>
+    <p>O WhatsApp e as ligações seguem o horário da loja.</p>
     <table class="horario"><caption class="so-leitor">Horário de atendimento</caption><tbody>
     {% for h in L.horario %}{% set par = h.split(': ', 1) %}<tr><th scope="row">{{ par[0] }}</th><td>{{ par[1] }}</td></tr>{% endfor %}
     </tbody></table>

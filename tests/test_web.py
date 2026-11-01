@@ -46,7 +46,7 @@ def test_inicio_tem_categorias_busca_chat_e_dados_da_loja(cliente):
     assert r.status_code == 200
     assert "Guitarras" in r.text and 'id="chat"' in r.text and 'role="search"' in r.text
     assert fato("empresa.nome_fantasia").valor in r.text
-    assert fato("empresa.endereco").valor["logradouro"] in cliente.get("/fale-conosco").text  # endereço só em /fale-conosco
+    assert fato("empresa.endereco").valor["logradouro"] in r.text  # endereço no rodapé, uma vez
 
 
 def test_rodape_mostra_um_telefone_e_um_email_dos_dados_da_empresa_com_orientacao(cliente):

@@ -32,3 +32,21 @@ def test_sem_titulos_de_coluna_e_com_os_seis_links(cliente):
 @pytest.mark.parametrize("caminho", list(LINKS))
 def test_cada_link_do_rodape_funciona(cliente, caminho):
     assert cliente.get(caminho).status_code == 200
+
+
+def test_rodape_traz_onde_estamos_e_horario_do_manual_sem_contatos(cliente):
+    from emporio.politicas.manual import fato
+
+    r = rodape(cliente.get("/").text)
+    e = fato("empresa.endereco").valor
+    assert "Onde estamos" in r and e["logradouro"] in r and e["cep"] in r and "Horário de funcionamento" in r
+    assert "09:00" in r
+    for chave in ("contato.telefone_capa", "contato.email_capa", "contato.telefone_whatsapp_dados_empresa"):
+        assert str(fato(chave).valor) not in r
+
+
+def test_fale_conosco_cards_com_horario_e_sem_endereco(cliente):
+    html = cliente.get("/fale-conosco").text
+    corpo = html[:html.index('<footer class="rodape">')]
+    assert corpo.count("bloco-nota") >= 2 and "Horário de atendimento" in corpo and "seguem o horário da loja" in corpo
+    assert 'href="/rastreio"' in corpo

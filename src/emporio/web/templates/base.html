@@ -86,7 +86,7 @@
       <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#telefone"/></svg>
       <div class="bloco-texto"><div class="fone-linha">{% if F.link %}<a class="bloco-fone" href="{{ F.link }}">{{ F.telefone }}</a>{% else %}<p class="bloco-fone">{{ F.telefone }}</p>{% endif %}
         {% if F.whatsapp %}<a class="icone-whats" href="{{ F.whatsapp }}" target="_blank" rel="noopener" aria-label="Conversar pelo WhatsApp (abre em nova aba)"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#whatsapp"/></svg></a>{% endif %}</div>
-        <p class="bloco-nota">{{ F.horario }}</p>{% if F.endereco %}<p class="bloco-nota faixa-endereco">{{ F.endereco }}</p>{% endif %}</div>
+        <p class="bloco-nota">{{ F.horario }}</p></div>
     </div>
     <div class="bloco-3">
       <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#pacote"/></svg>
@@ -98,8 +98,16 @@
 
 <footer class="rodape">
   <div class="contorno rodape-grade">
-    <p class="rodape-marca">{{ L.nome }}</p>
-    <nav aria-label="Links do rodapé">
+    <div class="rodape-loja">
+      <p class="rodape-marca">{{ L.nome }}</p>
+      <p class="rodape-rotulo">Onde estamos</p>
+      <address class="rodape-endereco">{{ L.endereco }}</address>
+    </div>
+    <div class="rodape-horario">
+      <p class="rodape-rotulo">Horário de funcionamento</p>
+      <ul class="rodape-horas">{% for h in L.horario %}<li>{{ h }}</li>{% endfor %}</ul>
+    </div>
+    <nav class="rodape-links" aria-label="Links do rodapé">
       <ul class="rodape-lista">
         <li><a href="/catalogo">Catálogo</a></li>
         <li><a href="/perguntas-frequentes">Perguntas frequentes</a></li>

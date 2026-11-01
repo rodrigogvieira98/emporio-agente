@@ -66,7 +66,7 @@ def test_rodape_compacto_altura_em_1280_links_em_linha_e_lia_fora_dos_links(url_
     pagina = _pagina(navegador, 1280)
     pagina.goto(url_site + "/")
     pagina.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
-    assert pagina.locator(".rodape").bounding_box()["height"] <= 96
+    assert pagina.locator(".rodape").bounding_box()["height"] <= 160
     links = [pagina.locator(".rodape a").nth(i).bounding_box() for i in range(pagina.locator(".rodape a").count())]
     assert len(links) == 6 and len({round(b["y"]) for b in links}) == 1  # linha única
     assert pagina.locator(".rodape h2").count() == 0

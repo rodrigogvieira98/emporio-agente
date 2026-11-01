@@ -414,6 +414,21 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 
 **Não corrigir, e declarar como limitação no README:** marca divergente em sete produtos (os CSV ficam intactos), cabeçalhos de segurança, redirecionamento pelo cabeçalho Host, `/saude` com o nome do modelo, segredo e cookie seguro na publicação, e os demais achados baixos.
 
+## Identidade "Palco e madeira" (etapa 9)
+
+Escolha do Rodrigo em 01/11/2026 (opção A), depois de comparar a home com Constelação, Teclacenter, Mercadão da Música, 4 Music e Fender. Prevalece sobre a identidade "balcão" e a composição "Loja acolhedora" no visual; conteúdo, regras e fluxos não mudam.
+
+- Paleta em tokens no `:root`: palco (quase preto com tom de madeira) para topo, abertura e rodapé; creme para áreas de leitura; amarelo-ipê como única cor de destaque (botões principais, preço em destaque, foco); verde só para "disponível". Todo par de texto passa AA, verificado pelo teste de contraste existente, que deve ser atualizado para os novos tokens.
+- Topo escuro: logotipo maior, busca, carrinho, e barra fixa de categorias visível (Guitarras, Baixos, Violões, Teclados, Baterias, Ukuleles), no lugar do menu escondido. No celular, a barra rola horizontalmente dentro dela mesma, sem rolagem da página.
+- Abertura de ponta a ponta: foto escura de instrumento com licença livre (das já usadas ou nova com crédito em `/creditos`), título grande em branco, subtítulo curto e botão ipê. Sem carrossel de banners e sem promoção inventada.
+- Faixa de confiança logo abaixo: 5% no PIX, até 12x sem juros, frete grátis em Campo Grande a partir de R$ 500,00. Valores derivados do manual.
+- Tipografia: títulos mais pesados, preço com mais peso; manter fontes locais.
+- Cards: foto protagonista em fundo claro, nome, preço, sem bolinha decorativa.
+- Bloco de história: "Desde 2008 em Campo Grande", com dados do manual e foto grande.
+- Lia, faixa de contato, rodapé, checkout e demais páginas seguem a nova paleta.
+- Sem degradê roxo, vidro, emojis ou ícones em excesso; sem cookie banner.
+- Aceite: capturas em 1280 e 390 px da home, catálogo, produto, checkout e /fale-conosco em `docs/capturas`; sem rolagem horizontal; contraste AA; e2e verdes.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

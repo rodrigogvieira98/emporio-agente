@@ -37,3 +37,7 @@ Escrito antes de implementar a condição C e antes de qualquer rodada de `casos
 - **Barra:** C substitui A ou B somente se cumprir os itens 1, 2, 4 e 5 da barra em relação a A, tiver conclusão nos frescos estritamente maior que a de A e a de B, e mediana de tempo por caso de até 3 vezes a de A.
 - Com redação desligada nas três condições, que passa a ser o padrão da entrega.
 - Se C não passar, ela não entra na entrega, e o resultado é relatado.
+
+## Adendo de 01/11/2026, 19h15: redação ligada na entrega
+
+Escrito antes de qualquer rodada de `casos_frescos.jsonl` e do holdout. Por decisão do Rodrigo, a entrega usa redação ligada (`EMPORIO_REDACAO=1`). As condições A e B passam a rodar com redação ligada, que é a configuração entregue, e A também sem redação, como controle. A barra não muda. Relatar também a telemetria `redacao_tentada`, `redacao_exibida` e `redacao_descartada` com denominador.

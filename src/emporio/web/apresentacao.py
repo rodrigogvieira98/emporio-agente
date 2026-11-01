@@ -71,9 +71,30 @@ def _faixas_horario(regras: list[dict[str, Any]]) -> list[str]:
     return linhas
 
 
+# Mesmas chaves e origens que o agente mostra em respostas.contato; o manual traz mais de um valor e
+# nenhum é escolhido em silêncio.
+CONTATOS = (
+    ("contato.telefone_whatsapp_dados_empresa", "telefone e WhatsApp nos dados da empresa"),
+    ("contato.whatsapp_secao_7", "canal de WhatsApp para atendimento remoto"),
+    ("contato.telefone_capa", "telefone na capa do manual"),
+    ("contato.email_capa", "grafia da capa do manual"),
+    ("contato.email_dados_empresa", "grafia dos dados da empresa"),
+)
+
+
+def contatos() -> list[dict[str, str]]:
+    """Cada contato do manual com a origem; valores iguais em chaves diferentes juntam as origens."""
+    por_valor: dict[str, list[str]] = {}
+    for chave, onde in CONTATOS:
+        f = fato(chave)
+        if f:
+            por_valor.setdefault(str(f.valor), []).append(onde)
+    return [{"valor": v, "origem": ", ".join(o)} for v, o in por_valor.items()]
+
+
 def loja() -> dict[str, Any]:
     """Nome, endereço, contato e horário, todos do manual."""
-    info: dict[str, Any] = {"nome": "", "endereco": "", "telefone": "", "email": "", "horario": []}
+    info: dict[str, Any] = {"nome": "", "endereco": "", "contatos": [], "horario": []}
     f = fato("empresa.nome_fantasia")
     if f:
         info["nome"] = f.valor
@@ -82,9 +103,7 @@ def loja() -> dict[str, Any]:
         e = f.valor
         info["endereco"] = (f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}, "
                             f"CEP {e['cep']}")
-    f = fato("contato.telefone_whatsapp_dados_empresa")
-    if f:
-        info["telefone"] = f.valor
+    info["contatos"] = contatos()
     f = fato("horario.funcionamento")
     if f and isinstance(f.valor, list):
         info["horario"] = _faixas_horario(f.valor)

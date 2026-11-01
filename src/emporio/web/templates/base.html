@@ -22,7 +22,8 @@
   {% set L = loja() %}
   <p><strong>{{ L.nome }}</strong>{% if L.endereco %} | {{ L.endereco }}{% endif %}</p>
   {% if L.horario %}<p>Horário: {{ L.horario | join(" | ") }}</p>{% endif %}
-  {% if L.telefone %}<p>Contato: {{ L.telefone }}</p>{% endif %}
+  {% if L.contatos %}<p>Contatos que constam no manual da loja:</p>
+  <ul class="contatos">{% for c in L.contatos %}<li>{{ c.valor }} ({{ c.origem }})</li>{% endfor %}</ul>{% endif %}
 </footer>
 
 <section id="chat" class="chat" aria-label="Chat com a Lia">

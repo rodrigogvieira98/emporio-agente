@@ -49,6 +49,14 @@ def test_inicio_tem_categorias_busca_chat_e_dados_da_loja(cliente):
     assert fato("empresa.endereco").valor["logradouro"] in r.text
 
 
+def test_rodape_mostra_todos_os_contatos_do_manual_com_origem(cliente):
+    html = cliente.get("/").text
+    for chave in ("contato.telefone_whatsapp_dados_empresa", "contato.whatsapp_secao_7", "contato.telefone_capa",
+                  "contato.email_capa", "contato.email_dados_empresa"):
+        assert str(fato(chave).valor) in html, chave
+    assert "telefone na capa do manual" in html and "canal de WhatsApp para atendimento remoto" in html
+
+
 def test_catalogo_filtra_por_categoria_e_faixa_de_preco(cliente):
     r = cliente.get("/catalogo", params={"categoria": "Ukuleles", "preco_max": "400"})
     assert r.status_code == 200

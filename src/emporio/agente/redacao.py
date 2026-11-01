@@ -64,6 +64,37 @@ ANTONIMOS = (
     ({"gratis", "gratuito", "gratuita"}, {"cobrado", "cobrada", "pago", "paga"}),
     ({"aberta", "aberto"}, {"fechada", "fechado"}),
 )
+# Saudação solta: a frase inteira é só "Olá", "Oi" e afins. A abertura da conversa é da persona, não da redação.
+SAUDACOES = {"ola", "oi", "opa", "alo", "eai", "ei", "hey", "salve"}
+# Palavras comuns que só existem com acento: sem ele, o texto saiu sem revisão de português. Lista curta e de palavras
+# que nunca têm outra leitura sem acento ("esta", "pais", "e" ficam de fora de propósito).
+SEM_ACENTO = {
+    "voce": "você", "voces": "vocês", "nao": "não", "tambem": "também", "entao": "então", "ate": "até", "ja": "já",
+    "ola": "olá", "preco": "preço", "precos": "preços", "opcao": "opção", "opcoes": "opções",
+    "informacao": "informação", "informacoes": "informações", "duvida": "dúvida", "duvidas": "dúvidas",
+    "horario": "horário", "horarios": "horários", "possivel": "possível", "disponivel": "disponível",
+    "disponiveis": "disponíveis", "facil": "fácil", "util": "útil", "orcamento": "orçamento", "pagina": "página",
+    "atencao": "atenção", "condicao": "condição", "condicoes": "condições", "promocao": "promoção",
+    "promocoes": "promoções", "violao": "violão", "violoes": "violões", "musica": "música", "endereco": "endereço",
+    "credito": "crédito", "debito": "débito", "codigo": "código", "numero": "número", "sao": "são", "estao": "estão",
+    "alem": "além", "porem": "porém", "ninguem": "ninguém", "apos": "após", "atraves": "através",
+}
+# Formas verbais comuns (irregulares e de uso corrente na redação) e radicais de verbos que a Lia usa.
+FORMAS_VERBAIS = {
+    "é", "são", "foi", "era", "será", "seria", "está", "estão", "estou", "estamos", "estava", "tem", "têm", "tenho",
+    "temos", "tinha", "vou", "vai", "vamos", "vão", "posso", "pode", "podem", "podemos", "pôde", "quer", "quero",
+    "queremos", "queria", "fico", "fica", "ficou", "faço", "faz", "fazemos", "fez", "dá", "dou", "damos", "sei", "sabe",
+    "sabemos", "vejo", "vê", "veja", "vem", "venho", "vêm", "deixa", "deixo", "segue", "sigo", "diga", "fale", "conte",
+    "peça", "pergunte", "confira", "aproveite", "escreva", "olhe", "espere", "há", "houve", "existe", "cabe", "serve",
+    "vale", "parece", "precisa", "preciso", "fique", "seja", "sejam", "saiba", "traga", "mande", "use", "tente", "diz",
+    "digo", "falo", "conto", "peço", "pergunto", "entendo", "entende", "combinado"}
+RADICAIS_VERBAIS = ("ajud", "mostr", "explic", "olh", "confer", "compar", "busc", "procur", "separ", "indic", "pergunt",
+                    "respond", "encontr", "resolv", "entend", "confirm", "pass", "segu", "comec", "cont", "fal", "recomend",
+                    "sugir", "sugere", "lembr", "avis", "mand", "envi", "ach", "cheg", "precis", "gost", "prefer")
+FINAIS_VERBAIS = ("o", "a", "e", "ar", "er", "ir", "ei", "ou", "amos", "emos", "imos", "am", "em", "ando", "endo", "indo",
+                  "aria", "ariam", "arei", "erei", "irei", "ava", "avam", "ado", "ido")
+NAO_E_VERBO = {"qualquer", "prazer", "mulher", "lugar", "militar", "particular", "popular", "similar", "regular",
+               "singular", "exemplar", "colher", "comum", "mesmo", "mesma"}
 MAX_FRASES = 2
 MAX_PERGUNTAS = 1
 MAX_CARACTERES = 220
@@ -118,6 +149,27 @@ def contradiz_o_bloco(frase: str, bloco: str) -> bool:
     return False
 
 
+def tem_verbo(frase: str) -> bool:
+    """Heurística de verbo em português: forma verbal comum, radical de verbo da Lia com terminação verbal, ou infinitivo.
+    Conservadora no sentido de descartar na dúvida: a redação é opcional, e o bloco factual sempre responde."""
+    for t in re.findall(r"[a-zà-ÿ]+", frase.lower()):
+        if t in NAO_E_VERBO:
+            continue
+        if t in FORMAS_VERBAIS:
+            return True
+        n = normalizar(t)
+        if len(n) >= 5 and re.search(r"(ar|er|ir)$", n):
+            return True  # infinitivo
+        if any(n.startswith(r) and n[len(r):] in FINAIS_VERBAIS for r in RADICAIS_VERBAIS):
+            return True
+    return False
+
+
+def _saudacao_solta(frase: str) -> bool:
+    palavras = tokens(frase)
+    return bool(palavras) and all(p in SAUDACOES for p in palavras)
+
+
 def _campo_livre(valor: Any) -> str:
     """Texto do campo do modelo; a palavra "null" no lugar do JSON null conta como campo vazio."""
     texto = (valor or "").strip() if isinstance(valor, (str, type(None))) else ""
@@ -146,6 +198,10 @@ def validar(livre: str, bloco: str, estado: Estado, mensagem: str = "") -> str |
         return "verbo_de_acao"
     if len(livre) > MAX_CARACTERES:
         return "longo"
+    if any(_saudacao_solta(f) for f in _frases(livre)):
+        return "saudacao_solta"
+    if any(p in SEM_ACENTO for p in re.findall(r"[a-zà-ÿ]+", livre.lower())):
+        return "sem_acento"
     for frase in _frases(livre):
         primeira = next((c for c in frase if c.isalpha()), "")
         if primeira and primeira.islower():

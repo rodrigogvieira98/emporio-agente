@@ -5,8 +5,10 @@ import re
 
 import pytest
 
+from emporio.agente.estado import Estado
 from emporio.agente.expediente import hora_br
 from emporio.agente.laco import Agente
+from emporio.agente.redacao import tem_verbo, validar
 
 
 def conversar(*mensagens, conversa="e19", agente=None):
@@ -153,6 +155,38 @@ def test_diferenca_de_preco_entre_os_dois_e_calculada_pelo_codigo(pergunta):
 def test_diferenca_de_preco_depois_de_uma_comparacao():
     r = conversar("compara a tele e a strato", "qual a diferença de preço entre os dois?")
     assert "R$ 7.100,00" in r[1].texto, r[1].texto
+
+
+# --- item 7: validador de redação -----------------------------------------------------------
+
+BLOCO_VALIDADOR = "Encontrei 1 opção disponível.\n- Violão X: R$ 100,00"
+
+
+@pytest.mark.parametrize("livre", ["Olá!", "Oi.", "Ola", "oi!", "Olá! Oi!"])
+def test_validador_descarta_saudacao_solta(livre):
+    assert validar(livre, BLOCO_VALIDADOR, Estado()) == "saudacao_solta", livre
+
+
+def test_saudacao_com_conteudo_nao_e_solta():
+    assert validar("Olá, claro, já te explico.", BLOCO_VALIDADOR, Estado()) is None
+
+
+@pytest.mark.parametrize("livre", ["Você pode olhar as opcoes abaixo.", "Voce pode ver abaixo.", "Não tem problema, tambem ajudo.",
+                                   "Entao já te mostro as opções.", "Claro, já te mostro o horario."])
+def test_validador_descarta_palavra_sem_acento_quando_a_forma_correta_tem(livre):
+    assert validar(livre, BLOCO_VALIDADOR, Estado()) == "sem_acento", livre
+
+
+def test_palavra_com_acento_passa():
+    assert validar("Você pode olhar as opções abaixo.", BLOCO_VALIDADOR, Estado()) is None
+
+
+@pytest.mark.parametrize("frase,tem", [("Claro, já te mostro as opções.", True), ("Posso ajudar com isso.", True),
+                                       ("Fico à disposição para comparar.", True), ("Isso é bem comum.", True),
+                                       ("Ótima escolha para iniciantes.", False), ("Com prazer.", False),
+                                       ("Boa escolha de categoria.", False), ("Perfeito!", False)])
+def test_detector_de_verbo(frase, tem):
+    assert tem_verbo(frase) is tem
 
 
 # --- item 3: pedido explícito de atendente traz prazo e canais ------------------------------

@@ -334,6 +334,54 @@ Aprovada pelo Rodrigo em 01/11/2026, depois de 36 falas reais com cerca de metad
 
 **Avaliação.** Os achados viram `eval/casos_conversas.jsonl`, usado para ajuste. `eval/casos_frescos.jsonl` e o holdout não são lidos por quem implementa nem usados para ajuste.
 
+## Frete estimado e auditoria (etapa 8)
+
+Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prevalece sobre as seções anteriores nestes pontos, inclusive sobre "o site não inventa valor".
+
+**Limite do frete grátis.** Em Campo Grande/MS, grátis a partir de R$ 500,00 em produtos, considerando promoções e antes do desconto do PIX. Abaixo disso, R$ 35,00. A forma de pagamento nunca muda o frete. Vale no site e na Lia. A Lia compara cidade e UF quando a UF for informada: Campo Grande/RN não recebe a regra da base. "Em Campo Grande" é só a cidade, com nota em `/politicas` explicando que as demais cidades seguem o frete estimado.
+
+**Frete estimado (simulação).** Hipótese do protótipo, não tarifa de transportadora. Função única `estimar_frete` em `src/emporio/ferramentas/`, usada pelo site e pela Lia, determinística, com envelope `Resultado`. Tabelas em YAML próprio, separado do manual (`src/emporio/politicas/frete_simulado.yaml`), com a indicação de que são hipóteses. A consulta de CEP passa a morar em `ferramentas/`, porque o agente não importa `web/`.
+
+- Por caixa: peso taxado = maior entre peso real e C × L × A ÷ 6.000, arredondado para cima por kg.
+- PAC = base da zona + por kg × (peso taxado − 1), mais adicional.
+- SEDEX = (base da zona + por kg × (peso taxado − 1)) × 1,6, mais adicional.
+- Adicional de R$ 11,19 quando um lado passa de 100 cm.
+- Cada unidade é uma caixa, e o pedido soma as caixas.
+- Zonas com origem em MS: MS fora de Campo Grande, base R$ 21,00 e R$ 1,80 por kg; SP, PR, MT, GO, DF, MG, R$ 26,00 e R$ 2,50; RJ, ES, SC, RS, R$ 29,00 e R$ 2,90; BA, SE, AL, PE, PB, RN, CE, PI, MA, TO, R$ 33,00 e R$ 3,20; PA, AP, AM, RR, AC, RO, R$ 36,00 e R$ 3,60.
+- Caixas estimadas (C × L × A em cm, peso real): ukulele soprano ou concert 65 × 26 × 12, 1,5 kg; ukulele tenor ou barítono 80 × 30 × 13, 2 kg; violão 110 × 45 × 16, 5 kg; guitarra 112 × 42 × 14, 6,5 kg; baixo elétrico 128 × 42 × 14, 7,5 kg; teclado 61 teclas 110 × 42 × 20, 12 kg.
+- Grande porte do manual (baterias acústicas, pianos digitais, teclados de 88 teclas ou stage e contrabaixos acústicos): cotação individual, sem valor. Baixos elétricos seguem a fórmula.
+- Produto sem caixa definida: cotação individual, nunca valor inventado.
+- Exemplos obrigatórios em teste: Dourados, violão, 14 kg, PAC R$ 55,59 e SEDEX R$ 82,23; São Paulo, guitarra, 11 kg, R$ 62,19 e R$ 92,79; Recife, teclado 61, 16 kg, R$ 92,19 e R$ 140,79; Manaus, ukulele tenor, 6 kg, R$ 54,00 e R$ 86,40.
+- Prazos só do manual: PAC 5 a 12 dias úteis, SEDEX 2 a 5. Jadlog fica como modalidade, sem preço.
+
+**Site.** Fora de Campo Grande, o resumo mostra "Frete estimado (simulação)" com o PAC, que entra no total e nas parcelas, e o SEDEX como informação. O total passa a "Total estimado". Pedido grava o frete estimado, e a confirmação mantém os mesmos rótulos. Cotação individual ou serviço de CEP fora do ar sem cidade localizada: "Total dos produtos" no checkout e na confirmação, sem valor inventado.
+
+**Lia.** Aceita CEP na mensagem. Com produto e CEP, informa PAC e SEDEX com o rótulo de simulação, usando `estimar_frete`, e pede o que faltar. Só com cidade e valor, sem produto, segue dizendo que depende de cotação e explica que produto e CEP permitem a estimativa. Nunca promete tarifa nem prazo de transportadora.
+
+**Resumo do checkout.** Uma linha só: "Frete: Grátis", "Frete: R$ 35,00", "Frete estimado (simulação): R$ X", "Frete: Informe o CEP". A região fica apenas em "Entrega em:". Pendência só em erro. O texto sobre o CEP fica só uma vez. `carrinho.html` passa a dizer "do CEP".
+
+**Auditoria: corrigir.**
+1. POST sem cookie válido não emite cookie novo, e as ações POST conferem `Origin`.
+2. Falhas de rastreio contam por pedido e por IP, com janela de tempo, no site e na Lia.
+3. Páginas próprias para 404, 405, 422 e 500, em português.
+4. Bloqueio do rastreio com mensagem própria, indicando quando libera e oferecendo atendimento, sem revelar se o pedido existe.
+5. Fale Conosco redireciona após gravar, sem duplicar ao recarregar.
+6. Entradas numéricas aceitam só `[0-9]` com limite de tamanho, sem erro 500.
+7. Filtro de preço entende `2.000` e `1.000,00`, e recusa negativo com texto próprio.
+8. Políticas mostram tabelas reais e não publicam instrução interna à equipe. Se isso exigir alterar o texto do manual, pare e relate.
+9. Aviso "Imagem ilustrativa" nas fotos do produto.
+10. Sai "ponto em aberto" das Perguntas frequentes.
+11. Filtro lista só categorias com produto.
+12. Busca sem resultado repete o termo e oferece caminhos, com tratamento de termo sem letras.
+13. Carrinho mostra subtotal por item e total de produtos.
+14. Abertura da home sem "condição de pagamento à vista".
+15. Perguntas frequentes orientam também o pedido feito no site.
+16. Lia: validador barra `null`, recusas não passam pela redação, frases do modelo não repetem nem contradizem o bloco factual, "e em 12x" logo após uma lista ambígua pede o produto em uma frase, e "entrega em Recife" não repete a informação.
+17. Português: "Adicionar ao carrinho", "Finalizar pedido" e "Conversar com a Lia"; horários em "Seg. a sex., das 9h às 18h"; um só rótulo de horário; site em "nós" e Lia em "eu"; ajustes de regência; "do Empório da Música" no texto escrito pelo site, com o texto do manual intacto.
+18. "Para começar" passa a "Menores preços por categoria".
+
+**Não corrigir, e declarar como limitação no README:** marca divergente em sete produtos (os CSV ficam intactos), cabeçalhos de segurança, redirecionamento pelo cabeçalho Host, `/saude` com o nome do modelo, segredo e cookie seguro na publicação, e os demais achados baixos.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

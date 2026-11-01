@@ -44,4 +44,4 @@ Os casos foram escritos por quem desenhou o sistema, e o controle foi corrigido 
 
 ## Congelamento
 
-sha256 de `casos_holdout.jsonl`: c93427eacd728046770cf1ce07770a4828ac1542c093f8095ff71c0b49de841b
+sha256 de `casos_holdout.jsonl`: b4ae269185026de677e4e38958e6b50e558b3c2518236d329f69dda24615f244

@@ -1038,9 +1038,15 @@ def reembolso_prazo(e: Estado, p: dict) -> str:
     linha = _linha_do_manual(e, "reembolso")
     if linha:
         corpo = linha[0].lower() + linha[1:].rstrip(".")
-        return f"Na devolução por arrependimento, {corpo}. {NAO_CONFIRMO}"
-    return (f"Na devolução por arrependimento, o reembolso sai em até {dias} dias úteis. "
-            + NAO_CONFIRMO)
+        txt = f"Na devolução por arrependimento, {corpo}."
+    else:
+        txt = f"Na devolução por arrependimento, o reembolso sai em até {dias} dias úteis."
+    arrep = _condicoes(e).get("regra.arrependimento")
+    if arrep:  # a condição de elegibilidade vai junto da forma e do prazo
+        online = " em compra online" if arrep.get("aplica_a") == "compra_online" else ""
+        estado = f", com o produto {arrep['estado_exigido']}" if arrep.get("estado_exigido") else ""
+        txt += f" Vale{online}, em até {_prazo(arrep)}{estado}."
+    return f"{txt} {NAO_CONFIRMO}"
 
 
 def previsao_entrega(e: Estado, p: dict) -> str:

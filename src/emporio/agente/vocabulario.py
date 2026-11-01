@@ -55,7 +55,14 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
         r"\b(dinheiro|reembols\w*|estorno|valor de volta|restitu\w*|receber de volta|pagamento de volta)|"
         r"(reembols\w*|estorno|dinheiro de volta)\b.{0,30}\b(quanto tempo|quantos dias|quando|prazo|demora\w*)|"
-        r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
+        r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b|"
+        # em que forma o dinheiro volta: por quê (cartão, pix) e para onde, sem pedir a abertura de uma devolução
+        r"(?<!quero )(?<!queria )(?<!preciso )\b(dinheiro|reembols\w*|estorn\w*|valor|ressarcimento)\b.{0,40}\b(volta\w*|cai\w*|devolvid\w*|"
+        r"reembolsad\w*|estornad\w*|creditad\w*|feito|feita|pago|paga|sai)\b.{0,30}\b(cartao|pix|boleto|credito|debito|forma|como|onde|conta|pra onde|para onde)\b|"
+        r"\b(volta\w*|devolvem|devolve|cai\w*|reembolsam|estornam)\b.{0,25}\b(dinheiro|valor|reembolso|estorno)\b.{0,25}\b(cartao|pix|boleto|credito|debito|forma|como|onde|conta|pra onde|para onde)\b|"
+        r"\b(dinheiro|valor|reembolso|estorno)\b.{0,25}\b(volta\w*|cai\w*)\b.{0,12}\b(pra|para) onde\b|"
+        r"\b(como|qual forma|em que forma|de que forma|que forma)\b.{0,25}\b(reembolso|estorno|ressarcimento)\b|"
+        r"\b(reembolso|estorno)\b.{0,25}\b(como|qual forma|em que forma|de que forma|que forma|cai como)\b)")),
     ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno|dinheiro de volta)\b")),
     ("defeito", re.compile(
         r"\b(defeit\w*|(entregador|transportadora|motoboy|carteiro)\b.{0,40}\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)|"

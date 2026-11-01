@@ -33,6 +33,28 @@ def test_retorno_fora_do_expediente_no_formato_do_site(monkeypatch):
     assert "amanhã às 9h" in r.texto and not re.search(r"\b\d{2}:\d{2}\b", r.texto)
 
 
+# --- item 1: forma do reembolso -------------------------------------------------------------
+
+PERGUNTAS_FORMA_REEMBOLSO = [
+    "se eu devolver, o dinheiro volta no cartão?",
+    "paguei no pix, o reembolso volta como?",
+    "como é feito o estorno de uma devolução?",
+    "o dinheiro da devolução cai como?",
+    "se eu devolver, o valor volta pra onde?",
+    "o reembolso é feito em qual forma?",
+    "devolvem o dinheiro no pix ou em crédito na loja?",
+]
+
+
+@pytest.mark.parametrize("pergunta", PERGUNTAS_FORMA_REEMBOLSO)
+def test_forma_do_reembolso_responde_pela_regra_de_arrependimento(sql, pergunta):
+    (r,) = conversar(pergunta)
+    t = r.texto.lower()
+    assert "mesma forma de pagamento" in t and "10 dias úteis" in t, r.texto
+    assert "7 dias" in t and "embalagem original" in t, r.texto  # a condição de elegibilidade vem junto
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 0
+
+
 # --- item 3: pedido explícito de atendente traz prazo e canais ------------------------------
 
 @pytest.mark.parametrize("mensagem", ["quero falar com um atendente", "me passa para uma pessoa de verdade",

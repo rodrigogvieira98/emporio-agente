@@ -177,6 +177,8 @@ Pedido do Rodrigo em 01/11/2026. Substitui, onde houver conflito, as seções "H
 - Rastreio, carrinho e checkout: coluna única e clara, resumo ao lado no desktop.
 Teste que conte que o e-mail aparece uma vez por página, e que nenhuma frase longa se repete na mesma página.
 
+**Fechar ao clicar fora.** Todo elemento aberto sobre a página (menu de categorias, painel da Lia no desktop, filtros recolhidos, modais) fecha com clique ou toque fora dele e com a tecla Esc, devolvendo o foco a quem o abriu. Clique dentro não fecha. Abrir um fecha o outro. Teste e2e para cada um.
+
 **Testes:** varredura de termos proibidos ao cliente em todo HTML renderizado, em `chat.js` e em todos os textos de `respostas.py`; links do Fale Conosco; formulário gravando e rejeitando inválido; FAQ com valores iguais aos do manual; carrossel por teclado, clique e toque; chat flutuante abre, conversa e fecha em 390 e 1280 px; toda imagem com crédito. Rejeitos de gabarito por mudança de frase são listados para aprovação.
 
 ## Persona da Lia

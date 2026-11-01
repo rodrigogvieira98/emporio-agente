@@ -70,7 +70,9 @@ O resumo do chamado pode conter o relato livre do cliente, inclusive nome, porqu
 
 Na mesma conversa, com chamado já registrado, novo pedido de atendente informa o protocolo existente e não abre outro chamado. O teste `test_mesmo_pedido_repetido_nao_duplica_chamado` passou a esperar 1 chamado em vez de 2. Mudança de teste aprovada pelo Rodrigo em 01/11/2026.
 
-Também aprovadas pelo Rodrigo em 01/11/2026 estas alterações de testes existentes: "Eu sou a Lia" para "Sou a Lia" em `test_concisao.py` e `test_llm.py`; nova ordem de consultas em `test_devolucao_do_pedido_4_conversa_completa` e `test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas`, porque a regra é dita antes de pedir o pedido; teste do rodapé em `test_web.py`, que passa a exigir um telefone e um e-mail.
+Também aprovadas pelo Rodrigo em 01/11/2026 estas alterações de testes existentes: "Eu sou a Lia" para "Sou a Lia" em `test_concisao.py` e `test_llm.py`; nova ordem de consultas em `test_devolucao_do_pedido_4_conversa_completa` e `test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas`, porque a regra é dita antes de pedir o pedido; teste do rodapé em `test_web.py`, que passa a exigir um telefone e um e-mail. Aprovadas também as trocas de texto esperado pela linguagem de cliente em `test_agente.py`, `test_cli_e_utilitarios.py`, `test_defeitos_das_conversas.py`, `test_falhas_dev.py`, `test_regressao_etapa3.py`, `test_compra_demo.py` e no e2e de compra.
+
+Canais de contato: decisão do Rodrigo em 01/11/2026, "vamos somente simular e nada mais, use os dados existentes". O site mostra os contatos do manual, sem ativar canal externo real.
 
 CLI `python -m emporio.cli --origem demo`.
 

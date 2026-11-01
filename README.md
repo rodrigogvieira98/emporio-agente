@@ -33,6 +33,32 @@ Conversa pelo terminal: `.venv\Scripts\python -m emporio.cli --origem demo`.
 O PWA só pode ser instalado em `localhost` ou em HTTPS.
 `EMPORIO_DATA_REFERENCIA=2026-03-25T10:00:00` fixa a data e a hora da loja, útil porque os pedidos dos dados são de 2025 e 2026.
 
+## Trocar de modelo
+
+O provedor é escolhido por variável de ambiente; sem nenhuma, nada muda (Ollama, como hoje).
+
+| Variável | Efeito |
+|---|---|
+| `EMPORIO_PROVEDOR` | `ollama` (padrão) ou `anthropic` |
+| `EMPORIO_MODELO` | modelo do provedor; no `anthropic` o padrão é `claude-haiku-5-5` |
+| `ANTHROPIC_API_KEY` | chave lida pelo SDK (ou perfil do `ant auth login`); nunca vai para o código |
+| `EMPORIO_LLM_TIMEOUT` | segundos por chamada (padrão 120) |
+
+Exemplo com a API da Anthropic:
+
+```
+.venv\Scripts\pip install -r requirements-api.txt
+set ANTHROPIC_API_KEY=...
+set EMPORIO_PROVEDOR=anthropic
+.venv\Scripts\python -m uvicorn emporio.web.app:app
+```
+
+`/saude` informa `provedor` e `nome_modelo`. Se a API falhar (rede, limite de uso, erro HTTP), a Lia segue só com as regras, como com o Ollama fora do ar. Nenhum modelo por API foi medido neste projeto: antes de virar padrão, a troca deve passar pelo mesmo harness e critério (`eval/rodar.py`). Para outro provedor, basta escrever uma implementação em `src/emporio/agente/provedores.py` e ligá-la em `llm.py`.
+
+### Custo estimado por API
+
+a preencher
+
 ## Testes e avaliação
 
 ```

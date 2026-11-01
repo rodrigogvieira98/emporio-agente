@@ -226,7 +226,12 @@ def criar_app(agente: Any = None) -> FastAPI:
     @app.get("/saude")
     def saude() -> JSONResponse:
         banco_ok = buscar_produtos(limite=1).estado == "ok"
-        modelo = llm.modelo_padrao()
+        try:
+            nome_provedor = llm.provedor()
+            modelo = llm.modelo_padrao()
+        except llm.ErroModelo as erro:
+            nome_provedor, modelo = os.environ.get("EMPORIO_PROVEDOR"), None
+            log.info("provedor invalido: %s", erro)
         if not modelo:
             estado_modelo = "nao_configurado"
         else:
@@ -237,7 +242,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                 estado_modelo = "indisponivel"
                 log.info("modelo indisponivel: %s", erro)
         corpo = {"status": "ok" if banco_ok else "falha", "banco": "ok" if banco_ok else "indisponivel",
-                 "modelo": estado_modelo, "nome_modelo": modelo}
+                 "modelo": estado_modelo, "nome_modelo": modelo, "provedor": nome_provedor}
         return JSONResponse(corpo, status_code=200 if banco_ok else 503)
 
     @app.get("/manifest.webmanifest")

@@ -2,6 +2,7 @@
 
 Ambiente: OLLAMA_HOST (padrão http://localhost:11434), EMPORIO_MODELO (modelo padrão),
 EMPORIO_LLM_TIMEOUT (segundos, padrão 120), EMPORIO_NUM_CTX (contexto, padrão 8192).
+EMPORIO_PROVEDOR escolhe o provedor: `ollama` (padrão) ou `anthropic` (ver provedores.py).
 """
 from __future__ import annotations
 
@@ -39,8 +40,19 @@ def host() -> str:
     return os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 
 
+def provedor() -> str:
+    nome = (os.environ.get("EMPORIO_PROVEDOR") or "ollama").strip().lower()
+    if nome not in ("ollama", "anthropic"):
+        raise ErroModelo(f"EMPORIO_PROVEDOR desconhecido: {nome!r} (use ollama ou anthropic)")
+    return nome
+
+
 def modelo_padrao() -> str | None:
-    return os.environ.get("EMPORIO_MODELO") or None
+    modelo = os.environ.get("EMPORIO_MODELO") or None
+    if modelo is None and provedor() == "anthropic":
+        from .provedores import MODELO_ANTHROPIC_PADRAO
+        return MODELO_ANTHROPIC_PADRAO
+    return modelo
 
 
 def num_ctx() -> int:
@@ -83,7 +95,10 @@ def modelos_instalados() -> list[str]:
 
 
 def conferir_modelo(modelo: str) -> None:
-    """Levanta ErroModelo se o Ollama não responde ou não tem o modelo."""
+    """Levanta ErroModelo se o provedor não responde ou não tem o modelo."""
+    if provedor() == "anthropic":
+        from . import provedores
+        return provedores.conferir_modelo(modelo)
     instalados = modelos_instalados()
     if modelo not in instalados and f"{modelo}:latest" not in instalados:
         raise ErroModelo(f"modelo {modelo!r} nao esta instalado no Ollama")
@@ -91,6 +106,9 @@ def conferir_modelo(modelo: str) -> None:
 
 def conversar(modelo: str, mensagens: list[dict[str, str]], formato: dict[str, Any] | None = None,
               limite: float | None = None, maximo_tokens: int = 400) -> RespostaLlm:
+    if provedor() == "anthropic":
+        from . import provedores
+        return provedores.conversar(modelo, mensagens, formato, limite or timeout_s(), maximo_tokens)
     corpo: dict[str, Any] = {
         "model": modelo, "messages": mensagens, "stream": False, "think": False,
         "options": {"temperature": 0, "seed": SEMENTE, "num_predict": maximo_tokens, "num_ctx": num_ctx()},

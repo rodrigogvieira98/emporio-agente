@@ -105,7 +105,8 @@
   <div class="visite-grade">
     <address class="visite-endereco">
       <p class="visite-rua">{{ L.endereco }}</p>
-      <ul class="visite-contatos">{% for c in L.contatos %}<li>{{ c.valor }} <span>({{ c.origem }})</span></li>{% endfor %}</ul>
+      <ul class="visite-contatos">{% for c in L.contatos %}<li>{{ c.valor }}</li>{% endfor %}</ul>
+      <p class="visite-nota">{{ L.contato_nota }}</p>
     </address>
     <table class="horario">
       <caption class="so-leitor">Horário de funcionamento</caption>

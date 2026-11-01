@@ -85,8 +85,9 @@
       </ul>
     </div>
     <div>
-      <h2 class="rodape-titulo">Contatos que constam no manual da loja</h2>
-      {% if L.contatos %}<ul class="rodape-lista contatos">{% for c in L.contatos %}<li>{{ c.valor }} <span>({{ c.origem }})</span></li>{% endfor %}</ul>{% endif %}
+      <h2 class="rodape-titulo">Contato</h2>
+      {% if L.contatos %}<ul class="rodape-lista contatos">{% for c in L.contatos %}<li>{{ c.valor }}</li>{% endfor %}</ul>
+      <p class="rodape-nota">{{ L.contato_nota }}</p>{% endif %}
     </div>
     <div>
       <h2 class="rodape-titulo">Aceitamos</h2>

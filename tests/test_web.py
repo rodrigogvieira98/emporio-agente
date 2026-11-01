@@ -49,12 +49,13 @@ def test_inicio_tem_categorias_busca_chat_e_dados_da_loja(cliente):
     assert fato("empresa.endereco").valor["logradouro"] in r.text
 
 
-def test_rodape_mostra_todos_os_contatos_do_manual_com_origem(cliente):
+def test_rodape_mostra_um_telefone_e_um_email_dos_dados_da_empresa_com_orientacao(cliente):
     html = cliente.get("/").text
-    for chave in ("contato.telefone_whatsapp_dados_empresa", "contato.whatsapp_secao_7", "contato.telefone_capa",
-                  "contato.email_capa", "contato.email_dados_empresa"):
-        assert str(fato(chave).valor) in html, chave
-    assert "telefone na capa do manual" in html and "canal de WhatsApp para atendimento remoto" in html
+    assert str(fato("contato.telefone_whatsapp_dados_empresa").valor) in html
+    assert str(fato("contato.email_dados_empresa").valor) in html
+    assert "O manual traz outros canais; se não conseguir contato, fale com a Lia." in html
+    for chave in ("contato.whatsapp_secao_7", "contato.email_capa"):  # a capa repete o telefone dos dados
+        assert str(fato(chave).valor) not in html, chave  # as variantes ficam no registro de ambiguidades
 
 
 def test_catalogo_filtra_por_categoria_e_faixa_de_preco(cliente):
@@ -177,3 +178,45 @@ def test_templates_e_web_sem_fatos_de_loja():
     arquivos = [p for p in WEB.rglob("*") if p.is_file() and p.suffix in {".html", ".css"} or p.name == "chat.js"]
     achados = [(p.name, rx.pattern) for p in arquivos for rx in proibidos if rx.search(p.read_text(encoding="utf-8"))]
     assert achados == []
+
+
+def test_chat_ocupado_responde_aviso_com_o_texto_do_cliente_e_nao_executa_nada(monkeypatch):
+    import threading
+    import time
+
+    monkeypatch.setenv("EMPORIO_ESPERA_AGENTE", "0.2")
+    liberar, entrou = threading.Event(), threading.Event()
+    chamadas = []
+
+    class AgenteLento:
+        def responder(self, conversa, mensagem, origem):
+            chamadas.append(mensagem)
+            entrou.set()
+            liberar.wait(5)
+            from emporio.agente.estado import Resposta
+            return Resposta(texto="pronto")
+
+    with TestClient(criar_app(AgenteLento())) as c:
+        primeira = {}
+        fio = threading.Thread(target=lambda: primeira.update(r=c.post("/chat", data={"mensagem": "primeira"})))
+        fio.start()
+        assert entrou.wait(5)
+        t0 = time.monotonic()
+        r = c.post("/chat", data={"mensagem": "segunda <b>mensagem</b>"})
+        assert time.monotonic() - t0 < 3  # a espera tem limite
+        liberar.set()
+        fio.join(5)
+    assert r.status_code == 503 and "atendendo outra conversa" in r.text and "não foi enviada" in r.text
+    assert "segunda &lt;b&gt;mensagem" in r.text  # texto do cliente preservado e escapado
+    assert chamadas == ["primeira"] and primeira["r"].status_code == 200  # a segunda não foi executada
+
+
+def test_chat_libera_a_trava_mesmo_com_falha_do_agente(monkeypatch):
+    class AgenteQuebrado:
+        def responder(self, *a):
+            raise RuntimeError("falhou")
+
+    monkeypatch.setenv("EMPORIO_ESPERA_AGENTE", "0.2")
+    with TestClient(criar_app(AgenteQuebrado())) as c:
+        assert c.post("/chat", data={"mensagem": "a"}).status_code == 200
+        assert c.post("/chat", data={"mensagem": "b"}).status_code == 200  # não ficou travado

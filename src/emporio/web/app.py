@@ -99,6 +99,10 @@ def criar_app(agente: Any = None) -> FastAPI:
     assinador = URLSafeSerializer(segredo, salt="emporio-sessao")
     seguro = os.environ.get("EMPORIO_COOKIE_SEGURO") == "1"
     trava_agente = threading.Lock()  # o agente guarda telemetria em memória: uma conversa por vez no processo
+    try:
+        espera = float(os.environ.get("EMPORIO_ESPERA_AGENTE", "30"))  # segundos que o chat espera a vez
+    except ValueError:
+        espera = 30.0
     trava_criacao = threading.Lock()
 
     app = FastAPI(title="Lia", docs_url=None, redoc_url=None, openapi_url=None)
@@ -358,12 +362,17 @@ def criar_app(agente: Any = None) -> FastAPI:
             return pagina(request, "_chat_troca.html", 422, usuario=None, lia=None,
                           aviso=f"Mensagem longa demais. Use até {MAX_MENSAGEM} caracteres.")
         agente_ = obter_agente()
+        if not trava_agente.acquire(timeout=espera):  # nada é executado: a mensagem não chegou ao agente
+            return pagina(request, "_chat_troca.html", 503, usuario=mensagem, lia=None,
+                          aviso="A Lia está atendendo outra conversa agora. Sua mensagem não foi enviada; "
+                                "tente de novo em instantes.")
         try:
-            with trava_agente:
-                resposta = agente_.responder(request.state.conversa_id, mensagem, "real")
+            resposta = agente_.responder(request.state.conversa_id, mensagem, "real")
         except Exception:  # noqa: BLE001 - a conversa não pode derrubar o site
             log.exception("falha no agente")
             return pagina(request, "_chat_troca.html", 200, usuario=mensagem, lia=None, aviso=MSG_FALHA)
+        finally:
+            trava_agente.release()
         return pagina(request, "_chat_troca.html", usuario=mensagem, lia=resposta.texto, aviso=None)
 
     return app

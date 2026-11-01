@@ -69,12 +69,12 @@
     document.body.addEventListener("htmx:afterRequest", function (e) {
       if (e.target !== form) return;
       var chegou = e.detail.xhr && e.detail.xhr.status !== 0;
-      if (chegou) form.reset();  // sem resposta, o texto digitado fica para reenviar
+      if (chegou && e.detail.xhr.status !== 503) form.reset();  // ocupada: o texto fica no campo para reenviar  // sem resposta, o texto digitado fica para reenviar
       campo.focus();
     });
     document.body.addEventListener("htmx:beforeSwap", function (e) {
       // respostas 422 do chat também trazem um fragmento com o aviso
-      if (e.detail.xhr && e.detail.xhr.status === 422 && e.detail.target === log) e.detail.shouldSwap = true;
+      if (e.detail.xhr && (e.detail.xhr.status === 422 || e.detail.xhr.status === 503) && e.detail.target === log) e.detail.shouldSwap = true;
     });
     document.addEventListener("click", function (e) {
       var abrir = e.target.closest && e.target.closest("[data-abrir-chat]");

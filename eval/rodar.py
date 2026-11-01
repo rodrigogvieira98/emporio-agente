@@ -57,7 +57,7 @@ def identificacao(caminho: Path, modelo: str | None) -> dict:
 
 def conferir_holdout(caminho: Path) -> None:
     pre = (RAIZ / "eval" / "PREREGISTRO.md").read_text(encoding="utf-8")
-    esperado = re.search(r"holdout\.jsonl`: ([0-9a-f]{64})", pre).group(1)
+    esperado = re.search(re.escape(caminho.name) + r"`: ([0-9a-f]{64})", pre).group(1)
     if hash_holdout(caminho) != esperado:
         sys.exit("Hash do holdout difere do pré-registro.")
 
@@ -93,7 +93,7 @@ def avaliar(caso: dict, respostas: list, chamados: int) -> dict:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--conjunto", choices=("dev", "holdout", "variacoes", "conversas", "frescos"), required=True)
+    p.add_argument("--conjunto", choices=("dev", "holdout", "holdout2", "variacoes", "conversas", "frescos"), required=True)
     p.add_argument("--rotulo", required=True)
     p.add_argument("--holdout-congelado", action="store_true")
     p.add_argument("--modelo", default=None, help="modelo Ollama; sem ele roda o controle por regras")
@@ -101,7 +101,7 @@ def main() -> int:
     caminho = RAIZ / "eval" / f"casos_{a.conjunto}.jsonl"
     if a.conjunto == "frescos" and not a.holdout_congelado:
         sys.exit("Frescos roda uma vez, no sistema congelado: use --holdout-congelado.")
-    if a.conjunto == "holdout":
+    if a.conjunto in ("holdout", "holdout2"):
         if not a.holdout_congelado:
             sys.exit("Holdout roda uma vez, no sistema congelado: use --holdout-congelado.")
         conferir_holdout(caminho)

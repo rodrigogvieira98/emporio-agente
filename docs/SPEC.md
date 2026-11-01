@@ -162,6 +162,19 @@ Pedido do Rodrigo em 01/11/2026. Substitui, onde houver conflito, as seções "H
 
 **Boas práticas:** título e descrição por página, favicon, Open Graph, página de privacidade a partir do manual (LGPD), trilha de navegação no produto, foco visível, foto com `alt`, `loading="lazy"` e dimensões declaradas.
 
+**Política de privacidade e cookies** (`/privacidade`, no rodapé), escrita para este produto, descrevendo só o que ele faz de verdade, conferido no código: cookie de sessão assinado e por que existe, ausência de cookie de publicidade e de rastreadores de terceiros, armazenamento no navegador do histórico do chat, cache do app instalado (só visual, nunca preço ou pedido), o que o chat e o Fale Conosco guardam, quem responde (assistente virtual e equipe), mensagens processadas por modelo rodando nos servidores da loja, carrinho e pedido por sessão, finalidades e direitos do manual (LGPD) e canal de contato. Sem inventar prazo de retenção, encarregado ou CNPJ que o manual não traga: o que faltar não é citado. Sem banner, porque o único cookie é essencial; um link discreto basta. Linguagem de cliente, e um teste por afirmação verificável (nome do cookie, atributos, ausência de script externo).
+
+**Revisão de disposição e repetição, página por página.** Cada página tem um único propósito e a informação aparece em um só lugar por página:
+- Contato completo só em Fale Conosco e, resumido, no rodapé. Um e-mail só em todo o site; nenhuma grafia alternativa em lugar nenhum.
+- Faixa superior: só situação da loja (aberta ou fechada). Endereço fica no rodapé e em Visite a loja, sem repetir na mesma tela além desses.
+- Homepage: abertura curta, vitrine, categorias, 4 a 5 perguntas frequentes, visite a loja (endereço, horário e link), rodapé. Sai "Como funciona comprar aqui", cujo conteúdo vive em Políticas e Perguntas frequentes. Sai a faixa "Pergunte para a Lia" e o botão do header: a Lia flutuante já está em toda página.
+- Rodapé: quatro colunas enxutas, sem repetir horário nem texto da homepage.
+- Produto: foto e nome, preço, condições, ação de compra, descrição e especificações, nessa ordem, sem repetir preço.
+- Catálogo: filtros à esquerda no desktop e recolhidos no celular, grade de produtos com paginação ou "ver mais" dentro do limite de 5 por consulta da ferramenta, chamada repetida por página.
+- Políticas: índice lateral ou no topo, um tema por âncora.
+- Rastreio, carrinho e checkout: coluna única e clara, resumo ao lado no desktop.
+Teste que conte que o e-mail aparece uma vez por página, e que nenhuma frase longa se repete na mesma página.
+
 **Testes:** varredura de termos proibidos ao cliente em todo HTML renderizado, em `chat.js` e em todos os textos de `respostas.py`; links do Fale Conosco; formulário gravando e rejeitando inválido; FAQ com valores iguais aos do manual; carrossel por teclado, clique e toque; chat flutuante abre, conversa e fecha em 390 e 1280 px; toda imagem com crédito. Rejeitos de gabarito por mudança de frase são listados para aprovação.
 
 ## Persona da Lia

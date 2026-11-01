@@ -44,7 +44,7 @@ small { font-size: .875rem; }
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pular { position: absolute; left: var(--s2); top: -100px; z-index: 50; background: var(--tinta); color: var(--papel); padding: var(--s2) var(--s4); border-radius: var(--raio); }
 .pular:focus { top: var(--s2); }
-.contorno { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: var(--lateral); }
+.contorno { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: max(var(--lateral), env(safe-area-inset-left)) max(var(--lateral), env(safe-area-inset-right)); }
 .pagina { padding-block: var(--s6) var(--s16); }
 .pagina h1 { margin-bottom: var(--s4); }
 .migalha { font-size: .875rem; }
@@ -285,9 +285,41 @@ a.indice-item:hover strong { text-decoration: underline; text-underline-offset: 
 .chat-espera { margin: 0; padding: 0 var(--s3) var(--s2); color: var(--cinza-texto); font-size: .8125rem; }
 .htmx-indicator { display: none; }
 .htmx-request.htmx-indicator, .htmx-request .htmx-indicator { display: block; }
+.chat-fechar { display: none; }
+.chat-cabeca { padding-inline: max(var(--s4), env(safe-area-inset-left)) max(var(--s4), env(safe-area-inset-right)); }
 @media (max-width: 767px) {
+  /* fechada: barra colada ao rodapé, respeitando a área segura do aparelho */
   .chat { right: 0; left: 0; bottom: 0; width: auto; max-width: none; box-shadow: none; border-width: 1px 0 0; border-radius: 0; }
+  .chat-cabeca { min-height: 48px; padding-bottom: env(safe-area-inset-bottom); border-radius: 0; }
   .chat-log { height: 14rem; }
+  /* aberta: a Lia em tela cheia, campo fixo no fim, acima do teclado (dvh e visualViewport) */
+  html.chat-tela-cheia, html.chat-tela-cheia body { overflow: hidden; }
+  html.chat-tela-cheia .chat { top: var(--topo-visivel, 0px); bottom: auto; height: var(--altura-visivel, 100dvh); border: 0; display: flex; flex-direction: column; z-index: 60; }
+  html.chat-tela-cheia .chat-cabeca { flex: none; padding-top: calc(var(--s2) + env(safe-area-inset-top)); padding-bottom: var(--s2); min-height: 56px; }
+  html.chat-tela-cheia .chat-sub { display: none; }
+  html.chat-tela-cheia .chat-fechar { display: inline; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; opacity: 1; }
+  html.chat-tela-cheia .chat-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  html.chat-tela-cheia .chat-corpo[hidden] { display: none; }
+  html.chat-tela-cheia .chat-log { flex: 1; height: auto; min-height: 0; padding-inline: max(var(--s4), env(safe-area-inset-left)) max(var(--s4), env(safe-area-inset-right)); overscroll-behavior: contain; }
+  html.chat-tela-cheia .chat-form { flex: none; padding: var(--s3) max(var(--s4), env(safe-area-inset-right)) calc(var(--s3) + env(safe-area-inset-bottom)) max(var(--s4), env(safe-area-inset-left)); background: var(--papel-claro); }
+  html.chat-tela-cheia .chat-form input { min-height: 48px; }
+  html.chat-tela-cheia .chat-form button { min-height: 48px; padding-inline: var(--s5); }
+  html.chat-tela-cheia .chat-espera { flex: none; padding-bottom: calc(var(--s2) + env(safe-area-inset-bottom)); }
+  .rodape-fim { padding-bottom: calc(var(--s16) + env(safe-area-inset-bottom)); }
 }
+
+/* alvos de toque de 44px nos links soltos do rodapé e do menu */
+.rodape-lista a, .regra dt a, .migalha a { display: inline-block; padding-block: 10px; }
+.rodape-lista { gap: 0; }
+
+/* página offline */
+.offline-grade { display: grid; gap: var(--s6); align-items: center; padding-block: var(--s8); }
+.offline h1 { font-size: 2.25rem; max-width: 16ch; }
+.offline-linha { max-width: 32rem; color: var(--cinza-texto); font-size: 1.0625rem; }
+.offline-arte { display: none; }
+.offline-loja { border-top: 1px solid var(--tinta); padding-top: var(--s6); }
+.offline-loja h2 { margin-bottom: var(--s3); }
+.offline-loja .visite-rua { margin-bottom: var(--s4); }
+@media (min-width: 768px) { .offline-grade { grid-template-columns: 7fr 5fr; } .offline-arte { display: block; width: 100%; max-width: 12rem; justify-self: end; color: var(--jacaranda); } }
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }

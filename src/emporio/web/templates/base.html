@@ -2,7 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="{{ cores().tinta }}">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="{{ loja().nome.split(' ', 1)[0] }}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icones/apple-touch-icon-180.png">
 <title>{% block titulo %}Início{% endblock %} | {{ loja().nome }}</title>
 <link rel="preload" href="/static/fontes/ZillaSlab-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="/static/marca.svg" type="image/svg+xml">
@@ -10,12 +18,13 @@
 <script src="/static/htmx-2.0.4.min.js" defer></script>
 <script src="/static/chat.js" defer></script>
 <script src="/static/vitrine.js" defer></script>
+<script src="/static/pwa.js" defer></script>
 </head>
 <body{% block corpo_attr %}{% endblock %}>
 {% set L = loja() %}{% set S = situacao_loja() %}
 <a class="pular" href="#conteudo">Ir para o conteúdo</a>
 
-<div class="faixa">
+{% block faixa %}<div class="faixa">
   <div class="contorno faixa-in">
     {% if L.endereco_curto %}<p class="faixa-endereco">{{ L.endereco_curto }}</p>{% endif %}
     {% if S.conhecida %}
@@ -26,7 +35,7 @@
     </p>
     {% endif %}
   </div>
-</div>
+</div>{% endblock %}
 
 <header class="topo">
   <div class="contorno topo-in">
@@ -40,7 +49,7 @@
       <button type="submit">Buscar</button>
     </form>
     <nav class="menu" aria-label="Principal">
-      <details class="menu-categorias">
+      {% block menu_categorias %}<details class="menu-categorias">
         <summary>Categorias</summary>
         <ul>
         {% for c in menu_categorias() %}
@@ -48,7 +57,7 @@
           {% else %}<li class="em-breve"><span>{{ c.nome }}</span><small>em breve</small></li>{% endif %}
         {% endfor %}
         </ul>
-      </details>
+      </details>{% endblock %}
       <a href="/politicas">Políticas</a>
       <a href="/rastreio">Rastrear pedido</a>
       <a class="botao botao-lia" href="#chat" data-abrir-chat>Falar com a Lia</a>
@@ -90,7 +99,7 @@
 
 <section id="chat" class="chat" aria-label="Chat com a Lia">
   <button id="chat-alternar" class="chat-cabeca" type="button" aria-expanded="true" aria-controls="chat-corpo">
-    <span>Converse com a Lia</span><small>assistente virtual</small>
+    <span>Converse com a Lia</span><small class="chat-sub">assistente virtual</small><small class="chat-fechar">Fechar</small>
   </button>
   <div id="chat-corpo" class="chat-corpo">
     <div id="chat-log" class="chat-log" role="log" aria-live="polite">
@@ -99,7 +108,7 @@
     <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
           hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
       <label class="so-leitor" for="chat-mensagem">Mensagem</label>
-      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off"
+      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
              placeholder="Escreva sua mensagem" required>
       <button id="chat-enviar" type="submit">Enviar</button>
     </form>

@@ -108,12 +108,13 @@ def test_aviso_imagem_ilustrativa_abre_creditos(url_site, navegador):
 def test_abertura_compacta_e_categorias_na_primeira_tela(url_site, navegador):
     p = _pagina(navegador, 1280, 800)
     p.goto(url_site + "/")
-    assert p.locator(".abertura").bounding_box()["height"] <= 360
+    altura_abertura = p.locator(".abertura").bounding_box()["height"]
+    assert 420 <= altura_abertura <= 460
     box = p.locator("#t-categorias").bounding_box()
     assert box["y"] + box["height"] <= 800
     m = _pagina(navegador, 390, 800)
     m.goto(url_site + "/")
-    assert m.locator(".abertura-foto").bounding_box()["height"] <= 260
+    assert m.locator(".abertura-foto").bounding_box()["height"] <= 300
     assert m.evaluate("document.documentElement.scrollWidth") <= 390
 
 

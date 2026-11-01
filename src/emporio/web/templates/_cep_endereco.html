@@ -1,0 +1,20 @@
+{# Bloco "Endereço de entrega" logo abaixo do campo de CEP; somente leitura (o pedido não gera entrega e o site não guarda endereço). #}
+{% set loc = c.localizacao %}
+<div id="cep-bloco" class="cep-bloco"{% if oob %} hx-swap-oob="outerHTML"{% endif %} aria-live="polite">
+{% if loc.estado == 'ok' %}
+  <section class="endereco-entrega" aria-label="Endereço de entrega">
+    <h3>Endereço de entrega</h3>
+    {% if loc.contingencia %}<p class="endereco-nota">Não foi possível confirmar o endereço agora. Mostramos só a cidade da loja.</p>{% endif %}
+    <dl>
+      {% if loc.logradouro %}<div><dt>Rua</dt><dd>{{ loc.logradouro }}</dd></div>{% endif %}
+      {% if loc.bairro %}<div><dt>Bairro</dt><dd>{{ loc.bairro }}</dd></div>{% endif %}
+      <div><dt>Cidade/UF</dt><dd>{{ loc.cidade }}{% if loc.uf %}/{{ loc.uf }}{% endif %}</dd></div>
+    </dl>
+  </section>
+{% elif loc.estado == 'indisponivel' %}
+  <section class="endereco-entrega endereco-indisponivel" aria-label="Endereço de entrega">
+    <h3>Endereço de entrega</h3>
+    <p>Não localizamos o endereço agora.</p>
+  </section>
+{% endif %}
+</div>

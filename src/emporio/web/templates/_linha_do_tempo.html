@@ -1,0 +1,13 @@
+{# Linha do tempo do rastreio: lista ordenada; a etapa atual é indicada em texto, não só por cor. #}
+<ol class="linha-tempo" aria-label="Andamento do pedido">
+  {% for e in etapas %}
+  <li class="etapa etapa-{{ e.estado }}"{% if e.estado == 'atual' %} aria-current="step"{% endif %}>
+    <span class="etapa-marca" aria-hidden="true"></span>
+    <span class="etapa-corpo">
+      <strong class="etapa-nome">{{ e.rotulo }}</strong>
+      <span class="etapa-estado">{{ e.estado_texto }}</span>
+      {% if e.detalhe %}<span class="etapa-detalhe">{{ e.detalhe }}</span>{% endif %}
+    </span>
+  </li>
+  {% endfor %}
+</ol>

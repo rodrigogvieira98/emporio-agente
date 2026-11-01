@@ -19,6 +19,11 @@ ROTULOS_ASSUNTO = {
     "busca_produto": "a busca de produtos", "frete": "o frete", "reclamacao": "a reclamação", "garantia": "a garantia",
     "pagamento": "as formas de pagamento",
 }
+# Ambiguidade do manual, dita na voz da loja (a evidência fica no YAML do manual e nos testes).
+AMBIGUIDADE_CLIENTE = {
+    "marco_troca_preferencia": "de quando a contagem do prazo parte",
+    "prazo_30_x_90": "como o prazo de troca por defeito e o da garantia legal se combinam",
+}
 ROTULOS_REGRA = {"devolucao": "devolução por arrependimento", "defeito": "troca por defeito",
                  "troca_preferencia": "troca por preferência"}
 STATUS_PEDIDO = {"pending": "pendente", "confirmed": "confirmado", "shipped": "enviado", "delivered": "entregue",
@@ -154,29 +159,12 @@ def endereco(e: Estado, p: dict) -> str:
 
 def contato(e: Estado, p: dict) -> str:
     c = _condicoes(e)
-    telefones: dict[str, list[str]] = {}
-    for chave, onde in (("contato.telefone_whatsapp_dados_empresa", "telefone e WhatsApp nos dados da empresa"),
-                        ("contato.whatsapp_secao_7", "canal de WhatsApp para atendimento remoto"),
-                        ("contato.telefone_capa", "telefone na capa do manual")):
-        if chave in c:
-            telefones.setdefault(c[chave], []).append(onde)
-    emails: dict[str, list[str]] = {}
-    for chave, onde in (("contato.email_capa", "grafia da capa do manual"),
-                        ("contato.email_dados_empresa", "grafia dos dados da empresa")):
-        if chave in c:
-            emails.setdefault(c[chave], []).append(onde)
-    if not telefones and not emails:
+    linhas = [f"- {rotulo}: {c[chave]}" for chave, rotulo in (
+        ("contato.telefone_capa", "Telefone"), ("contato.whatsapp_secao_7", "WhatsApp"),
+        ("contato.email_capa", "E-mail")) if chave in c]
+    if not linhas:
         return sem_dado(e, p)
-    linhas = [f"- {num} ({_lista(ondes)})" for num, ondes in telefones.items()]
-    linhas += [f"- e-mail {mail} ({_lista(ondes)})" for mail, ondes in emails.items()]
-    txt = "Estes são os contatos que constam no manual da loja:\n" + "\n".join(linhas)
-    amb = _ambiguidades(e)
-    if "telefone_whatsapp" in amb or "email" in amb:
-        a = aviso(e, "contato_ambiguo",
-                  "O manual traz mais de um número e mais de uma grafia de e-mail, e eu não consigo confirmar "
-                  "qual é o oficial. Se não funcionar, posso pedir para a equipe confirmar.", proprio=True)
-        txt += ("\n" + a) if a else ""
-    return txt
+    return "Você pode falar com a loja por estes canais:\n" + "\n".join(linhas)
 
 
 def pagamento(e: Estado, p: dict) -> str:
@@ -254,8 +242,8 @@ def frete_calculado(e: Estado, p: dict) -> str:
     if sit == "taxa":
         return f"Para {cidade}, o frete é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
     if sit == "requer_confirmacao":
-        return (f"Esse valor é exatamente o limite do frete grátis e o manual não diz o que vale nesse caso, "
-                f"então a equipe precisa confirmar.{prazo_txt} Quer que eu registre a dúvida para eles? {CONFIRMA}")
+        return (f"Esse valor é exatamente o limite do frete grátis, e para esse caso a nossa equipe precisa "
+                f"confirmar.{prazo_txt} Quer que eu registre a dúvida para eles? {CONFIRMA}")
     mods = _condicoes(e).get("frete.outras_cidades_modalidades")
     extra = f" Os envios são por {_lista([m['nome'] for m in mods])}." if mods else ""
     return (f"Para {cidade} o frete depende de cotação: ele é calculado pelo CEP, peso e dimensões do produto, "
@@ -284,7 +272,7 @@ def garantia_info(e: Estado, p: dict) -> str:
                 f"{defeito['marco_inicial']}.")
     if "prazo_30_x_90" in _ambiguidades(e):
         txt += aviso(e, "prazo_30_x_90",
-                     " O manual não explica como esses dois prazos se combinam, então a equipe confirma o seu caso.", proprio=True)
+                     " Como esses dois prazos se combinam depende de confirmação da nossa equipe.", proprio=True)
     fab = c.get("garantia.fabricante_prazo_meses")
     if fab:
         txt += (f" Os fabricantes costumam ter garantia própria, de {fab['min']} meses a {fab['max'] // 12} anos, "
@@ -317,7 +305,7 @@ def trocas_info(e: Estado, p: dict) -> str:
         linhas.append(f"- Defeito: {_prazo(defeito)}.")
     if pref:
         if "marco_troca_preferencia" in amb:
-            linhas.append(f"- Preferência: {pref['prazo_dias']} dias; o manual não diz de quando a contagem parte.")
+            linhas.append(f"- Preferência: {pref['prazo_dias']} dias; de quando a contagem parte depende de confirmação da nossa equipe.")
         else:
             linhas.append(f"- Preferência: {_prazo(pref)}.")
     if legal:
@@ -382,7 +370,7 @@ def pedir_produto(e: Estado, p: dict) -> str:
 
 
 def produto_nao_encontrado(e: Estado, p: dict) -> str:
-    return "Não encontrei esse produto no sistema. Pode me dizer a marca e o modelo do jeito que está no anúncio?"
+    return "Não encontrei esse produto. Pode me dizer a marca e o modelo do jeito que está no anúncio?"
 
 
 def escolha_produto(e: Estado, p: dict) -> str:
@@ -419,9 +407,9 @@ def promocoes(e: Estado, p: dict) -> str:
     if r.estado == "vazio":
         termo = r.dados.get("termo")
         if termo:
-            return (f"A promoção {termo.title()} não está ativa no sistema agora, então não posso prometer esse "
+            return (f"A promoção {termo.title()} não está ativa agora, então não posso prometer esse "
                     "desconto. Se quiser, mostro as promoções que estão ativas.")
-        return "No sistema não há nenhuma promoção ativa agora."
+        return "Não há nenhuma promoção ativa agora."
     linhas = []
     for i in r.dados["promocoes"]:
         extra = "" if i["situacao_venda"] == "disponivel" else f" ({SITUACAO.get(i['situacao_venda'])})"
@@ -432,13 +420,13 @@ def promocoes(e: Estado, p: dict) -> str:
             linhas.append(f"- {i['produto_nome']}: de {formatar(i['original_centavos'])} por "
                           f"{formatar(i['final_centavos'])} ({i['percentual']}% de desconto){extra}")
     a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com preço promocional.")
-    return "Promoções ativas no sistema:\n" + "\n".join(linhas) + (("\n" + a) if a else "")
+    return "Promoções ativas:\n" + "\n".join(linhas) + (("\n" + a) if a else "")
 
 
 def recusa_manipulacao(e: Estado, p: dict) -> str:
     pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
-    return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas no sistema"
+    return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas"
             f"{extra}. Quer ver as promoções ativas?")
 
 
@@ -457,7 +445,7 @@ def fora_escopo_geral(e: Estado, p: dict) -> str:
 
 def disponibilidade(e: Estado, p: dict) -> str:
     d = _dados(e, "ver_produto")
-    txt = f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque do sistema agora."
+    txt = f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque agora."
     return f"{txt} Preço de tabela: {formatar(d['preco_centavos'])}." if d.get("preco_centavos") else txt
 
 
@@ -477,25 +465,25 @@ def preco(e: Estado, p: dict) -> str:
     if d["forma"] == "credito":
         partes.append(f"No crédito em {d['parcelas']}x, cada parcela fica em {formatar(d['parcela_centavos'])}.")
         if d["permitido"] == "sim":
-            partes.append("Esse parcelamento atende a parcela mínima do manual.")
+            partes.append("Esse parcelamento atende a parcela mínima da loja.")
         elif d["permitido"] == "nao":
-            partes.append("Esse parcelamento não atende a parcela mínima do manual.")
+            partes.append("Esse parcelamento não atende a parcela mínima da loja.")
         else:
-            partes.append(f"O manual tem duas leituras para a parcela mínima ({formatar(d['minimo_tabela_centavos'])} "
-                          f"na tabela e {formatar(d['minimo_faixa_centavos'])} na faixa de {d['parcelas']}x), "
-                          f"então a equipe precisa confirmar. Quer que eu registre a dúvida para eles? {CONFIRMA}")
+            partes.append(f"Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
+                          f"{formatar(d['minimo_tabela_centavos'])} em uma regra e {formatar(d['minimo_faixa_centavos'])} "
+                          f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
     return " ".join(partes)
 
 
 def preco_promocao_conflitante(e: Estado, p: dict) -> str:
-    return ("Esse produto aparece com mais de uma promoção ativa no sistema, e eu não vou chutar o preço. "
+    return ("Esse produto aparece com mais de uma promoção ativa, e eu não vou chutar o preço. "
             f"Quer que eu registre para a equipe confirmar o valor? {CONFIRMA}")
 
 
 def item_nao_elegivel(e: Estado, p: dict) -> str:
-    return (f"Pelo manual da loja, esse item não entra em troca: {p['trecho']}. "
+    return (f"Esse item não entra em troca: {p['trecho']}. "
             "Se o seu caso for outro, é só me contar.")
 
 
@@ -503,7 +491,7 @@ def pedir_pedido(e: Estado, p: dict) -> str:
     regra = e.coletados.get("regra")
     if regra and p.get("com_regra") and e.objetivo in ROTULOS_REGRA:
         v = regra["valor"]
-        return (f"Pela regra do manual, {ROTULOS_REGRA[e.objetivo]}: {_prazo(v)}. A equipe confirma se o seu caso se "
+        return (f"Pela regra da loja, {ROTULOS_REGRA[e.objetivo]}: {_prazo(v)}. A equipe confirma se o seu caso se "
                 "enquadra. Para consultar o pedido, me diga o número do pedido e os 4 últimos dígitos do telefone "
                 "cadastrado.")
     if p.get("tem_pedido") and not p.get("tem_final"):
@@ -529,7 +517,7 @@ def status_pedido(e: Estado, p: dict) -> str:
     status = STATUS_PEDIDO.get(ped["status"], ped["status"])
     forma = _forma_pedido(ped["forma_pagamento"])
     txt = (f"Pedido {ped['pedido_id']}: status {status}.\nItens: {itens}.\n"
-           f"Total gravado no sistema: {formatar(ped['total_gravado_centavos'])} ({forma}).")
+           f"Total do pedido: {formatar(ped['total_gravado_centavos'])} ({forma}).")
     if ped.get("rastreio"):
         txt += f"\nCódigo de rastreio: {ped['rastreio']}."
     if ped.get("previsao"):
@@ -546,14 +534,13 @@ def status_pedido(e: Estado, p: dict) -> str:
 def status_pedido_demo(e: Estado, p: dict) -> str:
     d = e.coletados["pedido_demo"]
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in d["itens"])
-    return (f"Pedido {d['numero']}: é um pedido de demonstração, feito no site. {d['aviso']}\n"
-            f"Itens: {itens}.\nTotal gravado: {formatar(d['total_gravado_centavos'])}. "
-            "Ele não tem rastreio nem entrega, porque nada foi vendido de verdade.")
+    return (f"Pedido {d['numero']}: feito no site. {d['aviso']}\n"
+            f"Itens: {itens}.\nTotal do pedido: {formatar(d['total_gravado_centavos'])}.")
 
 
 def pedido_demo_negado(e: Estado, p: dict) -> str:
-    return ("Não encontrei esse pedido de demonstração nesta conversa. Pedido de demonstração só abre no mesmo "
-            "navegador em que foi feito. Confira o número, que começa com DEMO-.")
+    return ("Não encontrei esse pedido nesta conversa. Ele só abre no mesmo navegador em que foi feito. "
+            "Confira o número, que começa com PED-.")
 
 
 def _forma_pedido(bruto: str) -> str:
@@ -572,10 +559,10 @@ def pedir_dados_posvenda(e: Estado, p: dict) -> str:
 def propor_posvenda(e: Estado, p: dict) -> str:
     ped, regra = e.coletados["pedido"], e.coletados["regra"]["valor"]
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in ped["itens"])
-    sistema = (f"pedido {ped['pedido_id']}, status {STATUS_PEDIDO.get(ped['status'], ped['status'])}, {itens}, "
+    consta = (f"pedido {ped['pedido_id']}, status {STATUS_PEDIDO.get(ped['status'], ped['status'])}, {itens}, "
                f"total gravado {formatar(ped['total_gravado_centavos'])}")
     if ped.get("previsao"):
-        sistema += f", previsão de entrega {_data_br(ped['previsao'])}"
+        consta += f", previsão de entrega {_data_br(ped['previsao'])}"
     decl = []
     rotulo = {"canal_compra": "compra {}", "data_recebimento": "recebimento em {}", "data_compra": "compra em {}",
               "estado_produto": "produto {}", "descricao_defeito": "problema: {}"}
@@ -593,13 +580,14 @@ def propor_posvenda(e: Estado, p: dict) -> str:
                  else f"contados a partir {quando.get(marco, 'do marco inicial')}")
     aplica = " e vale para compra online" if regra.get("aplica_a") == "compra_online" else ""
     exigido = f" Produto: {regra['estado_exigido']}." if regra.get("estado_exigido") else ""
-    amb = e.coletados["regra"].get("ambiguidades", [])
-    nota = f" Ponto em aberto no manual: {amb[0]}" if amb else ""
+    amb = e.coletados["regra"].get("ambiguidades_ids", [])
+    pontos = [AMBIGUIDADE_CLIENTE[i] for i in amb if i in AMBIGUIDADE_CLIENTE]
+    nota = f" Depende de confirmação da nossa equipe: {pontos[0]}." if pontos else ""
     return (
-        "Resumo da sua solicitação, separado por origem:\n"
-        f"1) O que o sistema mostra: {sistema}.\n"
+        "Resumo da sua solicitação:\n"
+        f"1) O que consta no seu pedido: {consta}.\n"
         f"2) O que você me informou (não verificado): {'; '.join(decl)}.\n"
-        f"3) O que a equipe confirma: se o seu caso se enquadra na regra do manual ({condicao}, {marco_txt}{aplica}).{exigido}"
+        f"3) O que a equipe confirma: se o seu caso se enquadra na regra da loja ({condicao}, {marco_txt}{aplica}).{exigido}"
         f"{nota} Eu não consigo garantir a elegibilidade, a decisão é da equipe.\n"
         f"Posso registrar essa solicitação para a equipe? {CONFIRMA}")
 
@@ -647,7 +635,7 @@ def registro_cancelado(e: Estado, p: dict) -> str:
 
 
 def falha_ferramenta(e: Estado, p: dict) -> str:
-    base = ("Tive um problema ao consultar o sistema e não vou arriscar uma resposta sem confirmar. "
+    base = ("Tive um problema na consulta e não vou arriscar uma resposta sem confirmar. "
             "Pode tentar de novo em instantes?")
     if e.falhas_seguidas >= 2:
         return base[:-len("Pode tentar de novo em instantes?")] + f"Se preferir, registro o problema para a equipe. {CONFIRMA}"

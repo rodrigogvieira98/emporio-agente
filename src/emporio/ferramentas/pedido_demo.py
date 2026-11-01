@@ -12,9 +12,9 @@ from pydantic import field_validator
 from ..dados import banco
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 
-PREFIXO = "DEMO-"
-PADRAO_NUMERO = re.compile(r"DEMO-(\d{1,9})", re.I)
-AVISO_DEMO = "Pedido de demonstração, nenhum pagamento é feito."
+PREFIXO = "PED-"
+PADRAO_NUMERO = re.compile(r"PED-(\d{1,9})", re.I)
+AVISO_DEMO = "Pedido registrado. Nenhum valor foi cobrado."
 MOTIVO_NEGADO = "nao_foi_possivel_validar"
 
 
@@ -23,7 +23,7 @@ def formatar_numero(identificador: int) -> str:
 
 
 def achar_numero(texto: str) -> str | None:
-    """Número normalizado (DEMO-0001) se o texto citar um pedido de demonstração; senão None."""
+    """Número normalizado (PED-0001) se o texto citar um pedido de demonstração; senão None."""
     m = PADRAO_NUMERO.search(texto or "")
     return formatar_numero(int(m.group(1))) if m else None
 

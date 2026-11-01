@@ -40,7 +40,7 @@ def test_devolucao_do_pedido_4_conversa_completa(sql):
     assert [a["ferramenta"] for a in r1.acoes if "ferramenta" in a] == ["consultar_politica", "consultar_politica"]  # exceções e regra, antes de pedir o pedido
     assert [a["ferramenta"] for a in r2.acoes if "ferramenta" in a] == ["consultar_pedido"]
     # 3) propõe registro separando sistema, declarado e equipe, sem afirmar elegibilidade
-    assert "O que o sistema mostra" in r3.texto and "R$ 799,90" in r3.texto
+    assert "O que consta no seu pedido" in r3.texto and "R$ 799,90" in r3.texto
     assert "(não verificado)" in r3.texto and "compra online" in r3.texto and "15/12/2025" in r3.texto
     assert "O que a equipe confirma" in r3.texto and "Posso registrar" in r3.texto
     assert "Eu não consigo garantir a elegibilidade" in r3.texto
@@ -178,7 +178,7 @@ def test_takamine_ambiguo_lista_quatro_e_aceita_o_numero():
 
 def test_shelby_em_6x_pede_confirmacao_da_equipe_e_registra_duvida(sql):
     r1, r2 = conversar("Shelby SN-100 em 6x", "sim")
-    assert "duas leituras" in r1.texto and "equipe precisa confirmar" in r1.texto
+    assert "precisa de confirmação da nossa equipe" in r1.texto
     assert "R$ 91,50" in r1.texto
     assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "duvida_politica" and "EM-000001" in r2.texto
 
@@ -248,7 +248,7 @@ def test_horario_endereco_e_contato_vem_do_manual():
     h, e, c = conversar("qual o horário de funcionamento?", "onde fica a loja?", "qual o telefone?")
     assert "09:00 às 18:00" in h.texto and "09:00 às 13:00" in h.texto and "calendário de feriados" in h.texto
     assert "79202-333" in e.texto and "Campo Grande" in e.texto
-    assert "(67) 3341-4444" in c.texto and "(67) 3321-4500" in c.texto and "não consigo confirmar" in c.texto
+    assert "(67) 3341-4444" in c.texto and "(67) 3321-4500" in c.texto and "não consigo confirmar" not in c.texto  # um canal de cada tipo, sem variantes
 
 
 def test_pagamento_cita_as_duas_leituras_da_parcela_minima():
@@ -294,7 +294,7 @@ def test_mensagem_incompreendida_e_depois_oferta_de_atendente(sql):
 
 def test_garantia_informa_prazos_e_aponta_a_ambiguidade():
     (r,) = conversar("como funciona a garantia?")
-    assert "90 dias" in r.texto and "30 dias corridos" in r.texto and "não explica como esses dois prazos" in r.texto
+    assert "90 dias" in r.texto and "30 dias corridos" in r.texto and "depende de confirmação da nossa equipe" in r.texto
 
 
 # --- percepção por intenção -----------------------------------------------------------------

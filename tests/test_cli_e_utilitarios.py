@@ -21,7 +21,7 @@ def test_cli_roda_a_devolucao_do_pedido_4(tmp_path):
                            input=entrada, capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert saida.returncode == 0, saida.stderr
     assert "Chamado registrado. Protocolo: EM-000001" in saida.stdout
-    assert "O que o sistema mostra" in saida.stdout and "Lia:" in saida.stdout
+    assert "O que consta no seu pedido" in saida.stdout and "Lia:" in saida.stdout
     assert '"origem": "demo"' in config.caminho_trace().read_text(encoding="utf-8")
 
 

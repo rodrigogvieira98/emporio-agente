@@ -82,7 +82,7 @@ def test_d53_pedido_de_email_de_pessoa_nomeada_nao_abre_chamado(sql):
 
 def test_email_da_loja_continua_respondendo_o_contato():
     (r,) = conversar("qual o e-mail da loja?")
-    assert "contatos que constam" in r.texto
+    assert "E-mail:" in r.texto and "WhatsApp:" in r.texto
 
 
 def test_d56_nao_quero_atendente_mas_pede_preco_responde_o_preco():

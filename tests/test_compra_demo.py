@@ -149,7 +149,7 @@ def test_pagina_do_produto_descontinuado_nao_tem_botao_de_carrinho(cliente):
 def test_pagina_do_produto_vendavel_adiciona_ao_carrinho_e_mantem_a_lia(cliente):
     html = cliente.get(f"/produto/{TAKAMINE}").text
     assert 'action="/carrinho/adicionar"' in html and "Quero comprar com a Lia" in html
-    assert "nenhum pagamento é feito" in html
+    assert "Nenhum valor foi cobrado" in html
 
 
 def test_quantidade_de_1_a_3(cliente, sql):
@@ -172,14 +172,14 @@ def test_estoque_nao_e_baixado(cliente, sql):
 
 def test_avisos_de_demonstracao_no_carrinho_no_checkout_e_no_pedido(cliente):
     comprar(cliente, UKULELE_SOPRANO)
-    assert "nenhum pagamento é feito" in cliente.get("/carrinho").text
-    assert "nenhum pagamento é feito" in cliente.get("/checkout").text
+    assert "Nenhum valor foi cobrado" in cliente.get("/carrinho").text
+    assert "Nenhum valor foi cobrado" in cliente.get("/checkout").text
     base = final_unit(UKULELE_SOPRANO, "debito")
     taxa = calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["taxa_centavos"]
     corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base + taxa)}
     numero = numero_do_pedido(cliente.post("/checkout", data=corpo))
     pedido = cliente.get(f"/pedido/{numero}")
-    assert pedido.status_code == 200 and "nenhum pagamento é feito" in pedido.text and numero in pedido.text
+    assert pedido.status_code == 200 and "Nenhum valor foi cobrado" in pedido.text and numero in pedido.text
 
 
 def test_sem_campos_de_pagamento_real(cliente):
@@ -197,14 +197,14 @@ def test_rastreio_reconhece_demo_e_nao_mistura_com_os_dados(cliente, sql):
     taxa = calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["taxa_centavos"]
     numero = numero_do_pedido(cliente.post(
         "/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base + taxa)}))
-    assert numero == "DEMO-0001"
+    assert numero == "PED-0001"
     r = cliente.post("/rastreio", data={"pedido": numero, "final_telefone": ""})
-    assert r.status_code == 200 and numero in r.text and "nenhum pagamento é feito" in r.text
+    assert r.status_code == 200 and numero in r.text and "Nenhum valor foi cobrado" in r.text
     assert "Código de rastreio" not in r.text
     # outro navegador não vê o pedido; é o mesmo negado de um número inexistente
     with TestClient(criar_app(), follow_redirects=False) as outro:
         negado = outro.post("/rastreio", data={"pedido": numero, "final_telefone": ""})
-        inexistente = outro.post("/rastreio", data={"pedido": "DEMO-0099", "final_telefone": ""})
+        inexistente = outro.post("/rastreio", data={"pedido": "PED-0099", "final_telefone": ""})
     assert negado.status_code == inexistente.status_code == 403
 
 
@@ -229,7 +229,7 @@ def test_total_adulterado_no_navegador_nao_finaliza(cliente, sql):
 
 
 def test_numeros_sequenciais_e_carrinho_esvaziado(cliente, sql):
-    for esperado in ("DEMO-0001", "DEMO-0002"):
+    for esperado in ("PED-0001", "PED-0002"):
         comprar(cliente, TAKAMINE)
         base = final_unit(TAKAMINE, "debito")
         corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)}
@@ -253,15 +253,15 @@ def test_preco_nao_fica_gravado_no_carrinho(sql, cliente):
 def test_ferramenta_pedido_demo_cinco_estados(cliente, sql):
     # vazio não existe: número que não é dele é negado; entrada ruim é falha
     assert consultar_pedido_demo(numero="abc", conversa_id="web-x").estado == "falha"
-    assert consultar_pedido_demo(numero="DEMO-0001", conversa_id="").estado == "falha"
-    assert consultar_pedido_demo(numero="DEMO-0001", conversa_id="web-x").estado == "negado"
+    assert consultar_pedido_demo(numero="PED-0001", conversa_id="").estado == "falha"
+    assert consultar_pedido_demo(numero="PED-0001", conversa_id="web-x").estado == "negado"
     comprar(cliente, TAKAMINE)
     base = final_unit(TAKAMINE, "debito")
     cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)})
     sessao = sql.execute("SELECT sessao FROM pedidos_demo").fetchone()[0]
-    r = consultar_pedido_demo(numero="demo-0001", conversa_id=sessao)
+    r = consultar_pedido_demo(numero="ped-0001", conversa_id=sessao)
     assert r.estado == "ok" and r.dados["demonstracao"] is True and r.dados["total_gravado_centavos"] == base
-    assert consultar_pedido_demo(numero="DEMO-0001", conversa_id="web-outra").estado == "negado"
+    assert consultar_pedido_demo(numero="PED-0001", conversa_id="web-outra").estado == "negado"
 
 
 def test_sw_nao_guarda_carrinho_nem_checkout():
@@ -277,7 +277,7 @@ def test_cabecalho_mostra_a_contagem_do_carrinho(cliente):
     assert 'class="contagem-carrinho"' in cliente.get("/").text
 
 
-# --- Lia reconhece DEMO- ------------------------------------------------------------------
+# --- Lia reconhece PED- ------------------------------------------------------------------
 
 def _pedido_demo_da_sessao(cliente):
     comprar(cliente, TAKAMINE)
@@ -291,7 +291,7 @@ def test_lia_responde_pedido_demo_como_demonstracao(cliente, sql):
     numero = _pedido_demo_da_sessao(cliente)
     sessao = sql.execute("SELECT sessao FROM pedidos_demo").fetchone()[0]
     r = Agente().responder(sessao, f"cadê o meu pedido {numero}?", "eval")
-    assert "demonstração" in r.texto and numero in r.texto and "R$ 2.199,00" in r.texto
+    assert "Nenhum valor foi cobrado" in r.texto and numero in r.texto and "R$ 2.199,00" in r.texto
     ferramentas = [a.get("ferramenta") for a in r.acoes]
     assert "consultar_pedido_demo" in ferramentas and "consultar_pedido" not in ferramentas
     assert "telefone" not in r.texto.lower()
@@ -301,7 +301,7 @@ def test_lia_nega_pedido_demo_de_outra_conversa(cliente, sql):
     from emporio.agente.laco import Agente
     numero = _pedido_demo_da_sessao(cliente)
     r = Agente().responder("web-outra-conversa", f"status do pedido {numero.lower()}", "eval")
-    assert "Não encontrei esse pedido de demonstração" in r.texto and "R$" not in r.texto
+    assert "Não encontrei esse pedido nesta conversa" in r.texto and "R$" not in r.texto
 
 
 def test_pedido_dos_dados_segue_pedindo_o_telefone():

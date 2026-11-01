@@ -32,8 +32,13 @@ def test_persona_tem_os_campos_obrigatorios_e_nenhum_fato_de_loja():
 
 
 def _textos_de_respostas() -> list[str]:
+    """Literais de respostas.py que viram texto ao cliente: com espaço, fora docstrings."""
     arvore = ast.parse(RESPOSTAS_PY.read_text(encoding="utf-8"))
-    return [n.value for n in ast.walk(arvore) if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+    docstrings = {id(n.body[0].value) for n in ast.walk(arvore)
+                  if isinstance(n, (ast.Module, ast.FunctionDef, ast.ClassDef)) and n.body
+                  and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
+    return [n.value for n in ast.walk(arvore) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+            and id(n) not in docstrings and " " in n.value]
 
 
 def test_nenhum_texto_de_respostas_usa_expressao_proibida_pela_persona():
@@ -41,6 +46,43 @@ def test_nenhum_texto_de_respostas_usa_expressao_proibida_pela_persona():
     achados |= {f[:60]: persona.proibida_em(f) for fs in respostas.RECONHECIMENTOS.values() for f in fs
                 if persona.proibida_em(f)}
     assert achados == {}
+
+
+def _turnos_dos_casos() -> list[list[str]]:
+    base = Path(__file__).resolve().parents[1] / "eval"
+    casos = []
+    for nome in ("casos_dev.jsonl", "casos_variacoes.jsonl"):
+        for linha in (base / nome).read_text(encoding="utf-8").splitlines():
+            if linha.strip():
+                casos.append(json.loads(linha)["turnos"])
+    casos += [  # caminhos com ambiguidade do manual, que o cliente vê em linguagem de loja
+        ["Shelby SN-100 em 6x", "sim"], ["qual o telefone, e-mail e whatsapp?"], ["quanto custa o Crafter HT-100?"],
+        ["qual o frete pra compra de R$ 500 em Campo Grande?"], ["tem promoção?", "a Black Friday vale?"],
+        ["como funciona a garantia?"], ["como funciona a troca e a garantia?", "sim"],
+        ["quero trocar meu violão", "pedido 4, final 3456", "recebi dia 15/12/2025, compra online, sem uso"],
+        ["quero devolver", "pedido 4, final 3456", "online, recebi dia 15/12/2025, sem uso", "sim"],
+        ["quero abrir reclamação", "o violão chegou riscado e ninguém me responde", "sim"],
+        ["o Giannini GF-3D Dreadnought Sunburst está disponível?"], ["pedido PED-0099"], ["qual o horário?"],
+        ["posso pagar parte no pix e parte no cartão?"], ["prazo de entrega para Dourados?"],
+    ]
+    return casos
+
+
+def test_nenhuma_resposta_em_execucao_cita_bastidor_nem_expressao_proibida():
+    """Roda os casos do dev e das variações e varre o texto que o cliente realmente recebe."""
+    achados = {}
+    for i, turnos in enumerate(_turnos_dos_casos()):
+        agente = Agente()
+        for t in turnos:
+            texto = agente.responder(f"varredura-{i}", t, "eval").texto
+            if persona.proibida_em(texto):
+                achados[f"{t[:40]} -> {texto[:50]}"] = persona.proibida_em(texto)
+    assert achados == {}
+
+
+def test_o_proibido_inclui_os_termos_de_bastidor():
+    for termo in ("manual", "sistema", "ferramenta", "seção", "origem", "demonstração", "teste", "desafio", "fictícia"):
+        assert persona.proibida_em(f"isso vem do {termo} da loja"), termo
 
 
 def test_o_detector_de_proibidas_pega_o_que_deveria():

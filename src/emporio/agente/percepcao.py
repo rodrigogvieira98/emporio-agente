@@ -93,7 +93,7 @@ def _numeros_de_pedido(norm: str, estado: Estado) -> dict[str, Any]:
     """Número do pedido e final do telefone. O final nunca é gravado."""
     out: dict[str, Any] = {}
     resto = norm
-    demo = achar_numero(resto)  # pedido de demonstração (DEMO-0001): não é pedido dos dados
+    demo = achar_numero(resto)  # pedido de demonstração (PED-0001): não é pedido dos dados
     if demo:
         out["pedido_demo"] = demo
         resto = PADRAO_NUMERO.sub(" ", resto)

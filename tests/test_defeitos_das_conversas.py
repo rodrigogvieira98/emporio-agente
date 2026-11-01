@@ -132,7 +132,7 @@ def test_pergunta_geral_de_troca_e_curta_completa_e_sem_pedir_pedido(frase):
     for prazo in ("Arrependimento: 7 dias corridos", "Defeito: 30 dias corridos", "Preferência: 7 dias",
                   "Garantia legal: 90 dias"):
         assert prazo in r.texto, prazo
-    assert "o manual não diz de quando a contagem parte" in r.texto  # ressalva da preferência
+    assert "de quando a contagem parte depende de confirmação da nossa equipe" in r.texto  # ressalva da preferência
     assert "a equipe confirma" in r.texto and "30 dias do defeito" in r.texto  # ressalva 30 x 90
     assert r.texto.count("?") == 1 and "verificar um pedido seu" in r.texto
     assert "Não entram em troca" not in r.texto and "não cobre:" not in r.texto  # listas ficam para o "sim"

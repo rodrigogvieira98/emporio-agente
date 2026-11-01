@@ -70,7 +70,7 @@ def sem_rolagem_horizontal(pagina) -> bool:
 def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     pagina = celular
     pagina.goto(f"{url_site}/produto/{CRAFTER}")
-    assert "nenhum pagamento é feito" in pagina.inner_text("main")
+    assert "Nenhum valor foi cobrado" in pagina.inner_text("main")
     assert sem_rolagem_horizontal(pagina)
     pagina.click(".btn-comprar")
 
@@ -92,17 +92,17 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     assert sem_rolagem_horizontal(pagina)
     pagina.locator("button:has-text('Finalizar')").click()
 
-    pagina.wait_for_url("**/pedido/DEMO-0001")
-    assert "DEMO-0001" in pagina.inner_text("main") and "nenhum pagamento é feito" in pagina.inner_text("main")
+    pagina.wait_for_url("**/pedido/PED-0001")
+    assert "PED-0001" in pagina.inner_text("main") and "Nenhum valor foi cobrado" in pagina.inner_text("main")
     assert sem_rolagem_horizontal(pagina)
     CAPTURAS.mkdir(parents=True, exist_ok=True)
     capturar(pagina, CAPTURAS / "compra_390.png")
 
     pagina.goto(f"{url_site}/rastreio")
-    pagina.fill("input[name=pedido]", "DEMO-0001")
+    pagina.fill("input[name=pedido]", "PED-0001")
     pagina.click("button:has-text('Consultar')")
     pagina.wait_for_load_state()
-    assert "DEMO-0001" in pagina.inner_text("main") and "demonstração" in pagina.inner_text("main")
+    assert "PED-0001" in pagina.inner_text("main") and "demonstração" in pagina.inner_text("main")
 
 
 def test_parcela_a_confirmar_bloqueia_a_finalizacao_em_390px(url_site, celular):

@@ -250,7 +250,7 @@ def integrar(estado: Estado, passo: Passo) -> None:
             estado.coletados["pedido"] = r.dados
         elif r.estado == "negado":
             estado.declarados.pop("pedido_id", None)  # pede de novo os dois dados
-    elif nome == "consultar_pedido_demo":  # pedido DEMO-: mesma conversa, sem telefone
+    elif nome == "consultar_pedido_demo":  # pedido PED-: mesma conversa, sem telefone
         if r.estado == "ok":
             estado.coletados["pedido_demo"] = r.dados
         elif r.estado == "negado":
@@ -268,7 +268,8 @@ def integrar(estado: Estado, passo: Passo) -> None:
             for c in s["condicoes"]:
                 if c["chave"] == chave:
                     estado.coletados["regra"] = {"objetivo": estado.objetivo, "chave": chave, "valor": c["valor"],
-                                                 "ambiguidades": [a["descricao"] for a in s["ambiguidades"]]}
+                                                 "ambiguidades": [a["descricao"] for a in s["ambiguidades"]],
+                                                 "ambiguidades_ids": [a["id"] for a in s["ambiguidades"]]}
         completar_datas(estado)
     elif nome == "registrar_encaminhamento" and r.estado == "ok":
         estado.coletados["protocolo"] = r.dados["protocolo"]

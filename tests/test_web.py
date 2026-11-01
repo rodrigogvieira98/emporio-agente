@@ -156,6 +156,7 @@ def test_chat_mensagem_vazia_ou_longa(cliente):
 
 def test_chat_responde_com_ollama_inacessivel(monkeypatch):
     monkeypatch.setenv("EMPORIO_MODELO", "qwen2.5:3b")
+    monkeypatch.setenv("EMPORIO_REDACAO", "1")
     monkeypatch.setenv("OLLAMA_HOST", "http://127.0.0.1:1")  # conexão recusada
     with TestClient(criar_app()) as c:
         r = c.post("/chat", data={"mensagem": "quero falar com um atendente"})

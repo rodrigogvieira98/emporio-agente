@@ -352,6 +352,7 @@ def test_fabrica_regras_decidem_e_modelo_so_redige(monkeypatch):
     from emporio.agente.fabrica import criar_agente
     from emporio.agente.regras import RegrasDecisor
 
+    monkeypatch.setenv("EMPORIO_REDACAO", "1")
     monkeypatch.setenv("EMPORIO_DECISOR", "regras")
     ag = criar_agente("falso:1b", ClienteFalso({"abertura": "Claro.", "fechamento": None}))
     assert isinstance(ag.decisor, RegrasDecisor) and ag.redator is not None and ag.concisao

@@ -72,7 +72,7 @@ Cinco conversas reais em [`exemplos/`](exemplos), geradas pelo próprio agente c
 - O manual tem ambiguidades (parcela mínima, frete de exatamente R$ 500, prazo da troca por preferência, 30 x 90 dias). A Lia mostra as duas leituras e encaminha para a equipe em vez de decidir.
 - Sem compra real nem pagamento.
 - O frete estimado fora de Campo Grande (PAC e SEDEX) é uma hipótese de simulação: as tabelas, caixas e pesos são suposições do protótipo e os valores não foram conferidos nos Correios, então não são tarifa nem prazo de transportadora.
-- Resposta com o modelo em CPU leva dezenas de segundos na primeira chamada; sem GPU, a redação pode ser desligada (`EMPORIO_REDACAO=0`). Com modelo e decisor de regras, o modelo também serve de reserva de intenção quando as regras não entendem a mensagem (lista fechada, sem chamado nem consulta de pedido); `EMPORIO_RESERVA=0` desliga.
+- Resposta com o modelo em CPU leva dezenas de segundos na primeira chamada; a redação livre vem desligada por padrão (`EMPORIO_REDACAO=1` liga). Com modelo e decisor de regras, o modelo também serve de reserva de intenção quando as regras não entendem a mensagem (lista fechada, sem chamado nem consulta de pedido); `EMPORIO_RESERVA=0` desliga.
 - PWA testado só em Chromium emulando celular.
 
 ## Uso de assistentes de código

@@ -130,3 +130,55 @@ def test_ela_usa_o_ultimo_produto_citado_nunca_o_mais_antigo():
     t = textos("Vi que o Martin D-28 tava com 15% de desconto na páscoa, ainda vale?",
                "poxa, e a Telecaster que tava na queima de estoque?", "tá bom, então me fala só quanto fica ela no pix")
     assert "Telecaster" in t[2] and "Martin" not in t[2]
+
+
+# 7. regra certa por tema ---------------------------------------------------------------------------
+
+def test_extravio_nao_cai_em_arrependimento():
+    t = textos("se o pedido nunca chegar, vcs devolvem o dinheiro?")
+    assert "arrependimento" not in t[0].lower() and "não tenho essa informação" in t[0].lower()
+
+
+def test_estorno_de_pedido_cancelado_responde_reembolso_do_cancelado():
+    t = textos("o pedido 17 foi cancelado, quero o estorno", "termina em 8765")
+    assert "cancelado" in t[1].lower() and "dias úteis" in t[1] and "arrependimento" not in t[1].lower()
+
+
+def test_reembolso_em_quanto_tempo_depois_de_consultar_cancelado():
+    t = textos("oi, por que cancelaram meu pedido 17?", "Telefone termina em 8765",
+               "vou receber meu dinheiro de volta quando?")
+    assert "cancelado" in t[2].lower() and "dias úteis" in t[2] and "arrependimento" not in t[2].lower()
+
+
+def test_dano_no_transporte_nao_vira_defeito():
+    t = textos("o entregador amassou a caixa do violão, é defeito?")
+    assert "recusar o recebimento" in t[0] and "troca por defeito" not in t[0]
+
+
+def test_pix_sobre_promocao_responde_direto():
+    t = textos("tem desconto no pix em produto na promoção?")
+    assert "não" in t[0].lower() and "promocion" in t[0].lower() and "Formas de pagamento" not in t[0]
+
+
+def test_pix_em_cima_do_preco_com_desconto_responde_direto():
+    t = textos("e se eu pagar no pix fica quanto em cima do preço com desconto?")
+    assert "promocion" in t[0].lower() and "Formas de pagamento" not in t[0]
+
+
+def test_segurar_preco_ate_sexta_responde_direto():
+    t = textos("consegue segurar esse preço pra mim até sexta? recebo só dia 5")
+    assert "não seguramos" in t[0].lower() and "marca e o modelo" not in t[0]
+
+
+@pytest.mark.parametrize("fala", ["quero excluir meus dados", "quero que apaguem meu cadastro, como faço?",
+                                  "não quero receber promoção, como paro?"])
+def test_excluir_dados_responde_a_secao_de_privacidade(fala):
+    (t,) = textos(fala)
+    assert "exclusão dos seus dados" in t and "Promoções ativas" not in t
+
+
+# 10. telefone termina em ----------------------------------------------------------------------------
+
+def test_telefone_termina_em_identifica_o_pedido():
+    t = textos("oi, por que cancelaram meu pedido 17?", "Telefone termina em 8765")
+    assert "Agora preciso dos 4 últimos" not in t[1] and "pedido 17" in t[1].lower()

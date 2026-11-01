@@ -63,3 +63,6 @@
 {"id":"c63","cat":"qa2","turnos":["Quanto fica o Tagima Memphis no pix?","fechado, pode por no carrinho"],"contem":["Tagima Memphis"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c64","cat":"qa2","turnos":["poxa, e a Telecaster que tava na queima de estoque?"],"contem":["Telecaster"],"nao_contem":["Não encontrei esse produto"],"chamado":false}
 {"id":"c65","cat":"qa2","turnos":["stratocaster ou telecaster? to em duvida"],"contem":["Stratocaster","Telecaster"],"chamado":false}
+{"id":"c66","cat":"qa2","turnos":["se o pedido nunca chegar, vcs devolvem o dinheiro?"],"contem":["não tenho essa informação"],"nao_contem":["arrependimento"],"chamado":false}
+{"id":"c67","cat":"qa2","turnos":["tem desconto no pix em produto na promoção?"],"contem":["promocional"],"nao_contem":["Formas de pagamento"],"chamado":false}
+{"id":"c68","cat":"qa2","turnos":["oi, por que cancelaram meu pedido 17?","Telefone termina em 8765","vou receber meu dinheiro de volta quando?"],"contem":["cancelado","dias úteis"],"nao_contem":["arrependimento"],"chamado":false}

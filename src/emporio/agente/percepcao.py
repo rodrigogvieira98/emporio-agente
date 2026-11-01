@@ -323,6 +323,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["empresa_foco"] = [k for k, p in (("fundacao", v.EMPRESA_FUNDACAO), ("cnpj", v.EMPRESA_CNPJ),
                                             ("razao", v.EMPRESA_RAZAO)) if p.search(norm)]
     slots["bandeira"] = bool(v.DEBITO_BANDEIRA.search(norm))
+    slots["pix_sobre_promocao"] = slots.get("forma") == "pix" and bool(v.PIX_SOBRE_PROMO.search(norm))
     slots["pergunta_prazo"] = bool(v.PERGUNTA_PRAZO.search(norm))
     slots["afirmativo"] = bool(v.AFIRMATIVO.search(norm))
     slots["negativo"] = bool(v.NEGATIVO.search(norm))
@@ -406,6 +407,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm):
         return "tentativa_manipulacao"
     tema = _tema_sem_info(norm)
+    if tema == "extravio" and slots.get("pedido_id"):
+        tema = None  # com o número do pedido, a consulta do pedido responde
     if tema and not slots.get("ingles") and not v.DADO_DE_TERCEIRO.search(norm):
         slots["tema_sem_info"] = tema
         return "sem_info"
@@ -418,6 +421,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.DADO_DE_TERCEIRO.search(norm):
         return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
+    if v.FINAL_EXPLICITO.search(norm) and "status_pedido" not in achadas:
+        achadas = [n for n in achadas if n != "contato"] or ["status_pedido"]  # "telefone termina em 8765" é o dado do pedido
     for flag, intencao in (("nega_atendente", "pedir_atendente"), ("nega_reclamacao", "reclamacao")):
         sobra = [n for n in achadas if n != intencao]
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale

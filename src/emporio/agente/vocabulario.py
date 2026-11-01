@@ -25,14 +25,14 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"vou avaliar|vou ver com calma|depois eu (vejo|volto|decido)|talvez depois|quero pensar)\b")),
     # seção 9 do manual: privacidade e dados pessoais (antes de "dado de terceiro" e de "fora de escopo")
     ("privacidade", re.compile(
-        r"\b(privacidade|lgpd|dados pessoais|(meus|nossos) dados|(excluir|apagar|deletar|remover) .{0,15}dados|"
+        r"\b(privacidade|lgpd|dados pessoais|(meus|nossos) dados|(exclu\w+|apag\w+|delet\w+|remov\w+|elimin\w+) .{0,20}(dados|cadastro|conta|informacoes)|(nao quero|parar de|deixar de|cancel\w+|sair d\w+) .{0,25}(receber|recebo|recebendo) .{0,12}(promoc\w+|novidades|e-?mails?|mensagens|ofertas)|(nao quero|parar de) .{0,6}receber promoc\w+|"
         r"compartilh\w+ .{0,15}dados)\b")),
     ("empresa_dados", re.compile(
         r"\b(desde quando (a loja|voces|vcs|existe|funciona)|quando (a loja )?(foi )?(fundad\w+|criad\w+|aberta)|"
         r"fundad[oa]|fundacao|razao social|cnpj|quantos anos (a loja|de loja|de mercado|de atuacao)|"
         r"ha quanto tempo (a loja|voces|vcs) (existe|funciona|atua\w*))\b")),
     ("rain_check", re.compile(
-        r"\b(rain check|segurar (o )?(preco|valor|promocao)|garantir (o )?(preco|valor) da promocao|"
+        r"\b(rain check|(segurar|guardar|reservar|congelar|manter) (o |esse |este |isso |meu |nesse )?(preco|valor|promocao)|garantir (o )?(preco|valor) da promocao|"
         r"manter (o )?(preco|valor) da promocao|reservar (o )?(preco|valor)|congelar (o )?(preco|valor))\b")),
     ("devolucao_frete", re.compile(r"\b(frete\b.{0,40}\bdevol\w*|devol\w*.{0,40}\bfrete)\b")),
     ("rastreio_como", re.compile(
@@ -56,7 +56,8 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
     ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno|dinheiro de volta)\b")),
     ("defeito", re.compile(
-        r"\b(defeit\w*|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
+        r"\b(defeit\w*|(entregador|transportadora|motoboy|carteiro)\b.{0,40}\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)|"
+        r"(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)\b.{0,25}\bno (transporte|caminho|frete|envio)|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
         r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*|"
         r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
         r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
@@ -119,6 +120,9 @@ SEM_INFO = (
         r"\b((compr\w+|aceit\w+|vend\w+|troc\w+|recebem|pegam|negoci\w+)\b.{0,30}\b(usad[oa]s?|seminov[oa]s?|segunda mao)|"
         r"(usad[oa]s?|seminov[oa]s?|segunda mao)\b.{0,25}\b(voces|vcs|a loja)\b.{0,15}\b(compr\w+|aceit\w+|vend\w+))\b")),
     ("nota fiscal", re.compile(r"\b(nota fiscal|notas fiscais|nf-?e|nfe|danfe|nota no cnpj|nota em nome)\b")),
+    ("extravio", re.compile(
+        r"\b(extravi\w+|(se|caso) (o pedido |ele |ela |a encomenda |o produto )?(nao|nunca) chegar\w*|nunca chegou|"
+        r"pedido (se )?perd\w+|perdeu (o )?pedido)\b")),
     ("seguro", re.compile(
         r"\b(seguro (cobre|cobrem|contra|do produto|do instrumento|de roubo|de queda)|(tem|ha|existe|contrat\w+|fazer|faz) (um )?seguro|o seguro)\b")),
 )
@@ -228,7 +232,7 @@ ESTADO_RUIM = re.compile(
 
 DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b")
 PEDIDO_EXPLICITO = re.compile(r"\b(?:pedido|numero|nro|num)\s*(?:no\s*|n\s*)?#?\s*(\d{1,6})\b|#\s*(\d{1,6})\b")
-FINAL_EXPLICITO = re.compile(r"\b(?:final|ultimos|terminad\w*|terminando)\s*(?:em|com|de|do telefone|e)?\s*(\d{4})\b")
+FINAL_EXPLICITO = re.compile(r"\b(?:final|ultimos|termina|terminad\w*|terminando|acaba|acabando)\s*(?:em|com|de|do telefone|e)?\s*(\d{4})\b")
 TELEFONE_COMPLETO = re.compile(r"\(?\b\d{2}\)?[\s.-]*9?\d{4}[\s.-]?\d{4}\b")
 
 # Pedidos que o agente recusa sem consultar nada.
@@ -254,6 +258,8 @@ NEGA_MAU_USO = re.compile(
     r"(caiu|cair|queda|quedas|derrub\w+|molhou|molhad[oa]|umidade|chuva|bati|batida|mau uso)\b|"
     r"\b(?:nao|nunca)\s+(?:caiu|cai|bati|molhou)\b")
 AVARIA = re.compile(
+    r"\b(entregador|transportadora|motoboy|carteiro|transporte)\b.{0,40}\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+|derrub\w+|avari\w+)|"
+    r"\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)\b.{0,25}\bno (transporte|caminho|frete|envio)\b|"
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
     r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*|"
     r"\b(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
@@ -307,6 +313,7 @@ DIAS_DESDE_COMPRA =re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passar
 EMPRESA_CNPJ = re.compile(r"\b(cnpj)\b")
 EMPRESA_RAZAO = re.compile(r"\b(razao social)\b")
 EMPRESA_FUNDACAO = re.compile(r"\b(desde quando|fundad\w+|fundacao|quantos anos|ha quanto tempo|quando (a loja )?(foi )?criad\w+)\b")
+PIX_SOBRE_PROMO = re.compile(r"\b(promoc\w+|promociona\w+|em oferta|com desconto|ja tem desconto|em liquidacao)\b")
 DEBITO_BANDEIRA = re.compile(r"\bbandeiras?\b")
 
 # Intenção de compra ("quero comprar o Yamaha C40"): o texto segue sendo o preço; o botão de carrinho é gerado por código.

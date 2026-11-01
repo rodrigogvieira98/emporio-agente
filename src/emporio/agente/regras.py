@@ -271,9 +271,10 @@ class RegrasDecisor:
                 return acao
         regra = estado.coletados.get("regra")
         # exclusão citada vale em qualquer ponto da troca (QA 2): depois da regra, só se a fala traz palavra nova
-        if (not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo)) or (
-                estado.slots.get("desconhecidas") and not any(
-                    k in estado.slots for k in ("pedido_id", "final_telefone")) and not estado.slots.get("datas")):
+        traz_dado = any(k in estado.slots for k in ("pedido_id", "final_telefone")) or bool(estado.slots.get("datas"))
+        if (not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo)
+                and not (traz_dado and estado.aguardando == "pedido")) or (
+                estado.slots.get("desconhecidas") and not traz_dado):
             acao = self._item_nao_elegivel(estado)
             if acao:
                 return acao
@@ -380,6 +381,11 @@ class RegrasDecisor:
         return responder("recusa_instrucoes")
 
     def _i_reembolso_prazo(self, estado: Estado) -> Acao:
+        if (estado.coletados.get("pedido") or {}).get("status") == "cancelled":  # estorno de pedido cancelado
+            r = resultado_de(estado, "consultar_politica", temas=["arrependimento"])
+            if r is None:
+                return ferramenta("consultar_politica", temas=["arrependimento"])
+            return responder("reembolso_cancelado") if r.estado == "ok" else self._erro(estado, r)
         return self._info(estado, ["arrependimento"], "reembolso_prazo")
 
     def _i_previsao_entrega(self, estado: Estado) -> Acao:
@@ -405,6 +411,8 @@ class RegrasDecisor:
         return self._info(estado, ["contato"], "contato")
 
     def _i_pagamento(self, estado: Estado) -> Acao:
+        if estado.slots.get("pix_sobre_promocao"):  # PIX em cima de preço promocional: regra de cumulatividade (seção 6)
+            return self._info(estado, ["promocoes"], "pix_sobre_promocao")
         return self._info(estado, ["pagamento"], "pagamento")
 
     def _i_fora_escopo(self, estado: Estado) -> Acao:

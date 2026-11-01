@@ -1042,6 +1042,14 @@ def sem_dado(e: Estado, p: dict) -> str:
             f"Quer que eu registre a dúvida para a equipe? {CONFIRMA}")
 
 
+def pix_sobre_promocao(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    if c.get("promocoes.pix_sobre_preco_promocional") is not False:
+        return sem_dado(e, p)
+    return ("Não: o desconto do PIX não se aplica sobre preço promocional. Produto em promoção vale o preço "
+            "promocional, e o desconto do PIX só vale para produto sem promoção.")
+
+
 def sem_info(e: Estado, p: dict) -> str:
     tema = p.get("tema") or "esse assunto"
     return (f"Não tenho essa informação sobre {tema}, então prefiro não afirmar nada. "
@@ -1303,7 +1311,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         fora_escopo, garantia_info, busca, pedir_categoria, pedir_produto, produto_nao_encontrado, escolha_produto,
         disponibilidade, preco, preco_promocao_conflitante, pedir_pedido, pedido_negado, pedido_negado_limite,
         status_pedido, status_pedido_demo, pedido_demo_negado, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
-        negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado, sem_info,
+        negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado, sem_info, pix_sobre_promocao,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,

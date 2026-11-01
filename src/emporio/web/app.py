@@ -30,6 +30,7 @@ from starlette.exceptions import HTTPException as ErroHTTP
 from .. import config
 from ..agente import llm
 from ..agente.fabrica import criar_agente
+from ..agente.laco import Agente
 from ..ferramentas.condicoes import calcular_condicoes
 from ..ferramentas.pedido_demo import PREFIXO as PREFIXO_PEDIDO, achar_numero, consultar_pedido_demo
 from ..ferramentas.pedidos import consultar_pedido
@@ -187,7 +188,13 @@ def criar_app(agente: Any = None) -> FastAPI:
     def obter_agente() -> Any:
         with trava_criacao:
             if app.state.agente is None:
-                app.state.agente = criar_agente(llm.modelo_padrao())
+                try:
+                    modelo = llm.modelo_padrao()
+                except llm.ErroModelo:  # provedor mal configurado: a Lia segue só com as regras
+                    log.warning("provedor de modelo inválido; seguindo só com as regras")
+                    app.state.agente = Agente()
+                    return app.state.agente
+                app.state.agente = criar_agente(modelo)
             return app.state.agente
 
     def pagina(request: Request, nome: str, status: int = 200, **contexto: Any) -> HTMLResponse:

@@ -39,8 +39,8 @@
     "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
   },
   {
-    "chave": "guitarra-corpo-1",
-    "arquivo": "guitarra-corpo-1.webp",
+    "chave": "guitarra-stratocaster",
+    "arquivo": "guitarra-stratocaster.webp",
     "largura": 800,
     "altura": 600,
     "alt": "Guitarra elétrica de corpo duplo e três captadores, de frente",
@@ -52,8 +52,8 @@
     "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
   },
   {
-    "chave": "guitarra-corpo-2",
-    "arquivo": "guitarra-corpo-2.webp",
+    "chave": "guitarra-corpo-1",
+    "arquivo": "guitarra-corpo-1.webp",
     "largura": 800,
     "altura": 600,
     "alt": "Guitarra elétrica preta de corpo duplo, de frente",
@@ -65,8 +65,8 @@
     "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
   },
   {
-    "chave": "guitarra-corpo-3",
-    "arquivo": "guitarra-corpo-3.webp",
+    "chave": "guitarra-corpo-2",
+    "arquivo": "guitarra-corpo-2.webp",
     "largura": 800,
     "altura": 600,
     "alt": "Guitarra elétrica sunburst de corpo único, de frente",
@@ -88,6 +88,19 @@
     "licenca": "CC BY-SA 4.0",
     "link_licenca": "https://creativecommons.org/licenses/by-sa/4.0",
     "link_origem": "https://commons.wikimedia.org/wiki/File:Gitara_elektryczna_Les_Paul_Slash_%22Apetite_For_Destruction%22_firmy_Gibson.jpg",
+    "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
+  },
+  {
+    "chave": "guitarra-telecaster",
+    "arquivo": "guitarra-telecaster.webp",
+    "largura": 800,
+    "altura": 600,
+    "alt": "Guitarra elétrica de corpo único em madeira clara e escudo preto, de frente",
+    "titulo": "Fender Telecaster American Vintage 1952 transparent",
+    "autor": "Massimo Barbieri",
+    "licenca": "CC BY-SA 3.0",
+    "link_licenca": "https://creativecommons.org/licenses/by-sa/3.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Fender_Telecaster_American_Vintage_1952_transparent.png",
     "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
   },
   {
@@ -160,26 +173,26 @@
     "arquivo": "ukulele-1.webp",
     "largura": 800,
     "altura": 600,
-    "alt": "Ukulele amarelo sobre fundo branco",
-    "titulo": "CreativeTools.se - PackshotCreator - Mahalo ukulele (5077880957)",
-    "autor": "Creative Tools from Halmstad, Sweden",
-    "licenca": "CC BY 2.0",
-    "link_licenca": "https://creativecommons.org/licenses/by/2.0",
-    "link_origem": "https://commons.wikimedia.org/wiki/File:CreativeTools.se_-_PackshotCreator_-_Mahalo_ukulele_(5077880957).jpg",
-    "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
+    "alt": "Ukulele soprano de madeira natural, de frente",
+    "titulo": "Soprano Ukulele",
+    "autor": "Lardyfatboy",
+    "licenca": "CC BY-SA 4.0",
+    "link_licenca": "https://creativecommons.org/licenses/by-sa/4.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Soprano_Ukulele.JPG",
+    "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto."
   },
   {
     "chave": "ukulele-2",
     "arquivo": "ukulele-2.webp",
     "largura": 800,
     "altura": 600,
-    "alt": "Ukulele soprano de madeira clara, de frente",
-    "titulo": "Mahalo Soprano Ukulele",
-    "autor": "Melissa Ursula Dawn Goldsmith",
+    "alt": "Ukulele de madeira escura de tom mogno, de frente",
+    "titulo": "Tenor Ukulele",
+    "autor": "Lardyfatboy",
     "licenca": "CC BY-SA 4.0",
     "link_licenca": "https://creativecommons.org/licenses/by-sa/4.0",
-    "link_origem": "https://commons.wikimedia.org/wiki/File:Mahalo_Soprano_Ukulele.jpg",
-    "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Tenor_Ukulele.JPG",
+    "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto."
   },
   {
     "chave": "abertura",

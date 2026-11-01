@@ -29,7 +29,8 @@
 @media (min-width: 768px) { :root { --lateral: var(--s8); } }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* o botão flutuante da Lia fica na base da tela: rolagem por foco ou âncora e o fim da página nunca param debaixo dele */
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 6rem; }
 body { margin: 0; font: 400 16px/1.55 var(--texto); color: var(--tinta); background: var(--papel); overflow-wrap: break-word; }
 img, svg { max-width: 100%; }
 img { height: auto; }
@@ -239,7 +240,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 @media (min-width: 1024px) { .intencoes { grid-template-columns: repeat(4, 1fr); } }
 
 /* rodapé enxuto */
-.rodape { background: var(--tinta); color: var(--papel); padding-top: var(--s10); font-size: .9375rem; margin-top: var(--s10); }
+.rodape { background: var(--tinta); color: var(--papel); padding-top: var(--s10); padding-bottom: calc(var(--s4) * 2 + 3.25rem + env(safe-area-inset-bottom)); font-size: .9375rem; margin-top: var(--s10); }
 .rodape a { color: var(--papel); }
 .rodape-grade { display: grid; gap: var(--s6); }
 .rodape-marca { font: 700 1.5rem/1.2 var(--titulo); margin-bottom: var(--s2); }

@@ -34,14 +34,16 @@ FOTOS: tuple[dict[str, Any], ...] = (
      "alt": "Violão folk com cordas de aço, de frente"},
     {"chave": "violao-eletroacustico-1", "titulo": "Gitara elektro-akustyczna GLA-T100 ACE Tramontane firmy Lag.jpg", "giro": -60,
      "alt": "Violão eletroacústico com corte lateral, de frente"},
-    {"chave": "guitarra-corpo-1", "titulo": "Fender Stratocaster 004-2.jpg", "giro": -60,
+    {"chave": "guitarra-stratocaster", "titulo": "Fender Stratocaster 004-2.jpg", "giro": -60,
      "alt": "Guitarra elétrica de corpo duplo e três captadores, de frente"},
-    {"chave": "guitarra-corpo-2", "titulo": "Gitara elektryczna Pacifica 112-VCX firmy Yamaha.jpg", "giro": -60,
+    {"chave": "guitarra-corpo-1", "titulo": "Gitara elektryczna Pacifica 112-VCX firmy Yamaha.jpg", "giro": -60,
      "alt": "Guitarra elétrica preta de corpo duplo, de frente"},
-    {"chave": "guitarra-corpo-3", "titulo": "Gitara elektryczna Variax JTV59 CSB firmy Line 6.jpg", "giro": -60,
+    {"chave": "guitarra-corpo-2", "titulo": "Gitara elektryczna Variax JTV59 CSB firmy Line 6.jpg", "giro": -60,
      "alt": "Guitarra elétrica sunburst de corpo único, de frente"},
     {"chave": "guitarra-les-paul", "titulo": 'Gitara elektryczna Les Paul Slash "Apetite For Destruction" firmy Gibson.jpg', "giro": -60,
      "alt": "Guitarra elétrica de corpo único em acabamento sunburst, de frente"},
+    {"chave": "guitarra-telecaster", "titulo": "Fender Telecaster American Vintage 1952 transparent.png", "giro": -60,
+     "alt": "Guitarra elétrica de corpo único em madeira clara e escudo preto, de frente"},
     {"chave": "baixo-1", "titulo": "Gitara basowa PBG2T sygn. Paul Grey firmy Ibanez.jpg", "giro": -60,
      "alt": "Baixo elétrico de quatro cordas, de frente"},
     {"chave": "baixo-2", "titulo": "Gitara basowa Road Worn 50's P-Bass firmy Fender.jpg", "giro": -60,
@@ -53,10 +55,10 @@ FOTOS: tuple[dict[str, Any], ...] = (
      "alt": "Teclado controlador de 37 teclas visto de cima"},
     {"chave": "teclado-2", "titulo": "Masterkeyboard.png", "giro": 0,
      "alt": "Teclado de palco azul com teclas brancas e pretas, em perspectiva"},
-    {"chave": "ukulele-1", "titulo": "CreativeTools.se - PackshotCreator - Mahalo ukulele (5077880957).jpg", "giro": 0, "recorte": (0.0, 0.0, 1.0, 0.84), "tolerancia": 40,
-     "alt": "Ukulele amarelo sobre fundo branco"},
-    {"chave": "ukulele-2", "titulo": "Mahalo Soprano Ukulele.jpg", "giro": -60, "tolerancia": 60,
-     "alt": "Ukulele soprano de madeira clara, de frente"},
+    {"chave": "ukulele-1", "titulo": "Soprano Ukulele.JPG", "giro": -60, "tolerancia": 120, "bordas": True, "clarear": 215, "borrar": ((682, 76, 722, 138),),
+     "alt": "Ukulele soprano de madeira natural, de frente"},
+    {"chave": "ukulele-2", "titulo": "Tenor Ukulele.JPG", "giro": -60, "tolerancia": 110, "bordas": True, "clarear": 215, "borrar": ((620, 112, 700, 146),),
+     "alt": "Ukulele de madeira escura de tom mogno, de frente"},
     {"chave": "abertura", "titulo": "Kytara a ruka.jpg", "giro": 0, "recorte": (0.0, 0.30, 1.0, 0.80), "cobrir": True,
      "alt": "Mão tocando as cordas de um violão de acabamento sunburst"},
 )
@@ -96,12 +98,18 @@ def metadados(titulos: list[str]) -> dict[str, dict[str, str]]:
     return saida
 
 
-def _fundo_branco(im, tolerancia: int = 28):
+def _fundo_branco(im, tolerancia: int = 28, todas_as_bordas: bool = False):
     """Leva o fundo quase branco (borda da foto) a branco puro, para a rotação não deixar moldura."""
     from PIL import Image, ImageDraw
     im = im.convert("RGB")
-    for canto in ((0, 0), (im.width - 1, 0), (0, im.height - 1), (im.width - 1, im.height - 1)):
-        ImageDraw.floodfill(im, canto, (255, 255, 255), thresh=tolerancia)
+    sementes = [(0, 0), (im.width - 1, 0), (0, im.height - 1), (im.width - 1, im.height - 1)]
+    if todas_as_bordas:  # fundo com degradê: parte de vários pontos de toda a borda
+        passo = max(1, min(im.size) // 12)
+        sementes += [(x, y) for x in range(0, im.width, passo) for y in (0, im.height - 1)]
+        sementes += [(x, y) for y in range(0, im.height, passo) for x in (0, im.width - 1)]
+    for ponto in sementes:
+        if sum(im.getpixel(ponto)) > 3 * 200:  # só semeia onde a borda é clara; nunca dentro do instrumento
+            ImageDraw.floodfill(im, ponto, (255, 255, 255), thresh=tolerancia)
     return im
 
 
@@ -129,9 +137,14 @@ def processar(caminho: Path, f: dict[str, Any]):
         im = im.resize((round(im.width * escala), round(im.height * escala)), Image.LANCZOS)
         e, t = (im.width - LARGURA) // 2, (im.height - ALTURA) // 2
         return im.crop((e, t, e + LARGURA, t + ALTURA))
-    im = _fundo_branco(im, f.get("tolerancia", 28))
+    im = _fundo_branco(im, f.get("tolerancia", 28), f.get("bordas", False))
     if f.get("giro"):
         im = im.rotate(f["giro"], expand=True, resample=Image.BICUBIC, fillcolor=(255, 255, 255))
+    if f.get("clarear"):  # resto de fundo quase branco que o preenchimento não alcançou
+        from PIL import ImageChops
+        r, g, b = im.split()
+        claro = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda v: 255 if v >= f["clarear"] else 0)
+        im.paste((255, 255, 255), mask=claro)
     im = _aparar(im)
     margem = 0.07
     escala = min(LARGURA * (1 - 2 * margem) / im.width, ALTURA * (1 - 2 * margem) / im.height)
@@ -140,7 +153,18 @@ def processar(caminho: Path, f: dict[str, Any]):
     quadro.paste(im, ((LARGURA - im.width) // 2, (ALTURA - im.height) // 2))
     for caixa in f.get("tapar", ()):  # logotipo do fabricante: cobre com a cor do entorno, para a foto não contradizer o produto
         _tapar(quadro, caixa)
+    for caixa in f.get("borrar", ()):  # logotipo em madeira: desfoca com borda suave, sem remendo de cor chapada
+        _borrar(quadro, caixa)
     return quadro
+
+
+def _borrar(quadro, caixa: tuple[int, int, int, int]) -> None:
+    from PIL import Image, ImageFilter
+    e, t, d, b = caixa
+    trecho = quadro.crop(caixa).filter(ImageFilter.GaussianBlur(12))
+    mascara = Image.new("L", (d - e, b - t), 0)
+    mascara.paste(255, (3, 3, d - e - 3, b - t - 3))
+    quadro.paste(trecho, (e, t), mascara.filter(ImageFilter.GaussianBlur(2)))
 
 
 def _tapar(quadro, caixa: tuple[int, int, int, int]) -> None:
@@ -177,7 +201,7 @@ def main(pasta: Path) -> None:
                          "link_origem": m["link_origem"],
                          "alteracoes": ("Recortada e ajustada ao quadro 4:3." if f.get("cobrir") else
                                         "Recortada, girada e ajustada ao quadro 4:3 em fundo branco."
-                                        + (" Logotipo do fabricante coberto." if f.get("tapar") else ""))})
+                                        + (" Logotipo do fabricante coberto." if f.get("tapar") or f.get("borrar") else ""))})
         print(arquivo, tamanho // 1024, "KB")
     (SAIDA / "creditos.json").write_text(json.dumps(creditos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     doc = Path(__file__).resolve().parents[3] / "docs" / "CREDITOS_IMAGENS.md"

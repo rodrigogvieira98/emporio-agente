@@ -179,30 +179,44 @@ def test_lia_abre_conversa_e_fecha_sem_abrir_sozinha(url_site, navegador, largur
     assert pagina.evaluate("document.documentElement.scrollWidth") <= largura
 
 
-def test_botao_da_lia_nao_cobre_a_acao_de_compra_no_celular(url_site, navegador):
-    pagina = _pagina(navegador, 390, 800)
-    pagina.goto(url_site + "/produto/95")
-    pagina.locator(".btn-comprar").scroll_into_view_if_needed()
-    comprar, lia = pagina.locator(".btn-comprar").bounding_box(), pagina.locator("#chat-alternar").bounding_box()
-    sobrepoe = not (comprar["x"] + comprar["width"] <= lia["x"] or lia["x"] + lia["width"] <= comprar["x"]
-                    or comprar["y"] + comprar["height"] <= lia["y"] or lia["y"] + lia["height"] <= comprar["y"])
-    if sobrepoe:  # rolando até o fim o botão de compra precisa ficar livre
-        pagina.evaluate("window.scrollTo(0, 0)")
-        comprar = pagina.locator(".btn-comprar").bounding_box()
-        assert comprar["y"] + comprar["height"] < lia["y"] or comprar["y"] > lia["y"] + lia["height"]
+def _sobrepoe(a: dict, b: dict) -> bool:
+    return not (a["x"] + a["width"] <= b["x"] or b["x"] + b["width"] <= a["x"]
+                or a["y"] + a["height"] <= b["y"] or b["y"] + b["height"] <= a["y"])
+
+
+@pytest.mark.parametrize("largura", LARGURAS)
+def test_botao_da_lia_nao_cobre_acao_de_compra_nem_o_fim_da_pagina(url_site, navegador, largura):
+    pagina = _pagina(navegador, largura, 800)
+    for caminho in ("/produto/95", "/carrinho", "/checkout", "/catalogo"):
+        pagina.goto(url_site + caminho)
+        lia = pagina.locator("#chat-alternar").bounding_box()
+        for seletor in (".btn-comprar", ".btn-compra", "form button[type=submit]"):
+            alvo = pagina.locator(seletor)
+            if not alvo.count() or not alvo.first.is_visible():
+                continue
+            alvo.first.focus()  # foco por teclado rola o elemento; ele não pode parar debaixo do botão
+            assert not _sobrepoe(alvo.first.bounding_box(), lia), (caminho, seletor)
+        pagina.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+        pagina.wait_for_timeout(100)
+        for texto in pagina.locator(".rodape a, .rodape p").all():
+            caixa = texto.bounding_box()
+            assert not caixa or not _sobrepoe(caixa, lia), (caminho, texto.inner_text()[:40])
 
 
 @pytest.mark.parametrize("largura", LARGURAS)
 def test_sugestoes_da_lia_recebem_resposta_util(url_site, navegador, largura):
     pagina = _pagina(navegador, largura)
-    esperado = {"Encontrar instrumento": r"opções|R\$ \d", "Consultar pedido": r"pedido|número",
+    esperado = {"Encontrar instrumento": r"Qual tipo de instrumento|opções|R\$ \d", "Consultar pedido": r"pedido|número",
                 "Trocas e devoluções": r"\d+ dias|troca|devolu"}
     for rotulo, padrao in esperado.items():
         pagina.goto(url_site + "/")
         pagina.click("#chat-alternar")
         antes = pagina.locator("#chat-log .msg.lia").count()
-        pagina.click(f"#chat .chat-sugestoes button:has-text('{rotulo}')")
+        botao = pagina.locator(f"#chat .chat-sugestoes button:has-text('{rotulo}')")
+        enviada = botao.get_attribute("data-pergunta")
+        botao.click()
         pagina.wait_for_function(f"document.querySelectorAll('#chat-log .msg.lia').length > {antes}", timeout=20000)
+        assert pagina.locator("#chat-log .msg.voce").last.inner_text().strip() == enviada  # o texto enviado é o do botão
         resposta = pagina.locator("#chat-log .msg.lia").last.inner_text()
         assert len(resposta) > 25 and re.search(padrao, resposta, re.I), (rotulo, resposta)
         assert "Não consegui" not in resposta, (rotulo, resposta)

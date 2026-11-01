@@ -279,6 +279,24 @@ def test_cartoes_da_vitrine_nao_ficam_todos_iguais():
     assert len(usadas) >= 8
 
 
+def test_foto_de_formato_conhecido_segue_o_nome_do_modelo():
+    chave = lambda nome, cat="Guitarras": fotos.foto_do_produto(1, nome, cat)["chave"]  # noqa: E731
+    assert chave("Fender Telecaster Player Series") == "guitarra-telecaster"
+    assert chave("Fender Stratocaster American Pro II") == "guitarra-stratocaster"
+    assert chave("Gibson Les Paul Standard '50s") == "guitarra-les-paul"
+    assert chave("Ibanez RG550 Genesis Collection") not in {"guitarra-telecaster", "guitarra-les-paul", "guitarra-stratocaster"}
+    assert chave("Fender Precision Bass", "Baixos") == "baixo-2"
+    assert chave("Ibanez Bass 2X Electric Bass", "Baixos") == "baixo-1"
+    assert chave("Kala KA-15S Soprano Mogno", "Ukuleles") != chave("Kala KA-T Tenor Mogno", "Ukuleles")
+
+
+def test_ukuleles_sao_de_madeira_natural_sem_foto_amarela():
+    uk = fotos.creditos()
+    chaves = [c for c in uk if c.startswith("ukulele")]
+    assert len(chaves) >= 2
+    assert all("amarel" not in uk[c]["alt"].lower() for c in chaves)
+
+
 def test_toda_imagem_tem_credito_licenca_livre_e_ate_200kb():
     pasta = WEB / "static" / "fotos"
     creditos = json.loads((pasta / "creditos.json").read_text(encoding="utf-8"))

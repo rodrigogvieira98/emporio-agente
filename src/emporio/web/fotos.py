@@ -46,12 +46,25 @@ def _chave_do_produto(produto_id: int, nome: str, categoria: str | None) -> str 
             return _escolher("violao-nylon", produto_id)
         return _escolher("violao-folk", produto_id)
     if "ukulele" in c or "ukulele" in n:
+        # o tamanho no nome decide: soprano usa a foto de soprano; os maiores usam a de corpo maior
+        if "soprano" in n and "ukulele-1" in creditos():
+            return "ukulele-1"
+        if any(t in n for t in ("concert", "tenor", "baritono")) and "ukulele-2" in creditos():
+            return "ukulele-2"
         return _escolher("ukulele", produto_id)
     if "guitarra" in c:
-        if "les paul" in n:
-            return "guitarra-les-paul" if "guitarra-les-paul" in creditos() else _escolher("guitarra", produto_id)
+        # formato conhecido pelo nome: a foto do mesmo formato, quando o catálogo de fotos tem
+        for trecho, chave in (("telecaster", "guitarra-telecaster"), ("les paul", "guitarra-les-paul"),
+                              ("stratocaster", "guitarra-stratocaster")):
+            if trecho in n and chave in creditos():
+                return chave
         return _escolher("guitarra-corpo", produto_id) or _escolher("guitarra", produto_id)
     if "baix" in c:
+        # Precision e Jazz Bass têm foto do formato quando existe; os demais variam entre as fotos de baixo
+        if "precision" in n and "baixo-2" in creditos():
+            return "baixo-2"
+        if "ibanez" in n and "baixo-1" in creditos():
+            return "baixo-1"
         return _escolher("baixo", produto_id)
     if "bateria" in c or "percussao" in c:
         return _escolher("bateria", produto_id)

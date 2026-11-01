@@ -280,6 +280,8 @@ A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-con
 
 A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé deixa de repetir canais: a coluna "Atendimento" sai, assim como "Todos os canais", e ficam nome, endereço, "Comprar" e "Informações". O rótulo "Falar com a loja" deixa de existir.
 
+**Rodapé sem dados de contato.** Decisão do Rodrigo, que prevalece sobre "Endereço só no rodapé" e sobre os itens acima que mantêm o endereço no rodapé. Dado de contato fica em um lugar só. O rodapé mostra nome da loja, as colunas de links "Comprar" e "Informações" e nenhum endereço, telefone, e-mail ou WhatsApp. O endereço aparece apenas em `/fale-conosco`, no card ao lado do formulário, que passa a se chamar "Onde estamos e horários", e na página offline. O telefone aparece na faixa e em `/fale-conosco`, nunca nas duas ao mesmo tempo, porque a faixa não aparece nessa página.
+
 **Fale conosco sai do cabeçalho.** Decisão do Rodrigo. O link deixa o menu do cabeçalho, no computador e no celular. O acesso passa a ser pela faixa e por um link "Fale conosco" na coluna "Informações" do rodapé.
 
 **Página `/fale-conosco` refeita.** A versão atual foi reprovada pelo Rodrigo. Ela empilha blocos soltos, deixa metade da tela vazia e repete "Deixar uma mensagem". Novo desenho, na mesma linguagem visual da faixa:

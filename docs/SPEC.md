@@ -432,6 +432,14 @@ Lacunas encontradas pela auditoria de conformidade em 01/11/2026, no modo autôn
 
 Fica como limitação declarada no README: saudação pelo nome (escolha de privacidade), uso de `specs` em filtros e comparação, paginação de "mais opções" no chat.
 
+## Ajustes finais de tela (etapa 12)
+
+Pedidos do Rodrigo em 01/11/2026.
+- Perguntas frequentes da home ocupam a mesma largura da faixa de contato, e "Ver todas as perguntas" fica alinhado à direita do título, como nas demais seções, sem ficar solto.
+- A mensagem do cliente aparece no chat assim que é enviada, com o campo limpo, e só depois vem o indicador "A Lia está respondendo..." e a resposta. Sem duplicar a mensagem ao chegar a resposta. Se a mensagem falhar (sem rede ou ocupada), a bolha sai e o texto volta ao campo.
+- O botão "Fechar" da Lia deixa de existir: fecha-se clicando fora, com Esc, ou no botão da Lia. No celular o painel deixa de ser tela cheia e reserva uma faixa superior visível da página, para o toque fora funcionar, com o campo acima do teclado. Isso substitui "Lia em tela cheia abaixo de 768px".
+- O rótulo "Pedido de demonstração" no pedido e no rastreio vira "Pedido", porque o site não anuncia que é teste; o aviso do checkout segue como está.
+
 ## QA de conversas da Lia (etapa 11)
 
 59 conversas simuladas em 01/11/2026 (220 turnos): contas sempre corretas e nenhum vazamento, mas 59% dos turnos com problema de entendimento, contexto ou fluxo. Correções gerais, por intenção e estado, nunca por frase. Transcrições em `scratchpad/qa_lia` (fora do repositório). Prioridade na ordem abaixo; o que não couber até as 18h30 fica como limitação declarada.

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="contorno pagina pagina-estreita">
+<h1>Perguntas frequentes</h1>
+<p class="lead">Respostas rápidas sobre pagamento, entrega, trocas e garantia. Não achou o que procurava? <a href="/fale-conosco">Fale conosco</a> ou converse com a Lia.</p>
+{% for g in grupos %}
+<section class="faq-grupo" aria-labelledby="faq-{{ loop.index }}">
+  <h2 id="faq-{{ loop.index }}">{{ g.tema }}</h2>
+  <div class="faq">
+  {% for f in g.itens %}
+    <details class="faq-item"><summary>{{ f.pergunta }}</summary><p>{{ f.resposta }}</p></details>
+  {% endfor %}
+  </div>
+</section>
+{% endfor %}
+</div>
+{% endblock %}

@@ -1,10 +1,12 @@
 {% extends "base.html" %}
-{% block titulo %}{{ p.nome }}{% endblock %}
 {% block conteudo %}
 <div class="contorno pagina">
-<p class="migalha"><a href="/catalogo">Voltar ao catálogo</a></p>
+<p class="migalha"><a href="/">Início</a> / <a href="/catalogo">Catálogo</a>{% if categoria %} / <a href="/catalogo?categoria={{ categoria | urlencode }}">{{ categoria }}</a>{% endif %} / <span aria-current="page">{{ p.nome }}</span></p>
 <div class="produto-grade">
-  <div class="produto-arte"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg></div>
+  <div class="produto-arte">
+    {% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="{{ p.foto.alt }}" decoding="async">
+    {% else %}<svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>{% endif %}
+  </div>
   <div class="produto-info">
     {% if categoria %}<p class="categoria">{{ categoria }}</p>{% endif %}
     <h1>{{ p.nome }}</h1>
@@ -12,9 +14,14 @@
       {% include "_preco.html" %}
       <p class="et-selo"><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>
     </div>
-    {% if descricao %}<p class="descricao">{{ descricao }}</p>{% endif %}
     {% if p.pode_comprar %}
-      <p class="aviso aviso-demo"><strong>{{ aviso_demo }}</strong> O estoque não é baixado.</p>
+      {% if condicoes %}
+      <h2>Formas de pagamento</h2>
+      <ul class="condicoes">
+        {% for c in condicoes.a_vista %}<li>{{ c.forma }}: {{ c.valor | brl }}</li>{% endfor %}
+        {% if condicoes.parcelamento %}<li>Cartão de crédito: até {{ condicoes.parcelamento.parcelas }}x de {{ condicoes.parcelamento.parcela | brl }}{% if condicoes.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
+      </ul>
+      {% endif %}
       <form class="form-compra" action="/carrinho/adicionar" method="post">
         <input type="hidden" name="produto_id" value="{{ p.id }}">
         <label>Quantidade
@@ -23,16 +30,10 @@
         <button type="submit" class="botao-cheio btn-comprar">Quero comprar</button>
         <button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button>
       </form>
-      {% if condicoes %}
-      <h2>Formas de pagamento</h2>
-      <ul class="condicoes">
-        {% for c in condicoes.a_vista %}<li>{{ c.forma }}: {{ c.valor | brl }}</li>{% endfor %}
-        {% if condicoes.parcelamento %}<li>Cartão de crédito: até {{ condicoes.parcelamento.parcelas }}x de {{ condicoes.parcelamento.parcela | brl }}{% if condicoes.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
-      </ul>
-      {% endif %}
     {% else %}
       <p class="aviso">Este produto não está disponível para compra no momento. A Lia pode sugerir alternativas.</p>
     {% endif %}
+    {% if descricao_produto %}<h2>Sobre este instrumento</h2><p class="descricao">{{ descricao_produto }}</p>{% endif %}
   </div>
 </div>
 </div>

@@ -27,24 +27,25 @@ def cliente(monkeypatch):
 
 
 def _vitrine(html: str) -> str:
-    return html[html.index('id="vitrine"'):html.index('id="categorias"')]
+    """Destaques (carrossel) e grade, as duas faixas de produtos da homepage (6d)."""
+    return html[html.index('id="destaques"'):html.index('id="ajuda"')]
 
 
 def _itens(vitrine: str) -> list[int]:
-    return [int(x) for x in re.findall(r'class="vitrine-item" data-produto="(\d+)"', vitrine)]
+    return [int(x) for x in re.findall(r'<article class="card" data-produto="(\d+)"', vitrine)]
 
 
 def test_vitrine_traz_as_quatro_promocoes_ativas_primeiro(cliente):
     itens = _itens(_vitrine(cliente.get("/").text))
-    assert itens[:4] == [127, 121, 90, 94] or set(itens[:4]) == set(PROMOCOES_ATIVAS)
-    assert 4 < len(itens) <= 8
+    assert set(itens[:4]) == set(PROMOCOES_ATIVAS)  # o carrossel de destaques vem primeiro
+    assert 4 < len(itens) <= 12
     assert len(itens) == len(set(itens))
 
 
 def test_vitrine_mostra_valores_do_crafter_ht_100(cliente):
     v = _vitrine(cliente.get("/").text)
     bloco = v[v.index('data-produto="90"'):]
-    bloco = bloco[:bloco.index("</li>")]
+    bloco = bloco[:bloco.index("</article>")]
     assert "Crafter HT-100" in bloco
     assert "R$ 2.399,00" in bloco and "-18%" in bloco and "R$ 1.967,18" in bloco
 
@@ -53,7 +54,7 @@ def test_vitrine_valores_das_promocoes_vem_da_ferramenta(cliente):
     v = _vitrine(cliente.get("/").text)
     for p in listar_promocoes().dados["promocoes"]:
         bloco = v[v.index(f'data-produto="{p["produto_id"]}"'):]
-        bloco = bloco[:bloco.index("</li>")]
+        bloco = bloco[:bloco.index("</article>")]
         assert f"-{p['percentual']}%" in bloco
         assert apresentacao.brl(p["final_centavos"]) in bloco and apresentacao.brl(p["original_centavos"]) in bloco
 
@@ -70,18 +71,18 @@ def test_vitrine_item_sem_promocao_mostra_condicao_pix_da_ferramenta(cliente):
     simples = next(i for i in _itens(v) if i not in PROMOCOES_ATIVAS)
     pix = calcular_condicoes(produto_id=simples, forma="pix").dados
     bloco = v[v.index(f'data-produto="{simples}"'):]
-    bloco = bloco[:bloco.index("</li>")]
-    assert apresentacao.brl(pix["final_centavos"]) in bloco and f"-{pix['pix_percentual']}%" in bloco
+    bloco = bloco[:bloco.index("</article>")]
+    assert apresentacao.brl(pix["final_centavos"]) in bloco and f"{pix['pix_percentual']}% de desconto" in bloco
 
 
-def test_categoria_sem_produto_vendavel_aparece_em_breve_sem_link(cliente):
+def test_categoria_sem_produto_vendavel_sai_da_selecao_e_sem_em_breve(cliente):
+    """6d: ausência no catálogo não comprova lançamento, então categoria vazia não aparece nem como 'em breve'."""
     html = cliente.get("/").text
     vazias = [c for c in navegacao.listar_categorias() if buscar_produtos(categoria=c, limite=1).estado != "ok"]
     assert len(vazias) == 3
     for nome in vazias:
-        assert nome in html
-        assert f"/catalogo?categoria={nome.replace(' ', '%20').replace('(', '%28').replace(')', '%29')}" not in html
-    assert html.count("Em breve") >= 3
+        assert nome not in html
+    assert "Em breve" not in html and "em breve" not in html
     assert "/catalogo?categoria=Viol" in html  # as com produto continuam com link
 
 
@@ -114,39 +115,40 @@ def test_faixa_fechada_no_domingo(cliente, monkeypatch):
     assert "Fechada" in topo and "abre amanhã" in topo
 
 
-def test_footer_traz_aviso_de_loja_ficticia(cliente):
-    rodape = cliente.get("/").text.split('<footer')[1]
-    assert "Loja fictícia criada para um desafio técnico; dados de demonstração." in rodape
+def test_site_nao_diz_que_a_loja_e_ficticia(cliente):
+    """6c: o aviso de loja fictícia sai do site e fica só no README."""
+    for caminho in ("/", "/catalogo", "/politicas", "/fale-conosco", "/perguntas-frequentes"):
+        assert "fictícia" not in cliente.get(caminho).text, caminho
 
 
-def test_como_funciona_traz_ressalvas_do_manual(cliente):
+def test_home_nao_tem_como_funciona_nem_faixa_da_lia_nem_botao_da_lia_no_header(cliente):
     html = cliente.get("/").text
-    secao = html[html.index('id="como-funciona"'):html.index('class="lia-chamada"')]
-    for titulo in ("Pagamento", "Frete", "Troca", "Garantia"):
-        assert titulo in secao
-    assert "exatamente R$ 500,00" in secao  # ambiguidade do frete, como o manual a registra
-    assert secao.count("A confirmar com a equipe") >= 3
-    assert 'href="/politicas"' in secao
+    assert "Como funciona comprar aqui" not in html and 'id="como-funciona"' not in html
+    assert "Pergunte para a Lia" not in html and "lia-chamada" not in html
+    assert "data-abrir-chat" not in html.split("</header>")[0]
 
 
-def test_lia_tem_perguntas_clicaveis_que_preenchem_o_chat(cliente):
+def test_lia_flutuante_comeca_fechada_com_sugestoes(cliente):
     html = cliente.get("/").text
-    assert len(re.findall(r"<button type=\"button\" data-pergunta=", html)) >= 3
-    assert "data-abrir-chat" in html
+    painel = html[html.index('id="chat"'):html.index('id="chat-alternar"')]
+    assert re.search(r'id="chat"[^>]* hidden>', html)  # nunca abre sozinha
+    assert "assistente virtual" in painel and 'id="chat-fechar"' in painel
+    assert len(re.findall(r"<button type=\"button\" data-pergunta=", painel)) == 3
+    assert "Lia &middot; conversar" in html
 
 
-def test_visite_a_loja_tem_endereco_horario_e_contatos_sem_mapa_externo(cliente):
+def test_visite_a_loja_tem_endereco_e_horario_sem_mapa_externo(cliente):
     html = cliente.get("/").text
     visite = html[html.index('id="visite"'):html.index("</section>", html.index('id="visite"'))]
     assert fato("empresa.endereco").valor["logradouro"] in visite
     assert "<table" in visite and "<iframe" not in html
-    assert str(fato("contato.telefone_capa").valor) in visite
+    assert 'href="/fale-conosco"' in visite
 
 
 def test_pagina_sem_recurso_externo_sem_travessao_e_sem_emoji(cliente):
-    for caminho in ("/", "/catalogo", "/produto/90", "/politicas", "/rastreio"):
+    for caminho in ("/", "/catalogo", "/produto/90", "/politicas", "/rastreio", "/fale-conosco", "/perguntas-frequentes", "/privacidade"):
         html = cliente.get(caminho).text
-        if caminho != "/politicas":  # ali o texto é a transcrição fiel do manual, que traz travessão
+        if caminho not in ("/politicas", "/privacidade"):  # ali o texto é a transcrição fiel do manual, que traz travessão
             assert "—" not in html and "–" not in html, caminho
         assert not re.search(r'(?:src|href)="https?://', html), caminho
         assert not re.search("[\U0001F300-\U0001FAFF☀-➿]", html), caminho
@@ -209,6 +211,8 @@ PARES_TEXTO = [  # (texto, fundo)
     ("cinza-texto", "papel"), ("cinza-texto", "papel-claro"), ("papel", "tinta"), ("papel", "jacaranda"),
     ("pantanal", "papel"), ("pantanal", "papel-claro"), ("alerta", "papel"), ("alerta", "papel-claro"),
     ("tinta", "ipe"),
+    ("papel-claro", "pantanal"), ("papel-claro", "pantanal-escuro"), ("pantanal", "verde-claro"),
+    ("pantanal-escuro", "verde-claro"), ("cinza-texto", "verde-claro"), ("tinta", "verde-claro"), ("papel", "tinta"),
 ]
 
 

@@ -1,7 +1,7 @@
-<section class="pedido pedido-demo" aria-label="Pedido de demonstração">
-  <p class="categoria">Pedido de demonstração</p>
+<section class="pedido pedido-demo" aria-label="Pedido {{ d.numero }}">
+  <p class="categoria">Pedido registrado</p>
   <h2 class="pedido-numero">{{ d.numero }}</h2>
-  <p class="aviso aviso-demo"><strong>{{ d.aviso }}</strong> Nada será enviado.</p>
+  <p class="aviso aviso-demo"><strong>Pedido registrado. Nenhum valor foi cobrado.</strong> Este pedido não gera cobrança nem entrega.</p>
   <ul class="resumo-linhas">
     {% for i in d.itens %}
     <li>
@@ -17,7 +17,7 @@
       <dt>Frete</dt>
       <dd>{% if d.frete_situacao == 'gratis' %}{{ 0 | brl }}{% elif d.frete_centavos is not none %}{{ d.frete_centavos | brl }}{% else %}calculado pela equipe{% endif %}</dd>
     </div>
-    <div class="resumo-final"><dt>Total gravado</dt><dd>{{ d.total_gravado_centavos | brl }}</dd></div>
+    <div class="resumo-final"><dt>Total do pedido</dt><dd>{{ d.total_gravado_centavos | brl }}</dd></div>
     <div>
       <dt>Pagamento</dt>
       <dd>{{ rotulo_forma.get(d.forma, d.forma) }}{% if d.forma == 'credito' %}, {{ d.parcelas }}x de {{ d.parcela_centavos | brl }}{% endif %}</dd>

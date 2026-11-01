@@ -1,10 +1,16 @@
 <article class="card" data-produto="{{ p.id }}">
   <a class="card-arte" href="/produto/{{ p.id }}" tabindex="-1" aria-hidden="true">
-    <svg viewBox="0 0 64 64"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>
+    {% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="" loading="lazy" decoding="async">
+    {% else %}<svg viewBox="0 0 64 64"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>{% endif %}
   </a>
-  <div class="etiqueta">
+  <div class="card-corpo">
     <h3 class="et-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h3>
     {% include "_preco.html" %}
-    <p class="et-selo"><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>
+    {% if p.pix or p.parcelamento %}<ul class="et-condicoes">
+      {% if p.pix %}<li>{% if p.pix.desconto %}PIX: <strong>{{ p.pix.valor | brl }}</strong> ({{ p.pix.desconto }}% de desconto){% else %}No PIX vale o preço acima{% endif %}</li>
+      {% elif p.parcelamento %}<li>Ou {{ p.parcelamento.parcelas }}x de <strong>{{ p.parcelamento.parcela | brl }}</strong>{% if p.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
+    </ul>{% endif %}
+    {% if p.situacao != 'disponivel' %}<p class="et-selo"><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>{% endif %}
+    <a class="card-acesso" href="/produto/{{ p.id }}">Ver produto<span class="so-leitor">: {{ p.nome }}</span></a>
   </div>
 </article>

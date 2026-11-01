@@ -30,6 +30,14 @@ ROTULO_FRETE = {
 }
 
 
+def _regiao_frete(situacao: str) -> str:
+    """Região explícita do frete: grátis e taxa valem na cidade-base do manual; cotação é para as demais."""
+    base = fato("frete.cidade_base")
+    if situacao == "cotacao_necessaria":
+        return "Em outras cidades"
+    return f"Em {base.valor}" if base else ""
+
+
 class CompraRecusada(Exception):
     """O checkout não pode ser finalizado como confirmado; `.pendencias` diz por quê."""
 
@@ -106,7 +114,8 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cidade: s
         else:
             frete = rf.dados["frete"]
             saida["frete"] = {"situacao": frete["situacao"], "taxa": frete["taxa_centavos"],
-                              "rotulo": ROTULO_FRETE.get(frete["situacao"], frete["situacao"])}
+                              "rotulo": ROTULO_FRETE.get(frete["situacao"], frete["situacao"]),
+                              "regiao": _regiao_frete(frete["situacao"])}
             if frete["taxa_centavos"] is not None:
                 total += frete["taxa_centavos"]
                 saida["total_com_frete_definido"] = True

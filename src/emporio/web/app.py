@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -25,19 +25,21 @@ from .. import dinheiro
 from ..agente import llm
 from ..agente.fabrica import criar_agente
 from ..ferramentas.condicoes import calcular_condicoes
-from ..ferramentas.pedido_demo import AVISO_DEMO, achar_numero, consultar_pedido_demo
+from ..ferramentas.pedido_demo import PREFIXO as PREFIXO_PEDIDO, achar_numero, consultar_pedido_demo
 from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from ..ferramentas.promocoes import listar_promocoes
 from ..politicas.manual import carregar_manual, fato
-from . import apresentacao, carrinho, compra, home, navegacao
+from . import apresentacao, carrinho, compra, conteudo, contato, fotos, home, navegacao
+
+POR_PAGINA = 12  # produtos por página do catálogo; o limite de 5 itens é do chat, não do site
 
 log = logging.getLogger("emporio.web")
 
 AQUI = Path(__file__).resolve().parent
 VERSAO_SW = "1"  # sobe a cada mudança do service worker ou da lista de estáticos que exija renovar o cache
-SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline")
+SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline", "/favicon.ico")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja
 MSG_FALHA = "Não consegui consultar isso agora. Tente de novo em instantes."
@@ -87,8 +89,7 @@ def _linhas_carrinho(sessao: str) -> list[dict[str, Any]]:
         if r.estado != "ok":
             linhas.append({"p": None, "produto_id": i["produto_id"], "quantidade": i["quantidade"]})
             continue
-        item = apresentacao.preparar_item(r.dados, promos)
-        item["ilustracao"] = apresentacao.ilustracao(r.dados["categoria"])
+        item = home.com_foto(apresentacao.preparar_item(r.dados, promos), r.dados["categoria"])
         linhas.append({"p": item, "produto_id": i["produto_id"], "quantidade": i["quantidade"]})
     return linhas
 
@@ -112,7 +113,8 @@ def criar_app(agente: Any = None) -> FastAPI:
     modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias,
                                situacao_loja=apresentacao.situacao_loja, cores=apresentacao.cores, ilustracao=apresentacao.ilustracao,
                                menu_categorias=home.categorias, formas_pagamento=apresentacao.formas_de_pagamento,
-                               aviso_demo=AVISO_DEMO, itens_no_carrinho=_itens_no_carrinho,
+                               canais=contato.canais, itens_no_carrinho=_itens_no_carrinho,
+                               prefixo_pedido=PREFIXO_PEDIDO,
                                rotulo_forma=apresentacao.ROTULO_FORMA, parcelas_max=compra.parcelas_max)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
                                pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras)
@@ -201,17 +203,70 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     def inicio(request: Request):
-        return pagina(request, "inicio.html", vitrine=home.vitrine(), categorias_home=home.categorias(),
-                      como_funciona=home.como_funciona())
+        destaques = home.destaques()
+        return pagina(request, "inicio.html", destaques=destaques, grade=home.grade({d["id"] for d in destaques}),
+                      categorias_home=home.categorias(), faq=conteudo.perguntas(somente_principais=True),
+                      abertura=fotos.foto_de_abertura(),
+                      descricao="Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço, condição de "
+                                "pagamento e entrega à vista.")
+
+    @app.get("/favicon.ico")
+    def favicon() -> RedirectResponse:
+        return RedirectResponse("/static/icones/icon-192.png", status_code=307)
+
+    @app.get("/perguntas-frequentes", response_class=HTMLResponse)
+    def perguntas_frequentes(request: Request):
+        return pagina(request, "faq.html", grupos=conteudo.faq_agrupada(), titulo_pagina="Perguntas frequentes",
+                      descricao="Pagamento, entrega, acompanhamento do pedido, trocas e garantia.")
+
+    @app.get("/privacidade", response_class=HTMLResponse)
+    def privacidade(request: Request):
+        return pagina(request, "privacidade.html", titulo_pagina="Privacidade e cookies", manual=conteudo.privacidade_manual(),
+                      cookie=COOKIE, dias_cookie=60 * 60 * 24 * 30 // 86400, cookie_seguro=seguro,
+                      descricao="Quais dados guardamos, por que usamos um cookie e como falar com a loja sobre eles.")
+
+    @app.get("/creditos", response_class=HTMLResponse)
+    def creditos(request: Request):
+        return pagina(request, "creditos.html", titulo_pagina="Créditos das imagens",
+                      fotos=sorted(fotos.creditos().values(), key=lambda f: f["arquivo"]),
+                      descricao="Autor, licença e origem de cada fotografia usada na loja.")
+
+    def pagina_contato(request: Request, valores: dict[str, str] | None = None, erros: dict[str, str] | None = None,
+                       status: int = 200):
+        return pagina(request, "fale_conosco.html", status, valores=valores or {}, erros=erros or {},
+                      titulo_pagina="Fale conosco", protocolo=None, limites=contato.LIMITES,
+                      descricao="Converse, ligue, escreva ou deixe uma mensagem para a loja.")
+
+    @app.get("/fale-conosco", response_class=HTMLResponse)
+    def fale_conosco(request: Request):
+        return pagina_contato(request)
+
+    @app.post("/fale-conosco", response_class=HTMLResponse)
+    def fale_conosco_enviar(request: Request, assunto: str = Form(""), mensagem: str = Form(""),
+                            contato_retorno: str = Form(""), site: str = Form("")):
+        valores = {"assunto": assunto, "mensagem": mensagem, "contato": contato_retorno}
+        if site.strip():  # campo isca: pessoa não vê nem preenche; descarta sem gravar e sem dar pista
+            return pagina(request, "fale_conosco.html", titulo_pagina="Fale conosco", valores={}, erros={},
+                          protocolo="", limites=contato.LIMITES, descricao="")
+        erros = contato.validar(valores)
+        if erros:
+            return pagina_contato(request, valores, erros, 422)
+        try:
+            protocolo = contato.gravar(valores)
+        except Exception:  # noqa: BLE001 - o formulário não pode derrubar o site, e o texto do cliente é mantido
+            return pagina_contato(request, valores, {"geral": "Não conseguimos registrar agora. Tente de novo em instantes."}, 502)
+        return pagina(request, "fale_conosco.html", titulo_pagina="Fale conosco", valores={}, erros={},
+                      protocolo=protocolo, limites=contato.LIMITES, descricao="")
 
     @app.get("/catalogo", response_class=HTMLResponse)
     def catalogo(request: Request, categoria: str = "", termo: str = "", preco_min: str = "",
-                 preco_max: str = "", todos: str = ""):
+                 preco_max: str = "", todos: str = "", pagina_: int = Query(1, alias="pagina", ge=1)):
         filtros = {"categoria": categoria.strip(), "termo": termo.strip(), "preco_min": preco_min.strip(),
                    "preco_max": preco_max.strip(), "todos": bool(todos)}
         erro = None
         itens: list[dict[str, Any]] = []
         total = 0
+        paginas = 1
         try:
             minimo = dinheiro.para_centavos(filtros["preco_min"].replace(",", ".")) if filtros["preco_min"] else None
             maximo = dinheiro.para_centavos(filtros["preco_max"].replace(",", ".")) if filtros["preco_max"] else None
@@ -220,11 +275,15 @@ def criar_app(agente: Any = None) -> FastAPI:
             erro = "Use apenas números nos campos de preço."
         if erro is None:
             r = buscar_produtos(categoria=filtros["categoria"] or None, termo=filtros["termo"] or None,
-                                preco_min=minimo, preco_max=maximo, incluir_indisponiveis=filtros["todos"])
+                                preco_min=minimo, preco_max=maximo, incluir_indisponiveis=filtros["todos"],
+                                limite=POR_PAGINA, deslocamento=(pagina_ - 1) * POR_PAGINA, para_site=True)
             if r.estado == "ok":
                 promos = _promocoes()
                 itens = [home.com_categoria(apresentacao.preparar_item(i, promos)) for i in r.dados["itens"]]
                 total = r.dados["total_encontrado"]
+                paginas = max(1, -(-total // POR_PAGINA))
+                if not itens:  # página além do fim: volta à última, sem página vazia
+                    return RedirectResponse(str(request.url.include_query_params(pagina=paginas)), status_code=303)
             elif r.estado == "vazio":
                 erro = ("Não temos essa categoria no catálogo." if r.motivo == "categoria_inexistente"
                         else "Nenhum produto encontrado com esses filtros.")
@@ -232,7 +291,13 @@ def criar_app(agente: Any = None) -> FastAPI:
                 erro = "A faixa de preço está incoerente: o mínimo passa do máximo."
             else:
                 erro = MSG_FALHA
-        return pagina(request, "catalogo.html", itens=itens, total=total, erro=erro, filtros=filtros)
+        consulta = {k: v for k, v in (("categoria", filtros["categoria"]), ("termo", filtros["termo"]),
+                                      ("preco_min", filtros["preco_min"]), ("preco_max", filtros["preco_max"]),
+                                      ("todos", "1" if filtros["todos"] else "")) if v}
+        titulo = filtros["categoria"] or ("Resultados da busca" if filtros["termo"] else "Catálogo")
+        return pagina(request, "catalogo.html", itens=itens, total=total, erro=erro, filtros=filtros,
+                      pagina_atual=pagina_, paginas=paginas, por_pagina=POR_PAGINA, consulta=consulta,
+                      titulo_pagina=titulo, descricao="Instrumentos musicais com preço e condição de pagamento.")
 
     @app.get("/produto/{produto_id}", response_class=HTMLResponse)
     def produto(request: Request, produto_id: int):
@@ -242,20 +307,19 @@ def criar_app(agente: Any = None) -> FastAPI:
                           texto="Não achamos esse produto. Veja o catálogo ou pergunte para a Lia.")
         if r.estado != "ok":
             return pagina(request, "mensagem.html", 502, titulo="Produto indisponível no momento", texto=MSG_FALHA)
-        item = apresentacao.preparar_item(r.dados, _promocoes())
-        item["ilustracao"] = apresentacao.ilustracao(r.dados["categoria"])
+        item = home.com_foto(apresentacao.preparar_item(r.dados, _promocoes()), r.dados["categoria"])
         condicoes = _condicoes_de_pagamento(produto_id) if item["pode_comprar"] else None
-        return pagina(request, "produto.html", p=item, categoria=r.dados["categoria"], descricao=r.dados["descricao"],
-                      condicoes=condicoes)
+        return pagina(request, "produto.html", p=item, categoria=r.dados["categoria"], descricao_produto=r.dados["descricao"],
+                      condicoes=condicoes, titulo_pagina=item["nome"], descricao=(r.dados["descricao"] or "")[:155],
+                      imagem=(item["foto"] or {}).get("src"))
 
     @app.get("/politicas", response_class=HTMLResponse)
     def politicas(request: Request):
-        temas = sorted(carregar_manual().temas_conhecidos())
-        r = consultar_politica(temas=temas)
-        if r.estado != "ok":
+        temas = conteudo.politicas()
+        if not temas:
             return pagina(request, "mensagem.html", 502, titulo="Políticas indisponíveis no momento", texto=MSG_FALHA)
-        secoes = [s for s in r.dados["secoes"] if s["publico"] and s["texto"]]
-        return pagina(request, "politicas.html", secoes=secoes)
+        return pagina(request, "politicas.html", temas=temas, titulo_pagina="Políticas da loja",
+                      descricao="Pagamento, frete e entrega, trocas e devoluções, promoções e garantia.")
 
     # ---- compra de demonstração (incremento 1) ----------------------------------------------------
 
@@ -317,9 +381,9 @@ def criar_app(agente: Any = None) -> FastAPI:
         achado = achar_numero(numero)
         r = consultar_pedido_demo(numero=achado, conversa_id=request.state.conversa_id) if achado else None
         if r is None or r.estado == "negado":
-            return pagina(request, "mensagem.html", 404, titulo="Pedido de demonstração não encontrado",
-                          texto="Não achamos esse pedido nesta sessão do navegador. Pedido de demonstração só abre "
-                                "no navegador em que foi feito.")
+            return pagina(request, "mensagem.html", 404, titulo="Pedido não encontrado",
+                          texto="Não achamos esse pedido neste navegador. Pedido feito aqui no site só abre no "
+                                "navegador em que foi feito.")
         if r.estado != "ok":
             return pagina(request, "mensagem.html", 502, titulo="Pedido indisponível no momento", texto=MSG_FALHA)
         return pagina(request, "pedido_demo.html", d=r.dados)
@@ -331,7 +395,7 @@ def criar_app(agente: Any = None) -> FastAPI:
     @app.post("/rastreio", response_class=HTMLResponse)
     def rastreio(request: Request, pedido: str = Form(""), final_telefone: str = Form("")):
         pedido, final_telefone = pedido.strip(), final_telefone.strip()
-        if pedido.upper().startswith("DEMO"):  # pedido de demonstração: identificado pela sessão, sem telefone
+        if pedido.upper().startswith(PREFIXO_PEDIDO):  # pedido feito no site: identificado pela sessão, sem telefone
             achado = achar_numero(pedido)
             r = (consultar_pedido_demo(numero=achado, conversa_id=request.state.conversa_id) if achado else None)
             if r is not None and r.estado == "ok":

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="contorno pagina pagina-estreita texto-longo">
+<h1>Privacidade e cookies</h1>
+<p class="lead">Esta página explica, sem rodeios, o que este site guarda sobre você e por quê.</p>
+
+<h2 id="cookie">Cookie</h2>
+<p>O site usa um único cookie, chamado <code>{{ cookie }}</code>. Ele guarda um código aleatório, assinado, que identifica o seu navegador para manter o carrinho, os pedidos feitos aqui, o limite de consultas de pedido e a conversa com a Lia. Ele não contém nome, telefone nem e-mail. Dura {{ dias_cookie }} dias, só é enviado ao nosso próprio site (atributo <code>HttpOnly</code> e <code>SameSite=Lax</code>){% if cookie_seguro %} e só trafega por conexão segura{% endif %}.</p>
+<p>Esse cookie é essencial para o site funcionar, por isso não pedimos consentimento nem mostramos faixa de aviso. Não usamos cookies de publicidade, de análise de audiência nem rastreadores de terceiros, e o site não carrega nenhum script de outro endereço.</p>
+
+<h2 id="navegador">O que fica no seu navegador</h2>
+<p>O histórico da conversa com a Lia fica na memória da aba (<code>sessionStorage</code>), para a conversa continuar quando você muda de página. Ele some quando você fecha a aba. Se você instalar o site como aplicativo, o aparelho guarda uma cópia só visual (estilos, fontes, imagens e a página sem conexão). Preços, estoque, pedidos e respostas da Lia nunca ficam nessa cópia.</p>
+
+<h2 id="conversa">Conversa com a Lia</h2>
+<p>A Lia é uma assistente virtual. Ela e a equipe da loja respondem por este site. As mensagens são processadas por um modelo de linguagem que roda nos servidores da própria loja, sem enviar o texto a terceiros. Guardamos o texto da conversa e o estado dela (o que você pediu e o que já foi respondido) ligados ao código do seu navegador. Quando você pede atendimento humano, registramos um chamado com um resumo do seu relato, para a equipe retornar.</p>
+
+<h2 id="contato">Fale conosco</h2>
+<p>Ao enviar o formulário, guardamos o assunto, a mensagem e o e-mail ou telefone que você informou, junto com o protocolo, para responder. O formulário não exige nome.</p>
+
+<h2 id="compra">Carrinho e pedidos</h2>
+<p>O carrinho e os pedidos feitos neste site ficam ligados ao código do seu navegador. O site não pede dados de cartão, CPF nem endereço.</p>
+
+<h2 id="direitos">Finalidades e seus direitos</h2>
+<p class="texto-politica">{{ manual | quebras }}</p>
+
+<h2 id="canal">Como falar com a gente sobre seus dados</h2>
+<p>Para pedir exclusão ou tirar dúvidas, use os canais abaixo ou o <a href="/fale-conosco">Fale conosco</a>.</p>
+{% include "_canais.html" %}
+</div>
+{% endblock %}

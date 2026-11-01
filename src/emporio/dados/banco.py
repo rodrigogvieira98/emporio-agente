@@ -160,3 +160,22 @@ def criar_esquema(conn: sqlite3.Connection) -> None:
 def garantir_tabelas_demo(conn: sqlite3.Connection) -> None:
     """Cria as tabelas da compra de demonstração em bancos antigos; não toca nas demais."""
     conn.executescript(ESQUEMA_DEMO)
+
+
+# Fale Conosco (etapa 6c). Criada sob demanda, como as tabelas da compra.
+ESQUEMA_CONTATO = """
+CREATE TABLE IF NOT EXISTS mensagens_contato (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    protocolo TEXT NOT NULL UNIQUE,
+    nome TEXT NOT NULL,
+    contato TEXT NOT NULL,
+    assunto TEXT NOT NULL,
+    mensagem TEXT NOT NULL,
+    enviada_por_email INTEGER NOT NULL DEFAULT 0,
+    criado_em TEXT NOT NULL
+);
+"""
+
+
+def garantir_tabela_contato(conn: sqlite3.Connection) -> None:
+    conn.executescript(ESQUEMA_CONTATO)

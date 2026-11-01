@@ -140,6 +140,30 @@ Exigência do Rodrigo em 01/11/2026: o projeto todo é otimizado para PWA, inclu
 - Instalação exige HTTPS ou localhost; o README diz isso.
 - Testes: manifest válido e servido com o tipo correto, `sw.js` servido com `Service-Worker-Allowed` adequado e cabeçalho sem cache, rota offline existe. Playwright: service worker registrado, página offline aparece com a rede cortada, `/chat` sem rede mostra aviso e preserva o texto, layout da Lia em 390px sem rolagem horizontal. Lighthouse não é exigido.
 
+## Site real: revisão do Rodrigo (etapa 6c)
+
+Pedido do Rodrigo em 01/11/2026. Substitui, onde houver conflito, as seções "Homepage e identidade visual", "Incremento 1" e o rodapé. Mantêm-se cores, tipografia, regra de fato com fonte e PWA.
+
+**O site e a Lia parecem uma loja de verdade.** Só o repositório sabe que é teste.
+- Nenhum texto ao cliente cita manual, sistema, ferramenta, seção, origem de dado, demonstração, teste, desafio ou loja fictícia. O aviso de loja fictícia sai do site e fica no README.
+- Número de pedido passa de `DEMO-0001` a `PED-0001`. Sem pagamento real: a confirmação diz "Pedido registrado. Nenhum valor foi cobrado." e continua sem campo de cartão, CPF ou endereço. Saem os avisos de demonstração e de estoque não baixado.
+- Ambiguidade do manual continua nunca resolvida em silêncio, em linguagem de cliente: "Esse caso precisa de confirmação da nossa equipe." A evidência fica em `manual_v2_1.yaml`, nos docs e nos testes. Sistema: "conforme o estoque agora", "total do pedido".
+- A Lia continua se identificando como assistente virtual.
+
+**Fale Conosco** (`/fale-conosco`, no menu e no rodapé): WhatsApp com ícone e link `https://wa.me/55DDDNUMERO` para o canal de WhatsApp do manual (seção 7, `contato.whatsapp_secao_7`); telefone com ícone e `tel:` para `contato.telefone_capa`; e-mail com ícone e `mailto:` para `contato.email_capa` (grafia sem acento, válida como endereço). Endereço e horário. Formulário: nome, e-mail, assunto e mensagem, com validação no servidor, campo isca contra spam e link para a privacidade. Grava em tabela nova `mensagens_contato` e devolve protocolo `FC-0001`. Envia por SMTP só com `EMPORIO_SMTP_*` configurado; sem isso, fica gravada. A tela só diz "Mensagem recebida", nunca "e-mail enviado". Rodapé e "Visite a loja" usam os mesmos três links com ícone. Ícones SVG próprios.
+
+**Perguntas frequentes** (`/perguntas-frequentes`, no menu e no rodapé, com bloco das principais na homepage): 8 a 12 perguntas em `<details>`, nativas e acessíveis, com respostas vindas do manual via `fato()`/`consultar_politica`: formas de pagamento, parcelamento, PIX, frete, prazo, troca, devolução, garantia, rastreio e horário. Sem fato literal em template.
+
+**Carrossel** no modelo do Radar (`frontend/src/pages/LandingPage.tsx`, só leitura, adaptar ao nosso estilo em JS puro): cartão central em destaque, vizinhos menores e translúcidos atrás (escala 1, 0,87, 0,74; opacidade 1, 0,55, 0,18; deslocamento lateral), em laço, com transição de 0,45 s, clique no vizinho centraliza, setas, pontos, arrasto ou toque com limite de 40 px, setas do teclado, `aria-live` com o produto em destaque e `prefers-reduced-motion`. Sem JS, cai na grade rolável.
+
+**Lia flutuante:** botão redondo fixo no canto inferior direito, com retrato ilustrado próprio, que abre o painel do chat sobre a página e mantém a conversa ao navegar. Começa fechada em todas as páginas. Abaixo de 768px, abre em tela cheia, como já está. Sem barra fixa. "Falar com a Lia" no header abre o mesmo painel.
+
+**Fotos reais de instrumentos.** Decisão do Rodrigo, que substitui a regra de só ilustrações. Fotos por tipo de instrumento (violão nylon, folk, guitarra, baixo, ukulele, teclado, bateria e o que houver no catálogo), de licença livre verificada na origem: Wikimedia Commons, domínio público, CC0 ou CC BY/BY-SA. Nunca foto de loja ou marca. Sem marca legível que contradiga o produto. WebP local, até 200 KB. Tag "Imagem ilustrativa" no cartão e no produto. Autor, licença e link em `docs/CREDITOS_IMAGENS.md` e em `/creditos`, ligado no rodapé. Fundo uniforme recortado ou enquadramento coerente, para a vitrine não parecer colagem.
+
+**Boas práticas:** título e descrição por página, favicon, Open Graph, página de privacidade a partir do manual (LGPD), trilha de navegação no produto, foco visível, foto com `alt`, `loading="lazy"` e dimensões declaradas.
+
+**Testes:** varredura de termos proibidos ao cliente em todo HTML renderizado, em `chat.js` e em todos os textos de `respostas.py`; links do Fale Conosco; formulário gravando e rejeitando inválido; FAQ com valores iguais aos do manual; carrossel por teclado, clique e toque; chat flutuante abre, conversa e fecha em 390 e 1280 px; toda imagem com crédito. Rejeitos de gabarito por mudança de frase são listados para aprovação.
+
 ## Persona da Lia
 
 Orientação do Rodrigo em 01/11/2026. Faz parte do núcleo. A persona muda a maneira de dizer e não autoriza prometer o que o sistema não consegue fazer. Sem treino de modelo nem chamada extra de IA.

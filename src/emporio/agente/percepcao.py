@@ -404,7 +404,8 @@ def _tema_sem_info(norm: str) -> str | None:
 
 
 def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
-    if v.MANIPULACAO.search(norm):
+    if v.MANIPULACAO.search(norm) or ((v.AUTORIDADE.search(norm) or v.PEDIDO_INDEVIDO.search(norm))
+                                      and not v.DADO_DE_TERCEIRO.search(norm)):
         return "tentativa_manipulacao"
     tema = _tema_sem_info(norm)
     if tema == "extravio" and slots.get("pedido_id"):

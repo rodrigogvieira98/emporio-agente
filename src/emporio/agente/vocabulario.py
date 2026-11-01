@@ -239,6 +239,15 @@ TELEFONE_COMPLETO = re.compile(r"\(?\b\d{2}\)?[\s.-]*9?\d{4}[\s.-]?\d{4}\b")
 MANIPULACAO = re.compile(
     r"\b(ignor\w+|esquec\w+|desconsider\w+)\b.{0,40}\b(instruc\w*|regras?|prompt|anterior\w*|orientac\w*)\b"
     r"|\b(modo desenvolvedor|jailbreak|finja que)\b")
+# Autoridade alegada e pedido indevido: recusa, nunca chamado nem "não entendi". Ler a intenção, não a frase.
+AUTORIDADE = re.compile(
+    r"\b(aqui e|sou|eu sou|falo como|falo em nome d\w+)\s+(o |a |um |uma )?(gerente|dono|dona|diretor\w*|proprietari\w+|"
+    r"administrador\w*|supervisor\w*|socio|ceo|funcionari\w+ da loja|da diretoria)\b"
+    r"|\bautorizo\b|\b(modo|painel) admin\w*|\b(sistema|admin)\b\s*[\]:]|\[\s*sistema\s*\]|\batualizacao de preco\b")
+PEDIDO_INDEVIDO = re.compile(
+    r"\b(escreve|escreva|registre|registra|anote|anota|prometa|promete|assine|assina|confirme ao cliente)\b.{0,30}"
+    r"\b(garant\w+|vend\w+|\d+\s*reais|gratis|desconto)\b"
+    r"|\breserv\w+\b.{0,30}\bsem (pagar|pagamento|sinal|entrada)\b|\bsem pagar\b.{0,20}\breserv\w+")
 DADO_DE_TERCEIRO = re.compile(
     r"\b(telefone|celular|fone|e-?mail|endereco|cpf|nome|sobrenome|dados|contato)\b.{0,30}"
     r"\b(do cliente|da cliente|do comprador|do dono|do titular|de outro cliente|de outra pessoa|de quem comprou)\b"

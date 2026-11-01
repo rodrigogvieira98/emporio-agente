@@ -444,6 +444,13 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Endereço do CEP e linha do tempo do rastreio (etapa 15)
+
+Pedidos do Rodrigo em 01/11/2026. Só site; agente e medição não mudam.
+
+- **Endereço do CEP:** o checkout já localiza o endereço e o mostra em uma linha. Ele passa a aparecer logo abaixo do campo, em bloco destacado "Endereço de entrega", com rua, bairro e cidade/UF. Só leitura; não se pede número nem complemento, porque o pedido não gera entrega e o site não guarda endereço. Fora do ar: mantém a mensagem de contingência.
+- **Linha do tempo do rastreio:** resultado do rastreio ganha etapas visuais a partir do status gravado, sem inventar evento: Pedido recebido (com a data do pedido), Pagamento confirmado, Enviado (com o código de rastreio), Entregue (previsão quando ainda não entregue). `pending` marca a primeira; `confirmed`, até a segunda; `shipped`, até a terceira; `delivered`, todas. `cancelled` mostra Pedido recebido e Cancelado, com a observação. Pedido PED- mostra Pedido recebido. Só a data do pedido e a previsão aparecem, porque os dados não trazem data por etapa. Marcação acessível em lista ordenada, com etapa atual indicada em texto, boa no celular.
+
 ## QA 2 da Lia (etapa 13)
 
 35 conversas novas em 01/11/2026 (163 turnos): 30,1% OK, 4 críticas. Fatos de preço e privacidade seguem íntegros. O problema é entender frase natural. As frases do QA 2 passam a ser usadas para ajuste. Prazo duro: 19h30.

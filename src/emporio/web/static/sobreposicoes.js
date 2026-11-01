@@ -17,7 +17,8 @@
     if (devolverFoco && o.gatilho) o.gatilho.focus();
   }
   function fecharOutros(mantem) {
-    lista.forEach(function (o) { if (o !== mantem && ativo(o)) fechar(o, false); });
+    // quem contém o elemento aberto (menu recolhido com o menu de categorias dentro) fica aberto
+    lista.forEach(function (o) { if (o !== mantem && ativo(o) && !o.raiz.contains(mantem.raiz)) fechar(o, false); });
   }
   function registrar(o) {
     lista.push(o);

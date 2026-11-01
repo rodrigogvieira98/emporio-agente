@@ -58,6 +58,9 @@
       <button type="submit">Buscar</button>
     </form>
     <nav class="menu" aria-label="Principal">
+      <details class="menu-recolhido" data-sobreposicao data-so-celular>
+        <summary class="menu-botao" data-gatilho aria-label="Menu de navegação">Menu</summary>
+        <div class="menu-itens" data-painel>
       {% block menu_categorias %}<details class="menu-categorias" data-sobreposicao>
         <summary data-gatilho>Categorias</summary>
         <ul data-painel>
@@ -70,6 +73,8 @@
       <a href="/catalogo">Catálogo</a>
       <a href="/perguntas-frequentes">Perguntas frequentes</a>
       <a href="/rastreio">Rastrear pedido</a>
+        </div>
+      </details>
       {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
     </nav>
   </div>
@@ -132,13 +137,12 @@
         <li><button type="button" data-pergunta="Como funcionam as trocas e devoluções?">Trocas e devoluções</button></li>
       </ul>
       <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
-            hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
+            hx-disabled-elt="#chat-enviar">
         <label class="so-leitor" for="chat-mensagem">Mensagem</label>
         <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
                placeholder="Escreva sua mensagem" required>
         <button id="chat-enviar" type="submit">Enviar</button>
       </form>
-      <p id="chat-espera" class="htmx-indicator chat-espera">A Lia está respondendo...</p>
     </div>
   </section>
   <button id="chat-alternar" class="lia-botao" type="button" aria-expanded="false" aria-controls="chat" data-gatilho>

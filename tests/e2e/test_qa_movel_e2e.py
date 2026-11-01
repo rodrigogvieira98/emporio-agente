@@ -118,3 +118,71 @@ def test_lia_prende_o_foco_e_camada_absorve_o_toque_na_faixa(servidor_movel, mov
     pagina.touchscreen.tap(40, 20)
     pagina.wait_for_selector("#chat", state="hidden")
     assert pagina.url == url
+
+
+def test_cabecalho_movel_compacto_com_menu_recolhido_e_carrinho_visivel(servidor_movel, movel):
+    pagina, _, largura = movel
+    pagina.goto(servidor_movel + "/catalogo")
+    m = pagina.evaluate("""() => { const q = s => document.querySelector(s).getBoundingClientRect();
+        return {topo: q('.topo').height, botao: q('.menu-botao'), carrinho: q('.link-carrinho'), busca: q('.busca-topo input'),
+                itens_visiveis: document.querySelector('.menu-recolhido').open,
+                sobra: document.documentElement.scrollWidth - innerWidth}; }""")
+    assert m["topo"] <= 140, m  # antes do ajuste o cabeçalho passava de 200 px
+    assert m["botao"]["height"] >= 44 and m["botao"]["width"] >= 44
+    assert m["carrinho"]["height"] >= 44 and 0 <= m["carrinho"]["x"] and m["carrinho"]["x"] + m["carrinho"]["width"] <= largura
+    assert not m["itens_visiveis"] and m["sobra"] <= 0
+    pagina.tap(".menu-botao")
+    alvos = pagina.evaluate("""() => ['/catalogo', '/perguntas-frequentes', '/rastreio'].map(h =>
+        { const r = document.querySelector('.menu-itens > a[href="' + h + '"]').getBoundingClientRect(); return [h, r.height, r.width, r.right]; })""")
+    for _, alt, lar, dir_ in alvos:
+        assert alt >= 44 and dir_ <= largura
+    pagina.tap(".menu-categorias summary")
+    assert pagina.locator(".menu-itens").is_visible() and pagina.locator(".menu-categorias ul").is_visible()
+    pagina.tap(".menu-itens a[href='/rastreio']")
+    pagina.wait_for_url("**/rastreio")
+    assert not pagina.evaluate("document.querySelector('.menu-recolhido').open")
+
+
+def test_cabecalho_em_1280_nao_muda(servidor_movel):
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        nav = p.chromium.launch()
+        try:
+            pagina = nav.new_page(viewport={"width": 1280, "height": 800})
+            pagina.goto(servidor_movel + "/")
+            assert pagina.locator(".menu-botao").is_hidden()
+            for h in ("/catalogo", "/perguntas-frequentes", "/rastreio", "/carrinho"):
+                assert pagina.locator(f".menu a[href='{h}']").last.is_visible()
+            assert pagina.locator(".menu-categorias summary").is_visible()
+            assert pagina.evaluate("document.querySelector('.topo').getBoundingClientRect().height") < 120
+        finally:
+            nav.close()
+
+
+def test_ritmo_da_conversa_cliente_escrevendo_resposta(servidor_movel, movel):
+    pagina, _, _ = movel
+    pagina.goto(servidor_movel + "/")
+    pagina.tap("#chat-alternar")
+    pagina.wait_for_selector("#chat:not([hidden])")
+    pagina.evaluate("""() => { window.__t = {}; const log = document.getElementById('chat-log'), t0 = () => performance.now();
+        new MutationObserver(ms => { for (const m of ms) { m.addedNodes.forEach(n => { if (n.nodeType !== 1) return;
+            if (n.classList.contains('voce')) window.__t.voce = t0();
+            else if (n.classList.contains('escrevendo')) window.__t.esc_ini = t0();
+            else if (n.classList.contains('lia')) window.__t.resposta = t0(); });
+          m.removedNodes.forEach(n => { if (n.nodeType === 1 && n.classList.contains('escrevendo')) window.__t.esc_fim = t0(); }); } })
+          .observe(log, {childList: true}); }""")
+    pagina.fill("#chat-mensagem", "Quanto custa o frete?")
+    pagina.tap("#chat-enviar")
+    pagina.wait_for_selector("#chat-log .msg.voce")
+    assert pagina.locator("#chat-log .msg.voce").is_visible()
+    pagina.wait_for_function("window.__t.resposta", timeout=15000)
+    t = pagina.evaluate("window.__t")
+    assert t["voce"] <= t["esc_ini"] <= t["esc_fim"] <= t["resposta"] + 5
+    assert t["esc_fim"] - t["esc_ini"] >= 600, t  # a bolha de escrevendo fica visível por pelo menos 600 ms
+    assert pagina.locator("#chat-log .msg.voce").count() == 1
+    assert pagina.locator("#chat-log .escrevendo").count() == 0
+    assert pagina.locator("#chat-log .msg.lia").count() == 2  # saudação e uma única resposta
+    pagina.reload()
+    pagina.tap("#chat-alternar")
+    assert pagina.locator("#chat-log .escrevendo").count() == 0
+    assert pagina.locator("#chat-log .msg.voce").count() == 1 and pagina.locator("#chat-log .msg.lia").count() == 2

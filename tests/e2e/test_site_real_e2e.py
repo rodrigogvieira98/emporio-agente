@@ -212,7 +212,7 @@ def test_sugestoes_da_lia_recebem_resposta_util(url_site, navegador, largura):
     for rotulo, padrao in esperado.items():
         pagina.goto(url_site + "/")
         pagina.click("#chat-alternar")
-        antes = pagina.locator("#chat-log .msg.lia").count()
+        antes = pagina.locator("#chat-log .msg.lia:not(.escrevendo)").count()
         enviadas_antes = pagina.locator("#chat-log .msg.voce").count()
         botao = pagina.locator(f"#chat .chat-sugestoes button:has-text('{rotulo}')")
         enviada = botao.get_attribute("data-pergunta")
@@ -221,9 +221,9 @@ def test_sugestoes_da_lia_recebem_resposta_util(url_site, navegador, largura):
         assert pagina.locator("#chat-log .msg.voce").count() == enviadas_antes  # clicar na sugestão não envia
         assert pagina.input_value("#chat-mensagem") == enviada and pagina.evaluate("document.activeElement.id") == "chat-mensagem"
         pagina.keyboard.press("Enter")
-        pagina.wait_for_function(f"document.querySelectorAll('#chat-log .msg.lia').length > {antes}", timeout=20000)
+        pagina.wait_for_function(f"document.querySelectorAll('#chat-log .msg.lia:not(.escrevendo)').length > {antes}", timeout=20000)
         assert pagina.locator("#chat-log .msg.voce").last.inner_text().strip() == enviada  # o texto enviado é o do botão
-        resposta = pagina.locator("#chat-log .msg.lia").last.inner_text()
+        resposta = pagina.locator("#chat-log .msg.lia:not(.escrevendo)").last.inner_text()
         assert len(resposta) > 25 and re.search(padrao, resposta, re.I), (rotulo, resposta)
         assert "Não consegui" not in resposta, (rotulo, resposta)
 

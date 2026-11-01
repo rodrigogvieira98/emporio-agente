@@ -30,6 +30,7 @@ def ambiente(tmp_path, monkeypatch, banco_modelo):
     # sábado, 10h na loja
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-10-31T10:00:00")
     monkeypatch.delenv("EMPORIO_MANUAL", raising=False)
+    monkeypatch.setenv("EMPORIO_CEP_EXTERNO", "0")  # testes nunca acessam a rede; quem testa a consulta usa um dublê
     return destino
 
 

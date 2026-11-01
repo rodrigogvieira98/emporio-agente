@@ -6,6 +6,7 @@ EMPORIO_COOKIE_SEGURO=1 (cookie só por HTTPS).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -38,7 +39,31 @@ POR_PAGINA = 12  # produtos por página do catálogo; o limite de 5 itens é do 
 log = logging.getLogger("emporio.web")
 
 AQUI = Path(__file__).resolve().parent
-VERSAO_SW = "2"  # sobe a cada mudança do service worker ou da lista de estáticos que exija renovar o cache
+
+_HASH_SW: dict[str, Any] = {}
+
+
+def _estaticos() -> list[str]:
+    """Estáticos que vão para o pré-cache (licenças ficam de fora)."""
+    return sorted("/static/" + p.relative_to(AQUI / "static").as_posix()
+                  for p in (AQUI / "static").rglob("*") if p.is_file() and p.suffix != ".txt")
+
+
+def versao_sw() -> str:
+    """Hash do conteúdo de sw.js e dos estáticos do pré-cache: mudou um arquivo, muda a versão do cache."""
+    caminhos = [AQUI / "sw.js"] + [AQUI / p[1:] for p in _estaticos()]
+    assinatura = tuple((c.stat().st_mtime_ns, c.stat().st_size) for c in caminhos)  # evita reler tudo a cada pedido
+    guardado = _HASH_SW.get("assinatura")
+    if guardado == (tuple(caminhos), assinatura):
+        return _HASH_SW["hash"]
+    h = hashlib.sha256()
+    for caminho in caminhos:
+        h.update(str(caminho.relative_to(AQUI)).encode())
+        h.update(caminho.read_bytes())
+    _HASH_SW.update(assinatura=(tuple(caminhos), assinatura), hash=h.hexdigest()[:12])
+    return _HASH_SW["hash"]
+
+
 SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline", "/favicon.ico")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja
@@ -113,7 +138,7 @@ def criar_app(agente: Any = None) -> FastAPI:
     modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias,
                                situacao_loja=apresentacao.situacao_loja, cores=apresentacao.cores, ilustracao=apresentacao.ilustracao,
                                menu_categorias=home.categorias, formas_pagamento=apresentacao.formas_de_pagamento,
-                               canais=contato.canais, itens_no_carrinho=_itens_no_carrinho,
+                               canais=contato.canais, faixa_contato=contato.faixa, itens_no_carrinho=_itens_no_carrinho,
                                prefixo_pedido=PREFIXO_PEDIDO,
                                rotulo_forma=apresentacao.ROTULO_FORMA, parcelas_max=compra.parcelas_max)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
@@ -187,11 +212,9 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     @app.get("/sw.js")
     def service_worker() -> Response:
-        estaticos = sorted("/static/" + p.relative_to(AQUI / "static").as_posix()
-                           for p in (AQUI / "static").rglob("*")
-                           if p.is_file() and p.suffix != ".txt")  # licenças não vão para o cache
+        estaticos = _estaticos()
         corpo = ((AQUI / "sw.js").read_text(encoding="utf-8")
-                 .replace('"/*VERSAO*/"', json.dumps(VERSAO_SW))
+                 .replace('"/*VERSAO*/"', json.dumps(versao_sw()))
                  .replace("/*ESTATICOS*/[]", json.dumps(estaticos, indent=2)))
         # Service-Worker-Allowed deixa o escopo na raiz; sem cache para a atualização chegar na hora
         return Response(corpo, media_type="application/javascript",
@@ -352,28 +375,30 @@ def criar_app(agente: Any = None) -> FastAPI:
         carrinho.remover(request.state.conversa_id, produto_id)
         return RedirectResponse("/carrinho", status_code=303)
 
-    def pagina_checkout(request: Request, forma: str, parcelas: str, cidade: str, aviso: str | None = None,
+    def pagina_checkout(request: Request, forma: str, parcelas: str, cep: str, aviso: str | None = None,
                         status: int = 200) -> HTMLResponse:
-        c = compra.calcular(request.state.conversa_id, forma, parcelas, cidade)
+        c = compra.calcular(request.state.conversa_id, forma, parcelas, cep)
+        if request.headers.get("HX-Request") == "true" and request.headers.get("HX-Boosted") != "true":
+            return pagina(request, "_checkout_dinamico.html", status, c=c, formas=compra.FORMAS, oob=True)
         return pagina(request, "checkout.html", status, c=c, aviso=aviso, formas=compra.FORMAS)
 
     @app.get("/checkout", response_class=HTMLResponse)
-    def ver_checkout(request: Request, forma: str = "pix", parcelas: str = "1", cidade: str = ""):
-        return pagina_checkout(request, forma, parcelas, cidade)
+    def ver_checkout(request: Request, forma: str = "pix", parcelas: str = "1", cep: str = ""):
+        return pagina_checkout(request, forma, parcelas, cep)
 
     @app.post("/checkout", response_class=HTMLResponse)
     def finalizar_checkout(request: Request, forma: str = Form("pix"), parcelas: str = Form("1"),
-                           cidade: str = Form(""), total_visto: str = Form("")):
+                           cep: str = Form(""), total_visto: str = Form("")):
         sessao = request.state.conversa_id
-        atual = compra.calcular(sessao, forma, parcelas, cidade)
+        atual = compra.calcular(sessao, forma, parcelas, cep)
         if total_visto != str(atual["total"]):  # o cliente mudou algo sem atualizar os valores
-            return pagina_checkout(request, forma, parcelas, cidade,
+            return pagina_checkout(request, forma, parcelas, cep,
                                    "Os valores mudaram desde a última conferência. Confira o total e finalize de novo.",
                                    409)
         try:
-            numero = compra.finalizar(sessao, forma, parcelas, cidade)
+            numero = compra.finalizar(sessao, forma, parcelas, cep)
         except compra.CompraRecusada:
-            return pagina_checkout(request, forma, parcelas, cidade, None, 422)
+            return pagina_checkout(request, forma, parcelas, cep, None, 422)
         return RedirectResponse(f"/pedido/{numero}", status_code=303)
 
     @app.get("/pedido/{numero}", response_class=HTMLResponse)

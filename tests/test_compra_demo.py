@@ -15,6 +15,8 @@ RAIZ = Path(__file__).resolve().parents[1]
 CRAFTER, TAKAMINE, SHELBY, UKULELE_SOPRANO = 90, 95, 89, 117  # promoção ativa, sem promoção, 6x ambíguo, barato
 DESCONTINUADO, ESGOTADO = 113, 96
 CAMPO_GRANDE = "Campo Grande"
+CEP_CAMPO_GRANDE = "79002-000"
+CEP_DOURADOS = "79800-000"  # fora da faixa de Campo Grande
 
 
 @pytest.fixture
@@ -44,7 +46,7 @@ def contar(sql, tabela):
 
 def test_promocao_com_pix_nao_soma_desconto(cliente, sql):
     assert comprar(cliente, CRAFTER).status_code == 303
-    html = cliente.get("/checkout", params={"forma": "pix", "cidade": CAMPO_GRANDE}).text
+    html = cliente.get("/checkout", params={"forma": "pix", "cep": CEP_CAMPO_GRANDE}).text
     ref = calcular_condicoes(produto_id=CRAFTER, forma="pix").dados
     assert ref["pix_aplicado"] is False and ref["percentual"] == 18
     esperado = ref["final_centavos"]
@@ -55,7 +57,7 @@ def test_promocao_com_pix_nao_soma_desconto(cliente, sql):
 
 def test_pix_sem_promocao_aplica_o_desconto_da_ferramenta(cliente):
     comprar(cliente, TAKAMINE)
-    html = cliente.get("/checkout", params={"forma": "pix", "cidade": CAMPO_GRANDE}).text
+    html = cliente.get("/checkout", params={"forma": "pix", "cep": CEP_CAMPO_GRANDE}).text
     assert "R$ 2.089,05" in html and "desconto do PIX" in html
 
 
@@ -67,7 +69,7 @@ def test_total_e_a_soma_das_ferramentas(cliente, sql):
                          + 3 * final_unit(UKULELE_SOPRANO, "debito"))
     frete = calcular_condicoes(valor=esperado_produtos, forma="debito", cidade=CAMPO_GRANDE)
     assert frete.dados["frete"]["situacao"] == "gratis"
-    corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(esperado_produtos)}
+    corpo = {"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(esperado_produtos)}
     numero = numero_do_pedido(cliente.post("/checkout", data=corpo))
     gravado = sql.execute("SELECT * FROM pedidos_demo WHERE numero = ?", (numero,)).fetchone()
     assert gravado["total_centavos"] == esperado_produtos
@@ -81,7 +83,7 @@ def test_frete_abaixo_do_limite_soma_a_taxa_do_manual(cliente, sql):
     base = final_unit(UKULELE_SOPRANO, "debito")
     frete = calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]
     assert frete["situacao"] == "taxa"
-    corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base + frete["taxa_centavos"])}
+    corpo = {"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base + frete["taxa_centavos"])}
     numero = numero_do_pedido(cliente.post("/checkout", data=corpo))
     gravado = sql.execute("SELECT * FROM pedidos_demo WHERE numero = ?", (numero,)).fetchone()
     assert gravado["total_centavos"] == base + frete["taxa_centavos"] and gravado["frete_centavos"] == frete["taxa_centavos"]
@@ -91,7 +93,7 @@ def test_parcela_com_requer_confirmacao_aparece_marcada_e_nao_finaliza(cliente, 
     comprar(cliente, SHELBY)
     ref = calcular_condicoes(produto_id=SHELBY, forma="credito", parcelas=6).dados
     assert ref["permitido"] == "requer_confirmacao"
-    params = {"forma": "credito", "parcelas": "6", "cidade": CAMPO_GRANDE}
+    params = {"forma": "credito", "parcelas": "6", "cep": CEP_CAMPO_GRANDE}
     html = cliente.get("/checkout", params=params).text
     assert "A confirmar com a equipe" in html and "R$ 91,50" in html
     assert re.search(r'<button[^>]*type="submit"[^>]*disabled', html)
@@ -116,7 +118,7 @@ def test_frete_de_exatamente_o_limite_fica_a_confirmar(cliente, sql, tmp_path, m
     monkeypatch.setenv("EMPORIO_MANUAL", str(copia))
     assert calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["situacao"] == "requer_confirmacao"
     comprar(cliente, UKULELE_SOPRANO)
-    params = {"forma": "debito", "cidade": CAMPO_GRANDE}
+    params = {"forma": "debito", "cep": CEP_CAMPO_GRANDE}
     html = cliente.get("/checkout", params=params).text
     assert "Frete a confirmar com a equipe" in html and "disabled" in html
     r = cliente.post("/checkout", data={**params, "parcelas": "1", "total_visto": str(base)})
@@ -130,7 +132,7 @@ def test_o_limite_exato_do_manual_na_ferramenta_e_requer_confirmacao():
 
 def test_outra_cidade_mostra_frete_calculado_pela_equipe(cliente):
     comprar(cliente, TAKAMINE)
-    html = cliente.get("/checkout", params={"forma": "debito", "cidade": "Dourados"}).text
+    html = cliente.get("/checkout", params={"forma": "debito", "cep": CEP_DOURADOS}).text
     assert "Frete calculado pela equipe" in html and "calculado pela equipe" in html
 
 
@@ -163,7 +165,7 @@ def test_quantidade_de_1_a_3(cliente, sql):
 def test_estoque_nao_e_baixado(cliente, sql):
     antes = sql.execute("SELECT estoque FROM produtos WHERE id = ?", (TAKAMINE,)).fetchone()[0]
     comprar(cliente, TAKAMINE, 3)
-    corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(3 * final_unit(TAKAMINE, "debito"))}
+    corpo = {"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(3 * final_unit(TAKAMINE, "debito"))}
     cliente.post("/checkout", data=corpo)
     assert sql.execute("SELECT estoque FROM produtos WHERE id = ?", (TAKAMINE,)).fetchone()[0] == antes
 
@@ -173,7 +175,7 @@ def test_avisos_de_demonstracao_no_carrinho_no_checkout_e_no_pedido(cliente):
     assert "não gera cobrança nem entrega" in cliente.get("/checkout").text
     base = final_unit(UKULELE_SOPRANO, "debito")
     taxa = calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["taxa_centavos"]
-    corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base + taxa)}
+    corpo = {"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base + taxa)}
     numero = numero_do_pedido(cliente.post("/checkout", data=corpo))
     pedido = cliente.get(f"/pedido/{numero}")
     assert pedido.status_code == 200 and "Nenhum valor foi cobrado" in pedido.text and numero in pedido.text
@@ -182,10 +184,10 @@ def test_avisos_de_demonstracao_no_carrinho_no_checkout_e_no_pedido(cliente):
 def test_sem_campos_de_pagamento_real(cliente):
     comprar(cliente, UKULELE_SOPRANO)
     html = (cliente.get("/checkout").text + cliente.get("/carrinho").text).lower()
-    for proibido in ("cpf", "numero do cartao", "número do cartão", "cvv", "cep", 'name="cartao"', "endereço completo"):
+    for proibido in ("cpf", "numero do cartao", "número do cartão", "cvv", 'name="cartao"', "endereço completo"):
         assert f'name="{proibido}"' not in html
     nomes = set(re.findall(r'<(?:input|select)[^>]*name="([^"]+)"', cliente.get("/checkout").text))
-    assert nomes <= {"termo", "total_visto", "forma", "parcelas", "cidade", "mensagem"}
+    assert nomes <= {"termo", "total_visto", "forma", "parcelas", "cep", "mensagem"}
 
 
 def test_rastreio_reconhece_demo_e_nao_mistura_com_os_dados(cliente, sql):
@@ -193,7 +195,7 @@ def test_rastreio_reconhece_demo_e_nao_mistura_com_os_dados(cliente, sql):
     base = final_unit(UKULELE_SOPRANO, "debito")
     taxa = calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["taxa_centavos"]
     numero = numero_do_pedido(cliente.post(
-        "/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base + taxa)}))
+        "/checkout", data={"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base + taxa)}))
     assert numero == "PED-0001"
     r = cliente.post("/rastreio", data={"pedido": numero, "final_telefone": ""})
     assert r.status_code == 200 and numero in r.text and "Nenhum valor foi cobrado" in r.text
@@ -214,14 +216,14 @@ def test_nada_e_gravado_em_pedidos(cliente, sql):
     antes = (contar(sql, "pedidos"), contar(sql, "itens_pedido"))
     comprar(cliente, TAKAMINE)
     base = final_unit(TAKAMINE, "debito")
-    cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)})
+    cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base)})
     assert contar(sql, "pedidos_demo") == 1
     assert (contar(sql, "pedidos"), contar(sql, "itens_pedido")) == antes
 
 
 def test_total_adulterado_no_navegador_nao_finaliza(cliente, sql):
     comprar(cliente, TAKAMINE)
-    r = cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": "1"})
+    r = cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": "1"})
     assert r.status_code == 409 and contar(sql, "pedidos_demo") == 0
 
 
@@ -229,7 +231,7 @@ def test_numeros_sequenciais_e_carrinho_esvaziado(cliente, sql):
     for esperado in ("PED-0001", "PED-0002"):
         comprar(cliente, TAKAMINE)
         base = final_unit(TAKAMINE, "debito")
-        corpo = {"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)}
+        corpo = {"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base)}
         assert numero_do_pedido(cliente.post("/checkout", data=corpo)) == esperado
         assert contar(sql, "carrinhos") == 0
 
@@ -254,7 +256,7 @@ def test_ferramenta_pedido_demo_cinco_estados(cliente, sql):
     assert consultar_pedido_demo(numero="PED-0001", conversa_id="web-x").estado == "negado"
     comprar(cliente, TAKAMINE)
     base = final_unit(TAKAMINE, "debito")
-    cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)})
+    cliente.post("/checkout", data={"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base)})
     sessao = sql.execute("SELECT sessao FROM pedidos_demo").fetchone()[0]
     r = consultar_pedido_demo(numero="ped-0001", conversa_id=sessao)
     assert r.estado == "ok" and r.dados["demonstracao"] is True and r.dados["total_gravado_centavos"] == base
@@ -280,7 +282,7 @@ def _pedido_demo_da_sessao(cliente):
     comprar(cliente, TAKAMINE)
     base = final_unit(TAKAMINE, "debito")
     return numero_do_pedido(cliente.post(
-        "/checkout", data={"forma": "debito", "parcelas": "1", "cidade": CAMPO_GRANDE, "total_visto": str(base)}))
+        "/checkout", data={"forma": "debito", "parcelas": "1", "cep": CEP_CAMPO_GRANDE, "total_visto": str(base)}))
 
 
 def test_lia_responde_pedido_demo_como_demonstracao(cliente, sql):

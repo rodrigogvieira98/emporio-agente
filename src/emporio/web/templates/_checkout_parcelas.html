@@ -1,0 +1,9 @@
+<div id="campo-parcelas" class="campo-parcelas"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{% if c.forma == 'credito' %}
+  <label for="parcelas">Parcelas
+    <select id="parcelas" name="parcelas">
+      {% for n in range(1, parcelas_max() + 1) %}<option value="{{ n }}"{% if n == c.parcelas %} selected{% endif %}>{{ n }}x</option>{% endfor %}
+    </select>
+  </label>
+{% endif %}
+</div>

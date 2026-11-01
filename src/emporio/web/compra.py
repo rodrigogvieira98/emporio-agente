@@ -18,6 +18,7 @@ from ..ferramentas.condicoes import calcular_condicoes
 from ..ferramentas.pedido_demo import AVISO_DEMO, formatar_numero
 from ..politicas.manual import fato
 from . import carrinho
+from . import cep as cep_mod
 
 FORMAS = ("pix", "debito", "credito", "boleto")
 FORMA_NEUTRA = "debito"
@@ -38,6 +39,21 @@ def _regiao_frete(situacao: str) -> str:
     return f"Em {base.valor}" if base else ""
 
 
+CIDADE_NAO_LOCALIZADA = "Cidade não localizada"
+
+
+def _destino(cep: str):
+    """Localização do CEP e a cidade que o frete e o pedido usam (None se o CEP não vale)."""
+    loc = cep_mod.localizar(cep)
+    if loc.estado == "ok":
+        if cep_mod.eh_cidade_base(loc.cidade, loc.uf):
+            return loc, str(fato("frete.cidade_base").valor)
+        return loc, f"{loc.cidade}/{loc.uf}"
+    if loc.estado == "indisponivel":
+        return loc, CIDADE_NAO_LOCALIZADA  # não bloqueia: o frete fica com a equipe
+    return loc, None
+
+
 class CompraRecusada(Exception):
     """O checkout não pode ser finalizado como confirmado; `.pendencias` diz por quê."""
 
@@ -51,14 +67,14 @@ def parcelas_max() -> int:
     return int(f.valor) if f else 1
 
 
-def normalizar_escolha(forma: str, parcelas: int | str, cidade: str) -> tuple[str, int, str]:
+def normalizar_escolha(forma: str, parcelas: int | str, cep: str) -> tuple[str, int, str]:
     forma = forma if forma in FORMAS else "pix"
     try:
         n = int(parcelas)
     except (TypeError, ValueError):
         n = 1
     n = max(1, min(n, parcelas_max())) if forma == "credito" else 1
-    return forma, n, (cidade or "").strip()[:80]
+    return forma, n, cep_mod.formatar(cep)
 
 
 def _linha(item: dict[str, Any], forma: str) -> dict[str, Any]:
@@ -80,11 +96,12 @@ def _linha(item: dict[str, Any], forma: str) -> dict[str, Any]:
     return base
 
 
-def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cidade: str = "") -> dict[str, Any]:
-    forma, n, cidade = normalizar_escolha(forma, parcelas, cidade)
+def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str = "") -> dict[str, Any]:
+    forma, n, cep = normalizar_escolha(forma, parcelas, cep)
+    loc, cidade = _destino(cep)
     itens = carrinho.listar(sessao)
     saida: dict[str, Any] = {
-        "forma": forma, "parcelas": n, "cidade": cidade, "linhas": [], "vazio": not itens, "produtos_total": 0,
+        "forma": forma, "parcelas": n, "cep": cep, "cidade": cidade or "", "localizacao": loc, "linhas": [], "vazio": not itens, "produtos_total": 0,
         "frete": None, "total": 0, "total_com_frete_definido": False, "parcela": None, "permitido": "sim",
         "pendencias": [], "pode_finalizar": False, "aviso": AVISO_DEMO,
     }
@@ -122,8 +139,12 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cidade: s
             if frete["situacao"] == "requer_confirmacao":
                 pend.append("O frete deste valor precisa ser confirmado com a equipe, então não dá para finalizar "
                             "como confirmado. Mude a forma de pagamento ou a quantidade, ou fale com a Lia.")
+    elif loc.estado == "inexistente":
+        pend.append("CEP não encontrado. Confira os números ou use o link para descobrir o seu CEP.")
+    elif cep:
+        pend.append("O CEP precisa ter 8 números. Confira e tente de novo.")
     else:
-        pend.append("Informe a cidade para calcular o frete.")
+        pend.append("Informe o CEP de entrega para calcular o frete.")
     saida["total"] = total
 
     if forma == "credito":
@@ -144,9 +165,9 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cidade: s
     return saida
 
 
-def finalizar(sessao: str, forma: str, parcelas: int | str, cidade: str) -> str:
+def finalizar(sessao: str, forma: str, parcelas: int | str, cep: str) -> str:
     """Recalcula no servidor, grava o pedido de demonstração e esvazia o carrinho. Devolve DEMO-NNNN."""
-    c = calcular(sessao, forma, parcelas, cidade)
+    c = calcular(sessao, forma, parcelas, cep)
     if c["vazio"]:
         raise CompraRecusada(["O carrinho está vazio."])
     if not c["pode_finalizar"]:

@@ -1,0 +1,65 @@
+{# Parte do checkout que o servidor recalcula a cada mudança (HTMX): total visto, resumo e botão de registrar. #}
+<div id="checkout-dinamico" class="checkout-dinamico">
+  <input type="hidden" name="total_visto" value="{{ c.total }}">
+  <section class="resumo" aria-label="Resumo do pedido">
+    <h2>Resumo</h2>
+    {% set loc = c.localizacao %}
+    <p id="cep-endereco" class="cep-endereco">
+      {% if loc.estado == 'ok' %}Entrega em: {{ loc.endereco }}{% if loc.contingencia %} (endereço não confirmado agora){% endif %}
+      {% elif loc.estado == 'indisponivel' %}Não localizamos o endereço agora. O frete será calculado pela equipe.{% endif %}
+    </p>
+    {% if c.linhas %}
+    <ul class="resumo-linhas">
+      {% for l in c.linhas %}
+      <li>
+        <span class="resumo-nome">{{ l.nome or 'Item' }}</span>
+        {% if l.final_unit is not none %}
+        <span class="resumo-qtd">{{ l.quantidade }} x {{ l.final_unit | brl }}</span>
+        <span class="resumo-sub">{{ l.subtotal | brl }}</span>
+        <small class="resumo-nota">
+          {% if l.percentual %}de {{ l.original | brl }}, promoção -{{ l.percentual }}%{% elif l.pix_aplicado %}de {{ l.original | brl }}, desconto do PIX{% else %}preço de tabela{% endif %}
+        </small>
+        {% else %}
+        <span class="selo selo-confirmar">A confirmar com a equipe</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if c.produtos_total %}
+    <dl class="resumo-total">
+      <div><dt>Produtos</dt><dd>{{ c.produtos_total | brl }}</dd></div>
+      <div>
+        <dt>{% if c.frete %}{{ c.frete.regiao }}: {{ c.frete.rotulo }}{% else %}Frete{% endif %}</dt>
+        <dd>
+          {% if not c.frete %}informe a cidade
+          {% elif c.frete.situacao == 'gratis' %}{{ 0 | brl }}
+          {% elif c.frete.taxa is not none %}{{ c.frete.taxa | brl }}
+          {% elif c.frete.situacao == 'requer_confirmacao' %}<span class="selo selo-confirmar">A confirmar com a equipe</span>
+          {% else %}a calcular{% endif %}
+        </dd>
+      </div>
+      <div class="resumo-final">
+        <dt>{% if c.frete and c.frete.taxa is none %}Total dos produtos{% else %}Total{% endif %}</dt>
+        <dd>{{ c.total | brl }}</dd>
+      </div>
+      {% if c.forma == 'credito' and c.parcela is not none %}
+      <div>
+        <dt>{{ c.parcelas }}x de</dt>
+        <dd>{{ c.parcela | brl }}
+          {% if c.permitido == 'requer_confirmacao' %}<span class="selo selo-confirmar">A confirmar com a equipe</span>
+          {% elif c.permitido == 'nao' %}<span class="selo selo-confirmar">Abaixo do mínimo</span>{% endif %}
+        </dd>
+      </div>
+      {% endif %}
+    </dl>
+    {% endif %}
+    {% endif %}
+    {% if c.pendencias %}
+    <ul class="pendencias" role="alert">{% for t in c.pendencias %}<li>{{ t }}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+  <p class="acoes-compra">
+    <button type="submit" class="botao-cheio" formmethod="post" formaction="/checkout"{% if not c.pode_finalizar %} disabled{% endif %}>Registrar pedido</button>
+  </p>
+</div>
+{% if oob %}{% include "_checkout_parcelas.html" %}{% endif %}

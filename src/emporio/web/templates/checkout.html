@@ -4,88 +4,34 @@
 <div class="contorno pagina">
 <p class="migalha"><a href="/carrinho">Voltar ao carrinho</a></p>
 <h1>Finalizar pedido</h1>
-<p class="aviso aviso-demo"><strong>Antes de confirmar:</strong> este pedido não gera cobrança nem entrega. Não informe dados de cartão, CPF ou endereço.</p>
+<p class="aviso aviso-demo"><strong>Antes de confirmar:</strong> este pedido não gera cobrança nem entrega. Não informe dados de cartão nem CPF. O CEP serve só para calcular o frete.</p>
 {% if aviso %}<p class="aviso aviso-erro" role="alert">{{ aviso }}</p>{% endif %}
 {% if c.vazio %}
 <p class="vazio-msg">Seu carrinho está vazio.</p>
 <p><a class="botao botao-cheio" href="/catalogo">Ver o catálogo</a></p>
 {% else %}
-<form class="checkout" action="/checkout" method="post">
-  <input type="hidden" name="total_visto" value="{{ c.total }}">
+<form class="checkout" action="/checkout" method="post"
+      hx-get="/checkout" hx-trigger="change, input from:#cep delay:350ms" hx-target="#checkout-dinamico" hx-swap="outerHTML"
+      hx-sync="this:replace" hx-replace-url="true">
   <div class="checkout-campos">
-    <label>Forma de pagamento
-      <select name="forma">
+    <label for="forma">Forma de pagamento
+      <select id="forma" name="forma">
         {% for f in formas %}<option value="{{ f }}"{% if f == c.forma %} selected{% endif %}>{{ rotulo_forma[f] }}</option>{% endfor %}
       </select>
     </label>
-    <label>Parcelas (só no crédito)
-      <select name="parcelas">
-        {% for n in range(1, parcelas_max() + 1) %}<option value="{{ n }}"{% if n == c.parcelas %} selected{% endif %}>{{ n }}x</option>{% endfor %}
-      </select>
+    {% set oob = false %}{% include "_checkout_parcelas.html" %}
+    <label for="cep">CEP de entrega
+      <input id="cep" name="cep" value="{{ c.cep }}" autocomplete="off" inputmode="numeric" maxlength="9" placeholder="Somente números"
+             aria-describedby="cep-ajuda">
+      <small id="cep-ajuda" class="cep-ajuda">Usado só para localizar a entrega e calcular o frete.
+        <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">Não sei meu CEP</a></small>
     </label>
-    <label>Cidade da entrega
-      <input name="cidade" value="{{ c.cidade }}" autocomplete="off" maxlength="80" placeholder="Só o nome da cidade">
-    </label>
-    <button type="submit" formmethod="get" formaction="/checkout">Atualizar valores</button>
+    <noscript><button type="submit" formmethod="get" formaction="/checkout">Atualizar valores</button></noscript>
   </div>
 
-  <section class="resumo" aria-label="Resumo do pedido">
-    <h2>Resumo</h2>
-    {% if c.linhas %}
-    <ul class="resumo-linhas">
-      {% for l in c.linhas %}
-      <li>
-        <span class="resumo-nome">{{ l.nome or 'Item' }}</span>
-        {% if l.final_unit is not none %}
-        <span class="resumo-qtd">{{ l.quantidade }} x {{ l.final_unit | brl }}</span>
-        <span class="resumo-sub">{{ l.subtotal | brl }}</span>
-        <small class="resumo-nota">
-          {% if l.percentual %}de {{ l.original | brl }}, promoção -{{ l.percentual }}%{% elif l.pix_aplicado %}de {{ l.original | brl }}, desconto do PIX{% else %}preço de tabela{% endif %}
-        </small>
-        {% else %}
-        <span class="selo selo-confirmar">A confirmar com a equipe</span>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-    {% if c.produtos_total %}
-    <dl class="resumo-total">
-      <div><dt>Produtos</dt><dd>{{ c.produtos_total | brl }}</dd></div>
-      <div>
-        <dt>{% if c.frete %}{{ c.frete.regiao }}: {{ c.frete.rotulo }}{% else %}Frete{% endif %}</dt>
-        <dd>
-          {% if not c.frete %}informe a cidade
-          {% elif c.frete.situacao == 'gratis' %}{{ 0 | brl }}
-          {% elif c.frete.taxa is not none %}{{ c.frete.taxa | brl }}
-          {% elif c.frete.situacao == 'requer_confirmacao' %}<span class="selo selo-confirmar">A confirmar com a equipe</span>
-          {% else %}a calcular{% endif %}
-        </dd>
-      </div>
-      <div class="resumo-final">
-        <dt>{% if c.frete and c.frete.taxa is none %}Total dos produtos{% else %}Total{% endif %}</dt>
-        <dd>{{ c.total | brl }}</dd>
-      </div>
-      {% if c.forma == 'credito' and c.parcela is not none %}
-      <div>
-        <dt>{{ c.parcelas }}x de</dt>
-        <dd>{{ c.parcela | brl }}
-          {% if c.permitido == 'requer_confirmacao' %}<span class="selo selo-confirmar">A confirmar com a equipe</span>
-          {% elif c.permitido == 'nao' %}<span class="selo selo-confirmar">Abaixo do mínimo</span>{% endif %}
-        </dd>
-      </div>
-      {% endif %}
-    </dl>
-    {% endif %}
-    {% endif %}
-    {% if c.pendencias %}
-    <ul class="pendencias" role="alert">{% for t in c.pendencias %}<li>{{ t }}</li>{% endfor %}</ul>
-    {% endif %}
-  </section>
-
-  <p class="acoes-compra">
-    <button type="submit" class="botao-cheio" formmethod="post" formaction="/checkout"{% if not c.pode_finalizar %} disabled{% endif %}>Registrar pedido</button>
-  </p>
+  {% include "_checkout_dinamico.html" %}
 </form>
+<script src="/static/checkout.js" defer></script>
 {% endif %}
 </div>
 {% endblock %}

@@ -62,6 +62,11 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
     ("garantia", re.compile(r"\bgarantia\b")),
+    # endereço de entrega de um pedido (dado do cliente): a Lia não mostra, e nunca o troca pelo endereço da loja
+    ("endereco_pedido", re.compile(
+        r"\b(endereco (?:de |da |do )?(?:entrega|cadastrad\w+|do pedido|do meu pedido|de envio)|"
+        r"(?:em|pra|para) onde (?:vai|foi|sera|esta indo|vao) (?:ser )?(?:entreg\w+|enviad\w+|mandad\w+)|"
+        r"onde (?:vai|foi|sera) (?:ser )?(?:entreg\w+|enviad\w+)|confirm\w+ (?:o )?endereco)\b")),
     ("frete", re.compile(r"\b(frete|entregam|enviam|entrega (para|pra|em)|cep)\b")),
     # quando o pedido chega: usa o pedido já consultado na conversa, se houver
     ("previsao_entrega", re.compile(

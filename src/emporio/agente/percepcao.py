@@ -642,6 +642,9 @@ def perceber(estado: Estado, mensagem: str) -> None:
             return
         estado.objetivo = None
         ag = None
+    if ag == "relato" and nova == "pedir_atendente" and not s["nega_atendente"]:
+        estado.aguardando = ag = None  # pedir um humano no meio do relato não é o relato: registra o pedido de atendente
+        estado.objetivo = None
     if ag == "relato":
         if s["negativo"] and s["palavras"] <= 4:
             estado.intencao = estado.objetivo

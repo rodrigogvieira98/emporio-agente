@@ -118,8 +118,8 @@ class RegrasDecisor:
         return responder("falha_ferramenta")
 
     def _registrar(self, estado: Estado, tipo: str, resumo: str) -> Acao:
-        if resultado_de(estado, "consultar_politica", temas=["horario"]) is None:
-            return ferramenta("consultar_politica", temas=["horario"])  # para informar o retorno fora do expediente
+        if resultado_de(estado, "consultar_politica", temas=["horario", "contato"]) is None:
+            return ferramenta("consultar_politica", temas=["horario", "contato"])  # retorno fora do expediente e canais
         r = resultado_de(estado, "registrar_encaminhamento")
         if r is None:
             n = sum(1 for a in estado.acoes_concluidas if a.startswith("chamado:"))
@@ -728,6 +728,10 @@ class RegrasDecisor:
             return self._erro(estado, r)
         return responder("promocoes", citado=estado.slots.get("desconto_citado"))
 
+    def _i_endereco_pedido(self, estado: Estado) -> Acao:
+        """Endereço de entrega é dado do cliente: não mostra e não responde com o endereço da loja."""
+        return self._info(estado, ["contato"], "endereco_pedido_privado")
+
     def _i_cupom(self, estado: Estado) -> Acao:
         """Cupom: a loja só tem as promoções ativas e o desconto do PIX; qualquer código citado não existe."""
         return self._info(estado, ["pagamento"], "cupom_inexistente")
@@ -899,8 +903,8 @@ class RegrasDecisor:
             return responder("negacao_atendente")
         protocolo = estado.chamados_assunto.get(estado.ultimo_assunto or "geral")
         if protocolo and resultado_de(estado, "registrar_encaminhamento") is None:  # mesmo assunto: não abre outro
-            if resultado_de(estado, "consultar_politica", temas=["horario"]) is None:
-                return ferramenta("consultar_politica", temas=["horario"])
+            if resultado_de(estado, "consultar_politica", temas=["horario", "contato"]) is None:
+                return ferramenta("consultar_politica", temas=["horario", "contato"])
             return responder("atendente_ja_registrado", protocolo=protocolo)
         resumo = "Cliente pediu atendimento humano."
         if estado.pendentes:

@@ -612,6 +612,15 @@ def recusa_manipulacao(e: Estado, p: dict) -> str:
             f"{extra}. Quer ver as promoções ativas?")
 
 
+def endereco_pedido_privado(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    canais = [f"{rot} {c[chave]}" for chave, rot in (("contato.whatsapp_secao_7", "WhatsApp"),
+                                                       ("contato.telefone_capa", "telefone")) if chave in c]
+    onde = f" Para conferir ou alterar, fale com a equipe: {_lista(canais)}." if canais else ""
+    return ("Por privacidade, eu não mostro o endereço de entrega de um pedido por aqui, nem confirmo o endereço de "
+            "quem comprou." + onde)
+
+
 def cupom_inexistente(e: Estado, p: dict) -> str:
     pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
@@ -1219,7 +1228,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
-        cupom_inexistente)
+        cupom_inexistente, endereco_pedido_privado)
 }
 
 

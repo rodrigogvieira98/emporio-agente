@@ -47,3 +47,5 @@
 {"id":"c47","cat":"qa_lia","turnos":["quero um violao","tenho 500 reais, qual voce indica?"],"contem":["Minha sugestão"],"nao_contem":["Qual tipo de instrumento","R$ 549,00"],"chamado":false}
 {"id":"c48","cat":"qa_lia","turnos":["e cupom PRIMEIRACOMPRA funciona?"],"contem":["Não existe esse cupom"],"nao_contem":["Formas de pagamento"],"chamado":false}
 {"id":"c49","cat":"qa_lia","turnos":["a promocao de pascoa do Martin D-28 ainda ta valendo?"],"contem":["não está ativa"],"chamado":false}
+{"id":"c50","cat":"qa_lia","turnos":["pedido 10, final 2109","qual o endereço de entrega cadastrado?"],"contem":["privacidade"],"nao_contem":["Estamos na"],"chamado":false}
+{"id":"c51","cat":"qa_lia","turnos":["to muito insatisfeito com o atendimento de vcs","sim"],"contem":["24 horas úteis"],"chamado":true}

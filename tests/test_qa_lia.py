@@ -328,6 +328,42 @@ def test_nome_de_produto_com_promocao_citada_e_encontrado():
     assert "Ohana CK-20" in t[0] and "20%" in t[0]
 
 
+# 11. endereço de entrega do pedido -----------------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", ["qual o endereço de entrega cadastrado?", "pra onde vai ser entregue meu pedido?",
+                                 "me confirma o endereço do meu pedido"])
+def test_endereco_de_entrega_do_pedido_nao_e_mostrado_nem_trocado_pelo_da_loja(sql, msg):
+    t = textos("pedido 10, final 2109", msg)
+    assert "Rua 14 de Maio" not in t[1] and "Estamos na" not in t[1]
+    assert "privacidade" in t[1].lower()
+
+
+def test_endereco_da_loja_continua_respondido():
+    (t,) = textos("onde fica a loja?")
+    assert "Rua 14 de Maio" in t
+
+
+# 12. pedido de humano ----------------------------------------------------------------------------------
+
+def test_pedido_de_humano_registra_com_protocolo(sql):
+    (r,) = conversar("quero falar com um humano")
+    assert "EM-" in r.texto
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
+
+
+def test_pedir_humano_no_meio_do_relato_de_irritacao_registra_atendente(sql):
+    r = conversar("meu pedido nao chegou ainda e ja to puto", "isso é um absurdo, quando chega?",
+                  "quero falar com um humano")
+    assert "EM-" in r[2].texto or "sim ou não" in r[2].texto
+    assert "Não entendi" not in r[2].texto
+
+
+def test_sim_a_oferta_de_registro_registra_com_protocolo_e_prazo(sql):
+    r = conversar("to muito insatisfeito com o atendimento de vcs", "sim")
+    assert "EM-" in r[1].texto and "24 horas úteis" in r[1].texto
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

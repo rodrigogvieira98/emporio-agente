@@ -51,7 +51,7 @@ def pagina():
 
 def test_quero_comprar_com_a_lia_ate_o_carrinho(url_site, pagina):
     pagina.goto(f"{url_site}/produto/81")
-    pagina.click("text=Quero comprar com a Lia")
+    pagina.click(".btn-compra")
     assert pagina.input_value("#chat-mensagem") == "Quero comprar Yamaha C40 Nylon Natural"
     assert pagina.locator("#chat-log .msg.voce").count() == 0  # preencheu, não enviou
     pagina.click("#chat-enviar")

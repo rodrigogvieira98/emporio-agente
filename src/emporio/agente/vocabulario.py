@@ -81,6 +81,7 @@ disponivel disponiveis disponibilidade estoque modelo modelos opcao opcoes indic
 bom boa dia tarde noite oi ola tudo bem e ai
 hoje agora atualmente mesmo la aquele aquela aquilo coisa negocio
 instrumento instrumentos iniciante iniciantes barato baratos barata baratas melhor melhores
+so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 """.split())
 
 AFIRMATIVO = re.compile(

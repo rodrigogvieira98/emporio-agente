@@ -265,6 +265,11 @@ TEMAS_INGLES = (
     (re.compile(r"\b(guitar\w*|bass|drum\w*|piano|keyboard|ukulele|violin|buy|product\w*)\b"), "produtos"),
 )
 AGRADECIMENTO_INGLES = re.compile(r"^\W*(?:ok\W+)?(?:thanks?|thank you|thx|bye|goodbye)\b")
+PALAVRAS_COMPARACAO = {"diferenca", "diferencas", "entre", "comparar", "comparacao", "compara", "versus", "vs", "melhor",
+                       "pior", "slap", "quero"}
+COMPARACAO = re.compile(r"\b(diferenca entre|diferencas entre|comparar|comparacao|compara\w*|versus|vs|"
+                        r"qual (?:e )?(?:o )?melhor entre|qual (?:a |o )?diferenca)\b")
+SEPARADOR_COMPARACAO = re.compile(r"\s+(?:e|vs|versus|ou|x|contra|com)\s+(?:o |a |os |as )?|,\s*")
 # Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
 CAMPANHA_CITADA = re.compile(
     r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"

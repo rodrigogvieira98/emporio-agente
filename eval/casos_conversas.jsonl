@@ -51,3 +51,4 @@
 {"id":"c51","cat":"qa_lia","turnos":["to muito insatisfeito com o atendimento de vcs","sim"],"contem":["24 horas úteis"],"chamado":true}
 {"id":"c52","cat":"qa_lia","turnos":["vcs sao uns lixos, porra","sim"],"contem":["EM-"],"nao_contem":["Não entendi"],"chamado":true}
 {"id":"c53","cat":"qa_lia","turnos":["hi, do you ship to Portugal?"],"contem":["em português","frete"],"nao_contem":["Nosso horário"],"chamado":false}
+{"id":"c54","cat":"qa_lia","turnos":["qual a diferença entre o Yamaha C40 e o Yamaha C70?"],"contem":["Yamaha C40","Yamaha C70","599,90","849,00"],"nao_contem":["Não encontrei"],"chamado":false}

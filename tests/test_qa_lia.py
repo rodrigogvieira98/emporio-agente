@@ -431,6 +431,28 @@ def test_portugues_nao_vira_ingles(msg):
     assert "em português" not in r.texto
 
 
+# 15. comparação de dois produtos ----------------------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", ["qual a diferença entre o Yamaha C40 e o Yamaha C70?", "Yamaha C40 vs Yamaha C70",
+                                 "quero comparar o Yamaha C40 com o C70"])
+def test_comparacao_mostra_os_dois_com_preco(msg):
+    (r,) = conversar(msg)
+    assert "Yamaha C40" in r.texto and "Yamaha C70" in r.texto
+    assert "R$ 599,90" in r.texto and "R$ 849,00" in r.texto
+    assert "Não encontrei" not in r.texto
+
+
+def test_comparacao_nao_escolhe_o_melhor_por_conta_propria():
+    (r,) = conversar("o Music Man 4X vs o Yamaha 3X, qual melhor pra slap?")
+    assert "Music Man Bass 4X" in r.texto and "Yamaha Bass 3X" in r.texto
+    assert "R$ 7.157,00" in r.texto and "R$ 11.445,00" in r.texto
+
+
+def test_comparacao_com_produto_inexistente_nao_inventa():
+    (r,) = conversar("qual a diferença entre o Yamaha C40 e o Zebra Z999?")
+    assert "R$" not in r.texto.split("Zebra")[-1] or "não encontrei" in r.texto.lower()
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

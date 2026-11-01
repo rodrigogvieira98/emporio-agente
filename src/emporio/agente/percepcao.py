@@ -175,6 +175,21 @@ def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     return s
 
 
+def _refs_de_comparacao(norm: str, voc: catalogo.Vocabulario) -> list[str]:
+    """Dois produtos citados numa comparação: parte a frase nos separadores e lê a referência de cada trecho.
+    O segundo trecho só com o modelo ("... e o C70") herda a marca do primeiro."""
+    limpo = _limpar_para_referencia(norm, voc)
+    refs: list[str] = []
+    for parte in v.SEPARADOR_COMPARACAO.split(limpo):
+        palavras = [t for t in tokens(parte) if t not in v.PALAVRAS_SOLTAS and t not in v.PALAVRAS_COMPARACAO
+                    and (t in voc.df or re.search(r"\d", t))]
+        if palavras and any(re.search(r"\d", t) or voc.df.get(t, 99) <= LIMITE_DISTINTIVO for t in palavras):
+            refs.append(" ".join(palavras))
+    if len(refs) >= 2 and len(refs[1].split()) == 1 and len(refs[0].split()) > 1:
+        refs[1] = f"{refs[0].split()[0]} {refs[1]}"  # "Yamaha C40 e o C70"
+    return refs[:2]
+
+
 def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots: dict[str, Any] = {"palavras": len(norm.split())}
     slots.update(_numeros_de_pedido(norm, estado))
@@ -260,6 +275,8 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     if slots["ingles"]:
         slots["tema_ingles"] = next((tema for p, tema in v.TEMAS_INGLES if p.search(norm)), None)
         slots["agradecimento_ingles"] = bool(v.AGRADECIMENTO_INGLES.search(norm))
+    if v.COMPARACAO.search(norm):
+        slots["comparar_refs"] = _refs_de_comparacao(norm, voc)
     camp = v.CAMPANHA_CITADA.search(norm)
     if camp:
         slots["promo_nome"] = camp.group(1)
@@ -359,6 +376,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "tentativa_manipulacao"
     if slots.get("ingles"):
         return "encerramento" if slots.get("agradecimento_ingles") else "ingles"
+    if len(slots.get("comparar_refs") or []) == 2:
+        return "comparar"
     if v.PEDIDO_INSTRUCOES.search(norm):
         return "pedido_instrucoes"
     if v.DADO_DE_TERCEIRO.search(norm):

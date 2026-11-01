@@ -621,6 +621,37 @@ def endereco_pedido_privado(e: Estado, p: dict) -> str:
             "quem comprou." + onde)
 
 
+ROTULO_SPEC = {"top": "tampo", "back_sides": "fundo e laterais", "neck": "braço", "strings": "cordas", "scale": "escala",
+               "electronics": "eletrônica", "color": "cor", "body": "corpo"}
+
+
+def _spec_texto(chave: str, valor: Any) -> str:
+    if chave == "electronics":
+        return "com eletrônica" if str(valor).lower() in ("yes", "sim", "true") else "sem eletrônica"
+    return str(valor)
+
+
+def comparacao(e: Estado, p: dict) -> str:
+    """Os dois produtos com preço de tabela, promoção ativa e as diferenças da ficha do catálogo. Sem veredito."""
+    produtos = [x.resultado.dados for x in e.passos if x.ferramenta == "ver_produto" and x.resultado.estado == "ok"][-2:]
+    a, b = produtos
+    linhas = []
+    for d in produtos:
+        promo = d.get("promocao") or {}
+        extra = f" (em promoção: {promo['percentual']}% de desconto)" if promo and not promo.get("ambigua") else ""
+        linhas.append(f"- {d['nome']}: {formatar(d['preco_centavos'])}{extra}")
+    ea, eb = a.get("especificacoes") or {}, b.get("especificacoes") or {}
+    difs = [f"{ROTULO_SPEC.get(k, k)}: {_spec_texto(k, ea[k])} no {a['nome']} e {_spec_texto(k, eb[k])} no {b['nome']}"
+            for k in ea if k in eb and ea[k] != eb[k] and k in ROTULO_SPEC]
+    txt = "Comparando os dois, preço de tabela:\n" + "\n".join(linhas)
+    if difs:
+        txt += "\nDiferenças da ficha do catálogo:\n" + "\n".join(f"- {x}" for x in difs)
+    for d in produtos:
+        if d.get("descricao"):
+            txt += f"\n{d['nome']}: {d['descricao']}"
+    return txt + "\nNão consigo dizer qual é melhor para o seu uso, só mostrar o que o catálogo informa. Quer ver as condições de algum deles?"
+
+
 def acolhimento(e: Estado, p: dict) -> str:
     return f"Sinto muito por isso. Quer que um atendente da equipe te ajude? {CONFIRMA}"
 
@@ -1238,7 +1269,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
-        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues)
+        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao)
 }
 
 

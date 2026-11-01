@@ -914,6 +914,22 @@ class RegrasDecisor:
             resumo += f" Pedido consultado: {pedido['pedido_id']}."
         return self._registrar(estado, "atendente", resumo)
 
+    def _i_comparar(self, estado: Estado) -> Acao:
+        """Dois produtos nomeados: preço e ficha do catálogo dos dois, sem escolher "o melhor"."""
+        dados = []
+        for ref in estado.slots["comparar_refs"]:
+            r = resultado_de(estado, "ver_produto", referencia=ref)
+            if r is None:
+                return ferramenta("ver_produto", referencia=ref)
+            if r.estado == "ok":
+                dados.append(r.dados)
+                continue
+            if r.estado in ("vazio", "ambiguo"):
+                return perguntar("produto_nao_encontrado", "referencia_produto")
+            return self._erro(estado, r)
+        estado.coletados["ultimo_produto"] = dados[-1]["id"]
+        return responder("comparacao")
+
     def _i_ingles(self, estado: Estado) -> Acao:
         return responder("so_portugues", tema=estado.slots.get("tema_ingles"))
 

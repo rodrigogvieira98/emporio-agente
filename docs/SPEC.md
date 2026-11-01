@@ -458,6 +458,15 @@ Pedido do Rodrigo em 01/11/2026. Substitui a linha do tempo da etapa 15. Etapas:
 - Datas mostradas só quando existem nos dados (data do pedido, previsão); o horário do pedido do site vem da gravação.
 - Uma função única em `src/emporio/ferramentas/` calcula as etapas, usada pelo rastreio do site, pela confirmação do pedido e pela Lia ao consultar pedido, para os três dizerem o mesmo.
 
+## Perguntas frequentes revisadas (etapa 22)
+
+Revisão do Rodrigo em 01/11/2026: a disposição já segue a home, mas o conteúdo ainda soa como regulamento interno.
+- Respostas na voz da loja ("nós"), diretas, em frases curtas, sem expressões internas como "A regra não informa", "Esse caso precisa de confirmação da nossa equipe", "a nossa equipe confirma o parcelamento", "Jadlog (.package)". Quando o manual for ambíguo, dizer o que vale e oferecer contato: "Se tiver dúvida no seu caso, fale com a gente".
+- Primeira frase de cada resposta responde a pergunta; detalhes depois.
+- Respostas aproveitam a largura do bloco, com medida de leitura confortável (até 75 caracteres por linha), alinhadas à esquerda junto da pergunta.
+- Temas revistos: Pagamento; Entrega e frete; Pedido e rastreio; Trocas, devoluções e garantia; Sobre a loja. Incluir perguntas que faltam e que o manual responde: reembolso (mesma forma de pagamento, até 10 dias úteis), produto com avaria na entrega, acessórios (não vendemos), privacidade dos dados.
+- Fatos continuam derivados do manual pelo código, sem número escrito à mão nos textos fixos.
+
 ## Banner com cinco instrumentos (etapa 20)
 
 Pedido do Rodrigo em 01/11/2026. A foto única da abertura vira uma sequência de cinco fotos de instrumentos (violão, guitarra, baixo, teclado e bateria, ou ukulele), com transição automática suave a cada 6 segundos.

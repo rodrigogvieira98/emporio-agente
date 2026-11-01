@@ -163,6 +163,12 @@ Comparação caso a caso entre só regras e entregue: nenhum caso melhorou ou pi
 
 O registro do holdout marca `arvore_alterada: true`. O marcador veio de um arquivo de imagem não rastreado, sem uso, em `src/emporio/web/static/` (o retrato original da Lia, depois removido). `git diff e0f35d6` em `src/` e `eval/rodar.py` não mostra mudança de código.
 
+### Versão avaliada e verificação da entrega
+
+- Código avaliado no holdout: **e0f35d6**. Documentação final: **38b8370** e posteriores. `git diff e0f35d6 38b8370` altera só `README.md`, `exemplos/*.md` e `eval/resultados/*.json`: nenhuma linha de `src/`, `tests/`, `docker-compose.yml` ou `requirements*.txt`, então o comportamento avaliado é o entregue.
+- Instalação limpa sem Docker, a partir de um clone do GitHub em 38b8370 e seguindo só este README: site e `/saude` no ar, Lia respondendo só com regras, 1.248 testes passando (01/11/2026, 20h13).
+- Instalação limpa com Docker, mesmo clone, `docker compose up -d --build`: a Lia respondeu só com regras durante o download do modelo, e com `qwen3:4b` e redação depois dele, cerca de 4 minutos (01/11/2026, 20h21).
+
 ## Exemplos de conversa
 
 Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exemplos/gerar_conversas.py` na configuração entregue (`qwen3:4b`, redação ligada): catálogo com orçamento e sugestão, informações da loja e fora do escopo, preço com nome ambíguo, promoção e parcela em conferência, devolução com consulta ao pedido e às políticas, e reclamação com chamado. Na conversa 05 a redação abriu a resposta com "Ola", sem acento, em linha solta: o validador deixou passar. Não corrigi para não alterar a versão avaliada.

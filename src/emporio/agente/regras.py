@@ -262,12 +262,18 @@ class RegrasDecisor:
             if acao:
                 return acao
         dias = estado.slots.get("dias_desde_compra")
+        recente = estado.coletados.get("dias_compra") or {}
+        if not dias and recente and estado.turno - int(recente.get("turno", -99)) <= 3:
+            dias = recente.get("dias")  # dito num turno anterior do mesmo caso
         if estado.objetivo == "defeito" and dias:
             acao = self._defeito_fora_do_prazo(estado, dias)
             if acao:
                 return acao
         regra = estado.coletados.get("regra")
-        if not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo):
+        # exclusão citada vale em qualquer ponto da troca (QA 2): depois da regra, só se a fala traz palavra nova
+        if (not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo)) or (
+                estado.slots.get("desconhecidas") and not any(
+                    k in estado.slots for k in ("pedido_id", "final_telefone")) and not estado.slots.get("datas")):
             acao = self._item_nao_elegivel(estado)
             if acao:
                 return acao

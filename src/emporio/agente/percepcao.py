@@ -19,7 +19,7 @@ from .estado import Estado
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
 MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_busca", "ofertas_recusadas",
-          "recomendado", "cidade_cliente")
+          "recomendado", "cidade_cliente", "dias_compra")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
@@ -300,7 +300,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["compra"] = bool(v.COMPRA.search(norm))
     slots["nivel"] = "iniciante" if v.NIVEL_INICIANTE.search(norm) else "outro" if v.NIVEL_OUTRO.search(norm) else None
     slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
-    slots["mau_uso"] = bool(v.MAU_USO.search(norm))
+    slots["mau_uso"] = bool(v.MAU_USO.search(v.NEGA_MAU_USO.sub(" ", norm)))  # "sem queda" nega o gatilho
     slots["avaria"] = bool(v.AVARIA.search(norm))
     slots["demonstrativo"] = bool(v.DEMONSTRATIVO.search(norm))
     slots["os_dois"] = bool(v.OS_DOIS.search(norm))
@@ -538,6 +538,9 @@ def _aplicar_slots(estado: Estado) -> None:
                 estado.aguardando == "dados_posvenda" and s["palavras"] >= 3 and not so_dado
                 and not s["afirmativo"] and not s["negativo"]):
             estado.declarar("descricao_defeito", s["texto_limpo"])
+    if s.get("dias_desde_compra") and estado.objetivo in POSVENDA | {"garantia"}:
+        # o prazo dito num turno vale nos seguintes do mesmo caso ("comprei faz 2 meses" ... "e o braço?")
+        estado.coletados["dias_compra"] = {"dias": s["dias_desde_compra"], "turno": estado.turno}
     soltas = []
     for d, dica in s.get("datas", []):
         if dica and estado.objetivo in POSVENDA | {"garantia"}:

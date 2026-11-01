@@ -248,6 +248,10 @@ FORA_DO_ASSUNTO = re.compile(
 
 # Conformidade com o manual: sinais lidos na fala do cliente, nunca fatos da loja.
 MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|umidade|chuva|bati|batida)\b")
+NEGA_MAU_USO = re.compile(
+    r"\b(sem|nem|nunca|nenhum[a]?|nao (?:teve|houve|sofreu|levou|deu|foi|caiu|bati|molhou))\b(?:\s+\w+){0,2}?\s+"
+    r"(caiu|cair|queda|quedas|derrub\w+|molhou|molhad[oa]|umidade|chuva|bati|batida|mau uso)\b|"
+    r"\b(?:nao|nunca)\s+(?:caiu|cai|bati|molhou)\b")
 AVARIA = re.compile(
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
     r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*|"

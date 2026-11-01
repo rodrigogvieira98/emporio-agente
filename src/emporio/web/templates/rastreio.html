@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Rastrear pedido{% endblock %}
+{% block conteudo %}
+<h1>Rastrear pedido</h1>
+<form class="filtros" action="/rastreio" method="post">
+  <label>Número do pedido <input name="pedido" inputmode="numeric" value="{{ pedido }}" required></label>
+  <label>Final do telefone (4 dígitos) <input name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+  <button type="submit">Consultar</button>
+</form>
+{% if aviso %}<p class="aviso" role="alert">{{ aviso }}</p>{% endif %}
+{% if resultado %}
+<section class="pedido" aria-label="Pedido">
+  <h2>Pedido {{ resultado.pedido_id }}</h2>
+  <p>Situação: <strong>{{ status_pedido.get(resultado.status, resultado.status) }}</strong></p>
+  <ul>{% for i in resultado.itens %}<li>{{ i.quantidade }}x {{ i.nome }}</li>{% endfor %}</ul>
+  <p>Total do pedido: {{ resultado.total_gravado_centavos | brl }} ({{ resultado.forma_pagamento | pagamento }})</p>
+  {% if resultado.rastreio %}<p>Código de rastreio: <strong>{{ resultado.rastreio }}</strong></p>
+  {% else %}<p>Ainda sem código de rastreio.</p>{% endif %}
+  {% if resultado.previsao %}<p>Previsão de entrega: {{ resultado.previsao | data_br }}{% if resultado.previsao_vencida %} (prazo vencido, fale com a Lia){% endif %}</p>{% endif %}
+  {% if resultado.nota %}<p>Observação: {{ resultado.nota }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

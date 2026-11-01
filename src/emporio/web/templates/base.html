@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Início{% endblock %} | {{ loja().nome }}</title>
+<link rel="stylesheet" href="/static/site.css">
+<script src="/static/htmx-2.0.4.min.js" defer></script>
+<script src="/static/chat.js" defer></script>
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="/">{{ loja().nome }}</a>
+  <nav aria-label="Principal">
+    <a href="/catalogo">Catálogo</a>
+    <a href="/rastreio">Rastrear pedido</a>
+    <a href="/politicas">Políticas</a>
+  </nav>
+</header>
+<main>{% block conteudo %}{% endblock %}</main>
+<footer class="rodape">
+  {% set L = loja() %}
+  <p><strong>{{ L.nome }}</strong>{% if L.endereco %} | {{ L.endereco }}{% endif %}</p>
+  {% if L.horario %}<p>Horário: {{ L.horario | join(" | ") }}</p>{% endif %}
+  {% if L.telefone %}<p>Contato: {{ L.telefone }}</p>{% endif %}
+</footer>
+
+<section id="chat" class="chat" aria-label="Chat com a Lia">
+  <button id="chat-alternar" class="chat-cabeca" type="button" aria-expanded="true" aria-controls="chat-corpo">
+    Converse com a Lia
+  </button>
+  <div id="chat-corpo" class="chat-corpo">
+    <div id="chat-log" class="chat-log" role="log" aria-live="polite">
+      <p class="msg lia">Oi! Sou a Lia, assistente virtual. Posso ajudar com produtos, preços, prazos e pedidos.</p>
+    </div>
+    <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
+          hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
+      <label class="so-leitor" for="chat-mensagem">Mensagem</label>
+      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off"
+             placeholder="Escreva sua mensagem" required>
+      <button id="chat-enviar" type="submit">Enviar</button>
+    </form>
+    <p id="chat-espera" class="htmx-indicator chat-espera">A Lia está respondendo...</p>
+  </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,5 @@
+<article class="card" data-produto="{{ p.id }}">
+  <h3><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h3>
+  {% include "_preco.html" %}
+  <p><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>
+</article>

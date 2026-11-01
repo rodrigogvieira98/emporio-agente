@@ -1,0 +1,13 @@
+<div class="preco">
+{% if p.final is not none %}
+  <span class="preco-original">{{ p.original | brl }}</span>
+  <span class="percentual">-{{ p.percentual }}%</span>
+  <span class="preco-final">{{ p.final | brl }}</span>
+  {% if p.descricao_promocao %}<small class="promo-desc">{{ p.descricao_promocao }}</small>{% endif %}
+{% elif p.promocao_em_conferencia %}
+  <span class="preco-final">{{ p.original | brl }}</span>
+  <small class="promo-desc">Promoção em conferência. Pergunte à Lia o valor final.</small>
+{% else %}
+  <span class="preco-final">{{ p.original | brl }}</span>
+{% endif %}
+</div>

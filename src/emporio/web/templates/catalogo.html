@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo{% endblock %}
+{% block conteudo %}
+<h1>Catálogo</h1>
+<form class="filtros" action="/catalogo" method="get">
+  <label>Categoria
+    <select name="categoria">
+      <option value="">Todas</option>
+      {% for c in categorias() %}<option value="{{ c }}"{% if c == filtros.categoria %} selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Busca <input name="termo" type="search" value="{{ filtros.termo }}"></label>
+  <label>Preço mínimo (reais) <input name="preco_min" inputmode="decimal" value="{{ filtros.preco_min }}"></label>
+  <label>Preço máximo (reais) <input name="preco_max" inputmode="decimal" value="{{ filtros.preco_max }}"></label>
+  <label class="inline"><input type="checkbox" name="todos" value="1"{% if filtros.todos %} checked{% endif %}> Mostrar indisponíveis</label>
+  <button type="submit">Filtrar</button>
+</form>
+{% if erro %}
+  <p class="aviso" role="status">{{ erro }}</p>
+{% else %}
+  <p class="contagem">Mostrando {{ itens | length }} de {{ total }} produtos, do menor para o maior preço. Refine os filtros para ver outros.</p>
+  <div class="grade">
+  {% for p in itens %}{% include "_card.html" %}{% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

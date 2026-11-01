@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Início{% endblock %}
+{% block conteudo %}
+<h1>Instrumentos musicais</h1>
+<form class="busca" action="/catalogo" method="get" role="search">
+  <label class="so-leitor" for="busca-termo">Buscar</label>
+  <input id="busca-termo" name="termo" type="search" placeholder="Buscar instrumento">
+  <button type="submit">Buscar</button>
+</form>
+<h2>Categorias</h2>
+<ul class="categorias">
+{% for c in categorias() %}
+  <li><a href="/catalogo?categoria={{ c | urlencode }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
+{% if destaque %}
+<h2>Promoções ativas</h2>
+<div class="grade">
+{% for d in destaque %}
+  <article class="card">
+    <h3><a href="/produto/{{ d.produto_id }}">{{ d.produto_nome }}</a></h3>
+    <div class="preco">
+      <span class="preco-original">{{ d.original_centavos | brl }}</span>
+      <span class="percentual">-{{ d.percentual }}%</span>
+      <span class="preco-final">{{ d.final_centavos | brl }}</span>
+      <small class="promo-desc">{{ d.descricao }}</small>
+    </div>
+  </article>
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

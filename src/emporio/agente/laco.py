@@ -148,6 +148,7 @@ class Agente:
             texto, oferecer = ajustar_tom(estado, acao, chave_final, texto)
             if (self.redator is not None and chave_final not in SEM_REDACAO and not partes
                     and not acao.parametros.get("compra")  # resposta de compra: sem texto livre do modelo
+                    and not any(a.get("ferramenta") in ("consultar_pedido", "consultar_pedido_demo") for a in acoes)  # pedido: sem texto livre
                     and estado.sentimento == "neutro"):
                 permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
                 texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,

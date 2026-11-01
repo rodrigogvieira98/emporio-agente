@@ -13,6 +13,7 @@ docker compose up -d --build
 Site em http://localhost:8000 e estado em http://localhost:8000/saude. O modelo padrão `qwen2.5:3b` é baixado na primeira subida (cerca de 2 GB); enquanto isso, a Lia já responde só com as regras. Troque o modelo com `EMPORIO_MODELO`.
 Com GPU NVIDIA: `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d`.
 Parar: `docker compose down`.
+O Docker sobe com `EMPORIO_REDACAO=1`: a redação só escreve frases curtas sem números e é validada por código; `EMPORIO_REDACAO=0` desliga (fora do Docker o padrão do código é 0).
 
 ## Executar sem Docker
 

@@ -39,9 +39,15 @@ ECO_DE_ROTULO = re.compile(
 # Oferta genérica de ajuda: não diz nada que o bloco factual já não diga, e a Lia não fecha com fórmula pronta.
 OFERTA_GENERICA = re.compile(
     r"\b(qualquer duvida|fique a vontade|estou (aqui|por aqui|a disposicao)|estamos a disposicao|"
-    r"a disposicao|caso (precise|queira|tenha)|se (precisar|quiser|tiver|houver)|conte comigo|conte com a gente|"
+    r"caso (precise|queira|tenha)|se (precisar|tiver|houver)|conte comigo|conte com a gente|"
     r"posso ajudar (em )?(mais|algo|alguma)|mais alguma coisa|mais alguma duvida|precisando|sempre que (precisar|quiser)|"
     r"para o que precisar|no que precisar|foi um prazer)\b")
+# Afirmação ou oferta sobre a loja (falha a): só passa se tudo o que a frase diz já está no bloco factual.
+AFIRMACAO_SOBRE_A_LOJA = re.compile(
+    r"\b(temos|oferecemos|trabalhamos|aceitamos|fazemos|possuimos|dispomos|vendemos|entregamos|parcelamos|"
+    r"disponivel|disponiveis|garantimos|atende|atendemos|verificar|conferir|checar|analisar|consultar|"
+    r"vamos (ver|olhar)|condicao de credito|aprovacao)\b")
+CAIXA_ALTA = re.compile(r"\b[A-ZÀ-Ý]{2,}\b")  # trecho em caixa alta: eco de "DAN ATIVO", sigla inventada
 LIMIAR_REPETE_BLOCO = 0.8
 LIMIAR_COBERTURA = 0.75  # parte das palavras de conteúdo da frase que já estão numa frase do bloco
 # "null" em texto (o modelo às vezes devolve a palavra no lugar do JSON null) nunca chega ao cliente.
@@ -118,7 +124,14 @@ def _campo_livre(valor: Any) -> str:
     return "" if normalizar(texto).strip(" .\"'`") in NULOS else texto
 
 
-def validar(livre: str, bloco: str, estado: Estado) -> str | None:
+def afirma_o_que_o_bloco_nao_diz(frase: str, bloco: str) -> bool:
+    """Frase com verbo de afirmação ou oferta sobre a loja cujo conteúdo não está inteiro no bloco factual."""
+    if not AFIRMACAO_SOBRE_A_LOJA.search(normalizar(frase)):
+        return False
+    return not _conteudo(frase) <= set(tokens(bloco))
+
+
+def validar(livre: str, bloco: str, estado: Estado, mensagem: str = "") -> str | None:
     """Devolve o motivo da reprovação, ou None se o texto livre pode ser exibido."""
     norm = normalizar(livre)
     if ECO_DE_ROTULO.search(normalizar(livre)) or ECO_DE_ROTULO.search(livre):
@@ -137,12 +150,16 @@ def validar(livre: str, bloco: str, estado: Estado) -> str | None:
         primeira = next((c for c in frase if c.isalpha()), "")
         if primeira and primeira.islower():
             return "minuscula"  # frase que começa em minúscula é resto de eco ou de continuação do bloco
+    if CAIXA_ALTA.search(livre):
+        return "caixa_alta"
     if OFERTA_GENERICA.search(norm):
         return "oferta_generica"
     if len(_frases(livre)) > MAX_FRASES:
         return "frases"
     if any(contradiz_o_bloco(f, bloco) for f in _frases(livre)):
         return "contradiz_bloco"
+    if any(afirma_o_que_o_bloco_nao_diz(f, bloco) for f in _frases(livre)):
+        return "afirmacao_fora_do_bloco"
     if livre.count("?") + bloco.count("?") > MAX_PERGUNTAS:
         return "perguntas"
     if estado.ja_saudou and tem_saudacao(livre):
@@ -153,6 +170,11 @@ def validar(livre: str, bloco: str, estado: Estado) -> str | None:
         identifica = t in voc.df and (voc.df[t] <= 4 or re.search(r"\d", t)) and t not in v.PALAVRAS_SOLTAS
         if identifica and t not in do_bloco:
             return "produto_fora_do_bloco"
+    # eco de termo do cliente que não está no bloco nem no vocabulário da loja ("DAN ATIVO"): na dúvida, descartar
+    da_mensagem = set(tokens(mensagem))
+    for t in tokens(livre):
+        if len(t) >= 3 and t in da_mensagem and t not in do_bloco and t not in voc.df and t not in PALAVRAS_VAZIAS:
+            return "eco_da_mensagem"
     return None
 
 
@@ -214,7 +236,7 @@ class Redator:
             reg.update(resultado="vazia")
             self.telemetria.append(reg)
             return bloco
-        motivo = validar(livre, bloco, estado)
+        motivo = validar(livre, bloco, estado, mensagem)
         if motivo:
             self._contar("redacao_descartada")
             reg.update(resultado=f"descartada:{motivo}")

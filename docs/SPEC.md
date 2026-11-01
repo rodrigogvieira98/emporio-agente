@@ -68,6 +68,8 @@ Trace JSONL em `var/trace.jsonl` por turno, campo `origem` obrigatório (real, e
 
 O resumo do chamado pode conter o relato livre do cliente, inclusive nome, porque é destinado à equipe. Telefone e e-mail continuam rejeitados no resumo. Trace, estado e execuções seguem sem nome. Decisão do Rodrigo em 31/10/2026, ao aprovar a mudança do teste de trace.
 
+Na mesma conversa, com chamado já registrado, novo pedido de atendente informa o protocolo existente e não abre outro chamado. O teste `test_mesmo_pedido_repetido_nao_duplica_chamado` passou a esperar 1 chamado em vez de 2. Mudança de teste aprovada pelo Rodrigo em 01/11/2026.
+
 CLI `python -m emporio.cli --origem demo`.
 
 ## Concisão e redundância

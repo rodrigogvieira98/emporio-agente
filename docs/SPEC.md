@@ -432,6 +432,27 @@ Lacunas encontradas pela auditoria de conformidade em 01/11/2026, no modo autôn
 
 Fica como limitação declarada no README: saudação pelo nome (escolha de privacidade), uso de `specs` em filtros e comparação, paginação de "mais opções" no chat.
 
+## QA de conversas da Lia (etapa 11)
+
+59 conversas simuladas em 01/11/2026 (220 turnos): contas sempre corretas e nenhum vazamento, mas 59% dos turnos com problema de entendimento, contexto ou fluxo. Correções gerais, por intenção e estado, nunca por frase. Transcrições em `scratchpad/qa_lia` (fora do repositório). Prioridade na ordem abaixo; o que não couber até as 18h30 fica como limitação declarada.
+
+1. Próxima abertura nunca promete "amanhã às 09:00" sem ressalva: diz o próximo dia de expediente pela regra e acrescenta que em feriado o horário pode mudar, conforme `feriados_sem_calendario`. Sem contradição na mesma resposta.
+2. Número sozinho não identifica produto: token numérico ("8", "10 dias", "3x", "7 dias", "CEP", "20%") só vira produto junto de marca ou modelo reconhecido; números de pedido, dias, parcelas, CEP e percentuais são extraídos antes da busca de produto.
+3. Escopo depois da intenção: palavra de acessório só recusa quando o pedido é comprar ou ver o acessório. "captação", "cordas" do instrumento ("baixo 5 cordas", "corda arrebentou"), "parecido", "precinho" e queixa de atendimento seguem a intenção própria. Corda arrebentada responde a exclusão de desgaste natural (8.3).
+4. Produto em foco em todo follow-up: "caro", "no pix", "mais barato", "parecido", "esse", "essa guitarra", "os dois", "quantidade" usam o último produto ou lista; "os dois" soma os dois últimos produtos citados.
+5. Consulta de pedido em várias mensagens: número e dígitos coletados em turnos separados, com estado aguardando; "final 7821" nunca é despedida; irritação no meio da consulta não abandona a consulta.
+6. Pós-venda: dias desde a compra informados pelo cliente ("faz 50 dias") aplicam a regra de prazo; avaria ("caixa amassada", "tampo rachado") vai para a orientação de recusar o recebimento ou defeito; "reembolso em quanto tempo" responde 10 dias úteis; pedido cancelado com pagamento responde sobre reembolso e "por que foi cancelado" usa a observação do pedido.
+7. Frete com produto conhecido usa o preço do produto: Campo Grande resolve grátis ou R$ 35,00, outra cidade com CEP gera a estimativa, grande porte diz cotação individual. A cidade informada antes fica no estado; o extrator de cidade não aceita trechos como "quantos dias chega". Nenhuma resposta promete estimativa que não entrega.
+8. Compra com produto em foco: "quero esse", "quero fechar", "coloca no carrinho" mostram o botão para o produto em foco. Respostas de compra não recebem texto livre do modelo.
+9. Orçamento: recomendação respeita o teto informado; sem produto acima do teto como sugestão.
+10. Promoção e cupom: promoção citada que não está ativa recebe "não está ativa"; cupom desconhecido recebe que não existe esse cupom; nome de produto com promoção citada é encontrado.
+11. Endereço de entrega de pedido: a Lia não mostra (privacidade) e não troca pelo endereço da loja.
+12. Pedido de humano oferece atendente com sim ou não e informa WhatsApp e telefone; "sim" a uma oferta de registro registra o chamado com protocolo e prazo de 24 horas úteis.
+13. Limite de tentativas da consulta de pedido também na ferramenta: por número de pedido, com janela de tempo, além de por conversa, para a Lia e o site compartilharem a proteção.
+14. Insulto e caixa alta com queixa recebem acolhimento curto e oferta de atendente, nunca "não entendi". Pergunta em inglês recebe resposta curta em português de que o atendimento é em português, com o tema reconhecido quando possível.
+15. Comparação de dois produtos nomeados mostra os dois com preço e diferenças do catálogo.
+16. Pergunta dupla de preço e frete ou de PIX e parcelas responde as duas; combinação de formas responde pela regra de R$ 2.000,00.
+
 ## Identidade "Palco e madeira" (etapa 9)
 
 Escolha do Rodrigo em 01/11/2026 (opção A), depois de comparar a home com Constelação, Teclacenter, Mercadão da Música, 4 Music e Fender. Prevalece sobre a identidade "balcão" e a composição "Loja acolhedora" no visual; conteúdo, regras e fluxos não mudam.

@@ -78,10 +78,11 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("objecao_preco", re.compile(
         r"(?<!mais )\b(ta |esta |achei |muito |bem |meio |super |um pouco )+(caro|salgado)\b|\bcaro demais\b|"
         r"\bsem condicoes de pagar\b|\bnao cabe no (meu )?(bolso|orcamento)\b|"
-        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b|"
+        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b|^(?:\w+ ){0,2}(?<!mais )(?:caro|carissimo|puxado)\W*$|"
         r"\b(precinho|fazer um preco|melhorar (o )?preco|baixar (o )?preco|abaixar (o )?preco|negociar|negociacao|"
         r"fazer (uma )?oferta|abatimento)\b")),
-    ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa)\b")),
+    ("preco_produto", re.compile(
+        r"\b(preco\w*|valor|quanto (ele |ela |eles |elas |isso |esse |essa |os dois |as duas )?(custa|sai|fica|e|esta|ta)|custa)\b")),
     ("pagamento", re.compile(
         r"\b(pagamento\w*|pagar|pix|boleto|cartao|credito|debito|parcel\w*|financia\w*)\b")),
     ("disponibilidade", re.compile(r"\b(disponivel|disponibilidade|disponiveis|estoque|tem (ai|ainda|ai ainda))\b")),
@@ -222,6 +223,15 @@ MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|um
 AVARIA = re.compile(
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
     r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*")
+# "esse", "essa guitarra", "ele": remetem ao produto em foco; "os dois" e a quantidade somam/multiplicam
+DEMONSTRATIVO = re.compile(r"\b(esse|essa|esses|essas|este|esta|desse|dessa|deste|desta|dele|dela|nele|nela|ele|ela|"
+                           r"o mesmo|a mesma)\b")
+OS_DOIS = re.compile(r"\b(os dois|as duas|ambos|ambas|dos dois|das duas|o dois)\b")
+_NUM = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6}
+QUANTIDADE = re.compile(
+    r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
+    r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
+    r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
 DESGASTE = re.compile(
     r"\b(cordas?|palhetas?|trastes?|feltros?)\b.{0,25}\b(arrebent\w*|rebent\w*|estour\w*|romp\w*|partiu|gast\w*|desgast\w*|"
     r"enferruj\w*)|\b(arrebent\w*|rebent\w*|estour\w*|romp\w*)\b.{0,20}\b(cordas?|palhetas?)\b")

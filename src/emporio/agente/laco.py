@@ -299,6 +299,8 @@ def integrar(estado: Estado, passo: Passo) -> None:
     elif nome == "ver_produto":
         if r.estado == "ok":
             estado.coletados["ultimo_produto"] = r.dados["id"]
+            recentes = [i for i in estado.coletados.get("ultimos_produtos", []) if i != r.dados["id"]]
+            estado.coletados["ultimos_produtos"] = [*recentes, r.dados["id"]][-2:]  # base do "os dois"
             estado.coletados.pop("recomendado", None)  # o produto consultado agora é o foco
         if r.estado == "ambiguo":
             estado.coletados["opcoes"] = r.dados["opcoes"]

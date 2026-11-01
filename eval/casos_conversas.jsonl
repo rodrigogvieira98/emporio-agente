@@ -35,3 +35,6 @@
 {"id":"c35","cat":"qa_lia","turnos":["quero saber do meu pedido","numero 8"],"contem":["4 últimos dígitos"],"nao_contem":["preço de tabela"],"chamado":false}
 {"id":"c36","cat":"qa_lia","turnos":["preciso de um baixo 5 cordas ativo"],"contem":["Bass"],"nao_contem":["não vendemos acessórios"],"chamado":false}
 {"id":"c37","cat":"qa_lia","turnos":["a corda arrebentou, cobre?"],"contem":["desgaste natural"],"nao_contem":["não vendemos acessórios"],"chamado":false}
+{"id":"c38","cat":"qa_lia","turnos":["quanto ta o Martin D-28?","nossa, muito caro"],"contem":["Entendo"],"nao_contem":["Qual produto"],"chamado":false}
+{"id":"c39","cat":"qa_lia","turnos":["queria ver guitarras","qual a mais barata?","ah, e vocês abrem amanhã?","voltando, essa guitarra no pix fica quanto?"],"contem":["Telecaster","PIX"],"nao_contem":["Qual produto"],"chamado":false}
+{"id":"c40","cat":"qa_lia","turnos":["quanto custa o Yamaha C40?","e o Shelby SN-100?","quanto fica os dois?"],"contem":["Yamaha C40","Shelby SN-100","1.148,90"],"chamado":false}

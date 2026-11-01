@@ -18,7 +18,8 @@ from .estado import Estado
 
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
-MANTER = ("pedido", "protocolo", "ultimo_produto", "ultima_busca", "ofertas_recusadas", "recomendado")
+MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_busca", "ofertas_recusadas",
+          "recomendado")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
@@ -247,6 +248,14 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
     slots["mau_uso"] = bool(v.MAU_USO.search(norm))
     slots["avaria"] = bool(v.AVARIA.search(norm))
+    slots["demonstrativo"] = bool(v.DEMONSTRATIVO.search(norm))
+    slots["os_dois"] = bool(v.OS_DOIS.search(norm))
+    mq = v.QUANTIDADE.search(norm)
+    if mq:
+        bruto = mq.group(1) or mq.group(2)
+        qtd = int(bruto) if bruto.isdigit() else v._NUM[bruto]
+        if 2 <= qtd <= 20:
+            slots["quantidade"] = qtd
     slots["desgaste"] = bool(v.DESGASTE.search(norm))
     slots["mais_barato"] = bool(v.EXTREMO_MIN.search(norm))
     dias = v.DIAS_DESDE_COMPRA.search(norm)
@@ -327,7 +336,12 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if slots.get("modalidade") and "frete" not in achadas and not any(
             n in ("devolucao", "defeito", "troca_preferencia", "status_pedido") for n in achadas):
         achadas = ["frete", *achadas]  # "qual o prazo do PAC?": pergunta de envio, mesmo sem a palavra "frete"
+    if (slots.get("quantidade") or slots.get("os_dois")) and "preco_produto" not in achadas and not any(
+            n in ("devolucao", "defeito", "troca_preferencia", "status_pedido", "frete") for n in achadas):
+        achadas = ["preco_produto", *achadas]  # "e se eu comprar dois?", "e os dois?": conta sobre o produto em foco
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if categoria and not ref and slots.get("demonstrativo"):
+        categoria = None  # "essa guitarra no pix": a categoria só nomeia o produto em foco, não pede uma busca
     if slots.get("cep") and ("frete" in achadas or not achadas or achadas[0] in ("preco_produto", "disponibilidade")):
         return "frete"  # CEP na mensagem: o cliente quer o frete (estimativa com produto e CEP)
     extremo = "min" if v.EXTREMO_MIN.search(norm) else "max" if v.EXTREMO_MAX.search(norm) else None
@@ -460,9 +474,13 @@ def perceber(estado: Estado, mensagem: str) -> None:
     # "se eu pagar no pix tem mais desconto?" com um produto em foco: recalcula o produto (e lembra que o PIX não soma)
     mais_desconto = s.get("forma") == "pix" and bool(re.search(r"\b(mais|outro|extra|adicional) desconto|desconto (a mais|extra|adicional)", norm))
     if (nova == "pagamento" and ultimo and "referencia" not in s and (s.get("forma") or s.get("parcelas"))
-            and (s["palavras"] <= 5 or mais_desconto) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
+            and (s["palavras"] <= 5 or mais_desconto or s.get("demonstrativo")) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
         s["produto_id"] = ultimo
+    if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
+        nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco
+        s["produto_id"] = ultimo
+        s["pergunta_promocao"] = True
     if nova is None and estado.ultimo_assunto == "frete" and s.get("cidade") and s["palavras"] <= 6:
         nova = "frete"  # "e em <outra cidade>?" depois de uma pergunta de frete
     estado.intencao = nova

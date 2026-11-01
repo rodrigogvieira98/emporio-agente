@@ -105,6 +105,47 @@ def test_queixa_de_atendimento_segue_a_reclamacao():
     assert ACESSORIOS not in t[0] and "Não entendi" not in t[0]
 
 
+# 4. produto em foco em todo follow-up -------------------------------------------------------------
+
+def test_objecao_de_preco_usa_o_produto_em_foco():
+    t = textos("quanto ta o Martin D-28?", "nossa, muito caro")
+    assert "Qual produto" not in t[1] and "Entendo" in t[1]
+
+
+def test_essa_guitarra_no_pix_depois_de_assunto_lateral():
+    t = textos("queria ver guitarras", "qual a mais barata?", "ah, e vocês abrem amanhã?",
+               "voltando, essa guitarra no pix fica quanto?")
+    assert "Telecaster" in t[3] and "PIX" in t[3] and "Qual produto" not in t[3]
+
+
+def test_quanto_ele_fica_no_pix_entao():
+    t = textos("o Ohana CK-20 quanto fica?", "ta bom, quanto ele fica no pix entao?")
+    assert "Ohana CK-20" in t[1]
+
+
+def test_quantidade_multiplica_o_produto_em_foco():
+    t = textos("quanto custa o ukulele Shelby SU-21S?", "e se eu comprar dois?")
+    assert "Qual produto" not in t[1] and "Para 2 unidades" in t[1] and "Shelby SU-21S" in t[1]
+    assert "R$ 303,82" in t[1]  # 2 x R$ 151,91 (PIX, 5% sobre R$ 159,90)
+
+
+def test_os_dois_soma_os_dois_ultimos_produtos_citados():
+    t = textos("quanto custa o Yamaha C40?", "e o Shelby SN-100?", "quanto fica os dois?")
+    assert "Yamaha C40" in t[2] and "Shelby SN-100" in t[2]
+    assert "R$ 1.148,90" in t[2]  # 599,90 + 549,00 (preço de tabela)
+
+
+@pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
+def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
+    t = textos("quanto custa o Yamaha C40?", msg)
+    assert "Qual tipo de instrumento" not in t[1] and "Qual produto" not in t[1]
+
+
+def test_esse_esta_em_promocao_responde_sobre_o_produto_em_foco():
+    t = textos("quanto custa o Yamaha C40?", "esse ta em promocao?")
+    assert "não está em promoção ativa" in t[1] and "Promoções ativas" not in t[1]
+
+
 def test_acessorio_pedido_de_verdade_continua_recusado():
     for msg in ("vcs vendem cordas de violao?", "quanto custa uma palheta?", "quero comprar um cabo"):
         assert ACESSORIOS in textos(msg)[0]

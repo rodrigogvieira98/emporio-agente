@@ -555,6 +555,9 @@ class RegrasDecisor:
         """"Qual o mais barato?" sobre a lista mostrada: nova consulta com a mesma busca, um item."""
         busca = estado.coletados.get("ultima_busca")
         if not busca or not busca.get("args"):
+            if estado.coletados.get("ultimo_produto") and estado.slots.get("extremo") == "min":
+                estado.slots["mais_barato"] = True  # "tem algo mais barato?" com um produto em foco
+                return self._i_parecido(estado)
             return self._i_busca_produto(estado)
         extremo = estado.slots.get("extremo", "min")
         args = dict(busca["args"])
@@ -578,7 +581,7 @@ class RegrasDecisor:
         if ref is None and (s.get("compra") or estado.coletados.get("compra")) and not s.get("desconhecidas"):
             ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
         # seguimento ("tá caro", "tem outro parecido?"): o produto em foco vale mesmo com palavras que o catálogo não conhece
-        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar")
+        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar", "extremo_lista")
         if ref is None and (seguimento or not s.get("desconhecidas")) and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}
@@ -669,7 +672,29 @@ class RegrasDecisor:
     def _i_dado_de_terceiro(self, estado: Estado) -> Acao:
         return responder("recusa_dado_de_terceiro")
 
+    def _soma_dos_dois(self, estado: Estado) -> Acao | None:
+        """"Quanto fica os dois?": soma as condições dos dois últimos produtos citados (None se não houver dois)."""
+        ids = estado.coletados.get("ultimos_produtos") or []
+        if not estado.slots.get("os_dois") or len(ids) < 2 or estado.slots.get("referencia"):
+            return None
+        forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
+        parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
+        for pid in ids:
+            args = {"produto_id": pid, "forma": forma, "parcelas": parcelas}
+            r = resultado_de(estado, "calcular_condicoes", **args)
+            if r is None:
+                return ferramenta("calcular_condicoes", **args)
+            if r.estado == "ambiguo":
+                return propor("preco_promocao_conflitante", "duvida_politica",
+                              f"Produto {pid} com mais de uma promocao ativa; cliente pediu a soma de dois produtos.")
+            if r.estado != "ok":
+                return self._erro(estado, r)
+        return responder("soma_dois", ids=ids, forma=forma, parcelas=parcelas)
+
     def _i_preco_produto(self, estado: Estado) -> Acao:
+        soma = self._soma_dos_dois(estado)
+        if soma:
+            return soma
         acao, produto = self._produto(estado)
         if acao:
             return acao
@@ -698,6 +723,10 @@ class RegrasDecisor:
                           f"Cliente perguntou parcelamento em {parcelas}x do produto {produto['id']}; "
                           "as duas leituras da parcela minima do manual divergem.")
         extra: dict[str, Any] = {}
+        if estado.slots.get("quantidade"):
+            extra["quantidade"] = estado.slots["quantidade"]
+        if estado.slots.get("pergunta_promocao"):
+            extra["pergunta_promocao"] = True
         if compra:
             extra["compra"] = True  # o próximo passo é o botão de carrinho, não outra pergunta
         if (r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro":

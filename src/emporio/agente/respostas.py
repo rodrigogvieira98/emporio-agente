@@ -635,6 +635,16 @@ def preco(e: Estado, p: dict) -> str:
             partes.append(f"Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
                           f"{formatar(d['minimo_tabela_centavos'])} em uma regra e {formatar(d['minimo_faixa_centavos'])} "
                           f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
+    if p.get("pergunta_promocao") and not d.get("percentual"):
+        partes.append("Esse produto não está em promoção ativa agora.")
+    if p.get("quantidade"):
+        n = p["quantidade"]
+        if d["forma"] == "credito":
+            partes.append(f"Para {n} unidades, são {formatar(d['parcela_centavos'] * n)} por mês em {d['parcelas']}x "
+                          f"(total {formatar(d['final_centavos'] * n)}).")
+        else:
+            rotulo = " no PIX" if d["forma"] == "pix" and not d.get("percentual") else ""
+            partes.append(f"Para {n} unidades{rotulo}: {formatar(d['final_centavos'] * n)}.")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
         return " ".join(partes)
@@ -1108,6 +1118,25 @@ def frete_grande_porte(e: Estado, p: dict) -> str:
             "individual: a nossa equipe faz o cálculo, e eu não informo valor por aqui.")
 
 
+def soma_dois(e: Estado, p: dict) -> str:
+    """Soma das condições dos dois últimos produtos citados, com os valores que a ferramenta devolveu."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"]
+    forma = p.get("forma", "pix")
+    linhas, total, tabela = [], 0, 0
+    for d in calc[-2:]:
+        total += d["final_centavos"]
+        tabela += d["original_centavos"]
+        linhas.append(f"- {d['produto_nome']}: {formatar(d['final_centavos'])}")
+    if forma == "credito":
+        parcela = sum(d["parcela_centavos"] for d in calc[-2:])
+        fecho = f"Os dois juntos, no crédito em {p.get('parcelas', 1)}x: {formatar(parcela)} por mês (total {formatar(total)})."
+    elif forma == "pix":
+        fecho = f"Os dois juntos, no PIX: {formatar(total)} (preço de tabela somado: {formatar(tabela)})."
+    else:
+        fecho = f"Os dois juntos: {formatar(total)}."
+    return "Somando os dois últimos produtos que você viu:\n" + "\n".join(linhas) + "\n" + fecho
+
+
 def parecidos(e: Estado, p: dict) -> str:
     """Outros modelos da mesma categoria do produto em foco, em faixa de preço próxima (ou mais baratos)."""
     d = _dados(e, "ver_produto")
@@ -1137,7 +1166,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos)
+        frete_grande_porte, parecidos, soma_dois)
 }
 
 

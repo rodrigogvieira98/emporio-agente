@@ -364,6 +364,33 @@ def test_sim_a_oferta_de_registro_registra_com_protocolo_e_prazo(sql):
     assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
 
 
+# 13. limite por número de pedido na ferramenta -------------------------------------------------------------
+
+def test_ferramenta_limita_tentativas_por_pedido_entre_conversas(sql, monkeypatch):
+    from datetime import datetime, timedelta
+
+    from emporio.ferramentas import pedidos
+    from emporio.ferramentas.pedidos import consultar_pedido
+
+    for i in range(pedidos.MAX_TENTATIVAS_POR_PEDIDO):  # cada conversa falha poucas vezes: o limite por conversa não pega
+        r = consultar_pedido(pedido_id=4, final_telefone="0000", conversa_id=f"c{i // 2}")
+        assert r.estado == "negado"
+    certo = consultar_pedido(pedido_id=4, final_telefone="3456", conversa_id="nova")
+    assert certo.estado == "negado" and certo.motivo == pedidos.MOTIVO_NEGADO  # nem o final correto passa na janela
+    outro = consultar_pedido(pedido_id=5, final_telefone="0000", conversa_id="nova")
+    assert outro.estado == "negado"  # outro pedido segue o fluxo normal (negado por dado errado, não bloqueado)
+
+
+def test_limite_por_pedido_expira_depois_da_janela(sql, monkeypatch):
+    from emporio.ferramentas import pedidos
+    from emporio.ferramentas.pedidos import consultar_pedido
+
+    for i in range(pedidos.MAX_TENTATIVAS_POR_PEDIDO):
+        consultar_pedido(pedido_id=4, final_telefone="0000", conversa_id=f"d{i // 2}")
+    monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-10-31T12:30:00")  # passou a janela
+    assert consultar_pedido(pedido_id=4, final_telefone="3456", conversa_id="nova").estado == "ok"
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

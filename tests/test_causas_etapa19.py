@@ -55,6 +55,49 @@ def test_forma_do_reembolso_responde_pela_regra_de_arrependimento(sql, pergunta)
     assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 0
 
 
+# --- item 2: modelo com número no nome ------------------------------------------------------
+
+@pytest.mark.parametrize("pergunta,nome,estado", [
+    ("tem o baixo Ibanez 2X?", "Ibanez Bass 2X Electric Bass", "descontinuado"),
+    ("tem o baixo 2X?", "Ibanez Bass 2X Electric Bass", "descontinuado"),
+    ("me fala do baixo Ibanez 2X", "Ibanez Bass 2X Electric Bass", "descontinuado"),
+    ("tem o violão Giannini GF-3D?", "Giannini GF-3D", "esgotado"),
+    ("tem o violão Shelby SN-7C?", "Shelby SN-7C", "descontinuado"),
+    ("tem o ukulele Kala KA-ABP-CTG?", "Kala KA-ABP-CTG", "ainda não está à venda"),
+])
+def test_produto_nomeado_responde_pelo_cadastro_mesmo_com_categoria(pergunta, nome, estado):
+    (r,) = conversar(pergunta)
+    assert nome in r.texto and estado in r.texto, r.texto
+    assert "Não encontrei" not in r.texto
+
+
+@pytest.mark.parametrize("pergunta,nome", [
+    ("quanto custa o baixo Yamaha 3X?", "Yamaha Bass 3X"),
+    ("quero o baixo Music Man 1X", "Music Man Bass 1X"),
+    ("tem o contrabaixo Yamaha 3X?", "Yamaha Bass 3X"),
+    ("o baixo 4X tem?", "Music Man Bass 4X"),
+])
+def test_modelo_com_numero_e_categoria_vira_o_produto_e_nao_uma_lista(pergunta, nome):
+    (r,) = conversar(pergunta)
+    assert nome in r.texto and "Encontrei" not in r.texto, r.texto
+
+
+@pytest.mark.parametrize("pergunta,parcelas", [
+    ("qual o preço do Yamaha Bass 3X em 3x?", "3x"),
+    ("quero pagar o baixo Music Man 4X em 2x", "2x"),
+    ("o Yamaha C40 no cartão 3x", "3x"),
+    ("dá pra parcelar o Yamaha Bass 3X em 5x?", "5x"),
+])
+def test_numero_do_nome_e_parcela_na_mesma_frase(pergunta, parcelas):
+    (r,) = conversar(pergunta)
+    assert f"em {parcelas}, cada parcela" in r.texto, r.texto
+
+
+def test_parcela_sozinha_depois_de_produto_em_foco():
+    r = conversar("quanto custa o Yamaha Bass 3X", "3x")
+    assert "Yamaha Bass 3X" in r[1].texto and "em 3x, cada parcela" in r[1].texto
+
+
 # --- item 3: pedido explícito de atendente traz prazo e canais ------------------------------
 
 @pytest.mark.parametrize("mensagem", ["quero falar com um atendente", "me passa para uma pessoa de verdade",

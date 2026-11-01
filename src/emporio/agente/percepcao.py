@@ -145,12 +145,28 @@ def _numeros_de_pedido(norm: str, estado: Estado) -> dict[str, Any]:
     return out
 
 
+# Termos que marcam pagamento: com eles na frente (ou na frase), "3x" é parcelamento e não nome de produto.
+TERMOS_PAGAMENTO = {"em", "ate", "de", "no", "na", "a", "ser", "pagar", "pago", "paga", "pagando", "pagamento", "parcelar",
+                    "parcelado", "parcelada", "parcelo", "parcela", "parcelas", "vezes", "vez", "cartao", "credito",
+                    "debito", "dividir", "dividido", "divido", "fazer", "faco", "fechar", "fecho", "levo", "juros",
+                    "pix", "boleto", "financiar", "financiado", "passar", "passo"}
+
+
 def _nome_de_produto(texto: str, m: re.Match[str], voc: catalogo.Vocabulario) -> bool:
-    """"2X" só é nome de produto ("Bass 2X") quando o catálogo o conhece e não vem depois de "em", "até" ou "de":
-    "em 3x" é parcelamento e nunca entra na referência do produto."""
+    """"2X" é nome de produto ("Bass 2X") quando o catálogo o conhece e vem junto de marca, categoria ou outra palavra
+    do nome. Vira parcelamento quando acompanha verbo ou termo de pagamento ("em 3x", "no cartão 3x") ou quando vem
+    sozinho, sem nada antes (o produto em foco é o da conversa)."""
+    if m.group(0).replace(" ", "") not in voc.df:
+        return False
     antes = texto[:m.start()].split()
-    # "3x" sozinho (sem marca ou modelo antes) é parcelamento; só "Bass 3X" é nome de produto
-    return m.group(0).replace(" ", "") in voc.df and bool(antes) and antes[-1] not in ("em", "ate", "de", "no", "a", "ser")
+    if not antes:
+        return False
+    ultima = antes[-1]
+    if ultima in TERMOS_PAGAMENTO:
+        return False
+    if ultima in voc.df or ultima in v.CATEGORIAS:
+        return True
+    return not any(t in TERMOS_PAGAMENTO for t in antes)  # palavra neutra ("o 2X"): só é nome sem pagamento na frase
 
 
 # Números que não são produto: tempo desde a compra, número do pedido, final de telefone, percentual.
@@ -190,6 +206,17 @@ def _refs_de_comparacao(norm: str, voc: catalogo.Vocabulario) -> list[str]:
     return refs[:2]
 
 
+def _marcar_produto_nomeado(slots: dict[str, Any], voc: catalogo.Vocabulario) -> None:
+    """A referência identifica um único produto do cadastro (marca e modelo, ou um modelo com número): o produto
+    nomeado responde pelo próprio cadastro, antes de qualquer busca por categoria."""
+    slots.pop("produto_nomeado", None)
+    ref = set(tokens(slots.get("referencia") or ""))
+    if not ref or not (len(ref) >= 2 or any(re.search(r"\d", t) for t in ref)):
+        return
+    if sum(ref <= nome for nome in voc.nomes) == 1:
+        slots["produto_nomeado"] = True
+
+
 def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots: dict[str, Any] = {"palavras": len(norm.split())}
     slots.update(_numeros_de_pedido(norm, estado))
@@ -208,13 +235,11 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         if m:
             slots["valor"] = _reais(m.group(1) or m.group(2))
     voc = catalogo.vocabulario()
-    m = RE_PARCELAS.search(norm)
-    if m:
-        antes = norm[:m.start()].split()
-        token = m.group(0).replace(" ", "")
-        # "Bass 2X" é nome de produto; "em 2x" é parcelamento
-        if not (token in voc.df and antes and antes[-1] not in ("em", "ate", "de", "no")):
+    for m in RE_PARCELAS.finditer(norm):
+        # "Bass 2X" é nome de produto; "em 2x" é parcelamento, mesmo na mesma frase ("Bass 3X em 3x")
+        if not _nome_de_produto(norm, m, voc):
             slots["parcelas"] = int(next(g for g in m.groups() if g))
+            break
     if re.search(r"\bpix\b", norm):
         slots["forma"] = "pix"
     elif re.search(r"\bboleto\b", norm):
@@ -254,6 +279,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
     slots["desconhecidas"] = [t for t in conteudo if t not in voc.df and not re.search(r"\d", t)]
+    _marcar_produto_nomeado(slots, voc)
     if slots.get("referencia"):
         # núcleo do nome: o que o catálogo conhece, o que tem número e o que o cliente escreveu com maiúscula
         # (nome próprio); o resto ("tá", "né", "disseram") é conversa. Só vale se identifica por modelo.
@@ -263,6 +289,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
                   or any(t in voc.df and voc.df[t] <= LIMITE_DISTINTIVO for t in nucleo))  # "Telecaster que tava..."
         if modelo:
             slots["referencia"] = " ".join(nucleo)
+        _marcar_produto_nomeado(slots, voc)
     palavras_da_msg = set(tokens(norm))
     for c in voc.campanhas:
         chaves = [t for t in tokens(c) if t not in ("de", "da", "do", "dos", "das")]
@@ -438,6 +465,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
             n in ("devolucao", "defeito", "troca_preferencia", "status_pedido", "frete") for n in achadas):
         achadas = ["preco_produto", *achadas]  # "e se eu comprar dois?", "e os dois?": conta sobre o produto em foco
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if ref and categoria and slots.get("produto_nomeado"):
+        categoria = None  # "o baixo Ibanez 2X": a categoria só situa o produto nomeado, que responde pelo cadastro
     procurando = re.search(r"\b(procur\w+|busc\w+|precis\w+|querend\w+|pensando em|interessad\w+)\b", norm)
     if categoria and not ref and slots.get("demonstrativo") and not procurando and "preco_max" not in slots:
         categoria = None  # "essa guitarra no pix": a categoria só nomeia o produto em foco, não pede uma busca

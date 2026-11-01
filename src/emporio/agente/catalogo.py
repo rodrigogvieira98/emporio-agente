@@ -19,6 +19,7 @@ class Vocabulario:
     cidades: list[str] = field(default_factory=list)
     campanhas: list[str] = field(default_factory=list)
     categorias: list[str] = field(default_factory=list)  # nomes do cadastro, na ordem dos ids
+    nomes: list[frozenset[str]] = field(default_factory=list)  # tokens do nome de cada produto
 
 
 @lru_cache(maxsize=4)
@@ -27,6 +28,7 @@ def _ler(caminho: str, mtime_ns: int) -> Vocabulario:
     conn = banco.conectar(caminho)
     try:
         for (nome,) in conn.execute("SELECT nome FROM produtos"):
+            voc.nomes.append(frozenset(tokens(nome)))
             for t in set(tokens(nome)):
                 voc.df[t] = voc.df.get(t, 0) + 1
         voc.cidades = sorted({normalizar(c) for (c,) in conn.execute("SELECT cidade FROM clientes WHERE cidade IS NOT NULL")},

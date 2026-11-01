@@ -278,12 +278,17 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 
 **"Para começar" em carrossel.** Decisão do Rodrigo, para compactar a home. A grade da seção "Para começar" vira carrossel, com o mesmo componente, os mesmos controles e o mesmo comportamento da vitrine de destaques, reaproveitando `vitrine.js` e o CSS existentes. Os dois carrosséis funcionam de forma independente, sem autoplay, com rótulos acessíveis próprios, e sem rolagem horizontal da página em 390 px. Cada um mantém seus produtos e o link "Ver todos os instrumentos".
 
-**Canais clicáveis.** Decisão do Rodrigo em 01/11/2026, que substitui a decisão anterior de manter contatos só como texto. Nas telas, cada canal tem ícone e link direto, gerado por padrão a partir dos dados do manual, sem depender de variável de ambiente:
-- botão "Fale conosco" da faixa: `mailto:` para o e-mail do manual, com assunto preenchido, e não mais `/fale-conosco`;
-- bloco do telefone da faixa: número com link `tel:` e, ao lado, ícone do WhatsApp com link `https://wa.me/55DDDNUMERO`, em nova aba;
-- em `/fale-conosco`: WhatsApp, Telefone e E-mail com os mesmos links.
+**Canais e contato: decisão final do Rodrigo em 01/11/2026.** Prevalece sobre o que estiver diferente nesta seção.
+- O botão "Fale conosco" da faixa abre `/fale-conosco`.
+- Em `/fale-conosco`, WhatsApp e Telefone ficam com ícone e texto, sem link. Contatos fictícios só ganham link com as variáveis `EMPORIO_WHATSAPP_URL` e `EMPORIO_TELEFONE_LINK`, quando forem canais controlados.
+- O bloco de e-mail tem o link específico "Enviar e-mail", com `mailto:`. É o único link de canal ativo por padrão.
+- O telefone da faixa fica como texto.
+- A faixa mostra o endereço resumido (rua, número e cidade/UF). O endereço completo, com CEP, fica em `/fale-conosco`. É uma repetição útil e permitida.
+- O rodapé segue sem link "Fale conosco" e sem dados de contato.
 
-`EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK` continuam podendo substituir os links padrão. O rodapé não tem link "Fale conosco", por decisão do Rodrigo, o que prevalece sobre o parágrafo "Fale conosco sai do cabeçalho". A página `/fale-conosco`, com formulário e endereço, continua no ar e é alcançada pelos links de Perguntas frequentes e Privacidade. O README avisa que os números são os do manual da loja fictícia.
+**Privacidade: decisão final.** Texto em linguagem simples, descrevendo o funcionamento real. Sai o jargão técnico. Informa que o cookie nasce na primeira visita e que o site não tem prazo automático de exclusão: os dados ficam até o cliente pedir a exclusão. Não declara prazo de retenção nem base legal específica sem fundamentação. Informa que "Enviar e-mail" abre o aplicativo de e-mail do cliente.
+
+**Frete: decisão final.** Pedido de exatamente R$ 500,00 continua com confirmação da equipe, no site e na Lia. O CEP é obrigatório para simular a entrega, não para navegar ou conversar. Fórmula ou tabela de frete estimado só entra depois de aprovada pelo Rodrigo.
 
 A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
 

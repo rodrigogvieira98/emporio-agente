@@ -599,6 +599,9 @@ def promocoes(e: Estado, p: dict) -> str:
             linhas.append(f"- {i['produto_nome']}: de {formatar(i['original_centavos'])} por "
                           f"{formatar(i['final_centavos'])} ({i['percentual']}% de desconto){extra}")
     a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com preço promocional.")
+    if p.get("citado"):
+        return (f"Não consigo confirmar um desconto de {p['citado']}% prometido por fora: só valem as promoções "
+                "ativas da loja.\nPromoções ativas:\n" + "\n".join(linhas) + (("\n" + a) if a else ""))
     return "Promoções ativas:\n" + "\n".join(linhas) + (("\n" + a) if a else "")
 
 
@@ -607,6 +610,12 @@ def recusa_manipulacao(e: Estado, p: dict) -> str:
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
     return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas"
             f"{extra}. Quer ver as promoções ativas?")
+
+
+def cupom_inexistente(e: Estado, p: dict) -> str:
+    pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
+    extra = f" e o desconto de {pix}% no PIX" if pix else ""
+    return ("Não existe esse cupom: eu só conheço as promoções ativas" + extra + ". Quer ver as promoções ativas?")
 
 
 def recusa_dado_de_terceiro(e: Estado, p: dict) -> str:
@@ -651,7 +660,13 @@ def preco(e: Estado, p: dict) -> str:
             partes.append(f"Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
                           f"{formatar(d['minimo_tabela_centavos'])} em uma regra e {formatar(d['minimo_faixa_centavos'])} "
                           f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
-    if p.get("pergunta_promocao") and not d.get("percentual"):
+    if p.get("promo_inativa"):
+        partes.insert(0, f"A promoção {str(p['promo_inativa']).title()} não está ativa para este produto, "
+                         "então não posso prometer esse desconto.")
+    elif p.get("desconto_citado"):
+        partes.insert(0, f"Não consigo confirmar um desconto de {p['desconto_citado']}%: só vale a promoção ativa "
+                         "da loja, e é isto que vale para este produto.")
+    if p.get("pergunta_promocao") and not d.get("percentual") and not p.get("promo_inativa"):
         partes.append("Esse produto não está em promoção ativa agora.")
     if p.get("quantidade"):
         n = p["quantidade"]
@@ -1203,7 +1218,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto)
+        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
+        cupom_inexistente)
 }
 
 

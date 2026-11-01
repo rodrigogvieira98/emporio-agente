@@ -299,6 +299,35 @@ def test_numero_sem_unidade_nao_vira_teto():
     assert not _precos(t[1]) or max(_precos(t[1])) > 100
 
 
+# 10. promoção e cupom ---------------------------------------------------------------------------------
+
+def test_promocao_citada_inativa_de_produto_recebe_nao_esta_ativa():
+    (t,) = textos("a promocao de pascoa do Martin D-28 ainda ta valendo?")
+    assert "não está ativa" in t and "Páscoa" in t.title().replace("Pascoa", "Páscoa")
+
+
+def test_promocao_inativa_sem_produto_recebe_nao_esta_ativa():
+    (t,) = textos("vai ter promocao de dia das maes?")
+    assert "não está ativa" in t
+
+
+def test_cupom_desconhecido_nao_existe():
+    t = textos("e cupom PRIMEIRACOMPRA funciona?")
+    assert "não existe esse cupom" in t[0].lower() and "Formas de pagamento" not in t[0]
+
+
+def test_desconto_prometido_por_vendedor_nao_vira_produto():
+    t = textos("vi no instagram que tem 30% de desconto de black friday no Tagima Woodstock",
+               "mas o vendedor me prometeu 20% de desconto")
+    assert "não está ativa" in t[0]
+    assert "Ohana" not in t[1].split("Promoções ativas")[0] and "não consigo confirmar" in t[1].lower()
+
+
+def test_nome_de_produto_com_promocao_citada_e_encontrado():
+    t = textos("a promocao do Ohana CK-20 ainda esta valendo?")
+    assert "Ohana CK-20" in t[0] and "20%" in t[0]
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

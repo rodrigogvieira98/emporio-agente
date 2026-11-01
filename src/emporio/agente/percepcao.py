@@ -253,6 +253,13 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         if chaves and all(t in palavras_da_msg for t in chaves):
             slots["termo_promocao"] = c
             break
+    camp = v.CAMPANHA_CITADA.search(norm)
+    if camp:
+        slots["promo_nome"] = camp.group(1)
+        slots.setdefault("termo_promocao", camp.group(1))  # a ferramenta diz se há promoção ativa com esse nome
+    dc = v.DESCONTO_CITADO.search(norm)
+    if dc and re.search(r"\b(desconto|promocao|off|abatimento)\b", norm):
+        slots["desconto_citado"] = int(dc.group(1))
     slots["datas"] = _datas(norm)
     if v.CANAL_ONLINE.search(norm):
         slots["canal_compra"] = "online"

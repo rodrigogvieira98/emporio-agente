@@ -77,6 +77,7 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\b((?<!\d )(?<!\d)cordas?(?! orquestrais?)(?!\s+(?:\w+\s+)?(?:arrebent|rebent|estour|romp|partiu|soltou|enferruj|"
         r"oxid|gast|desgast))|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
         r"afinador\w*|suporte|estante|correia|caixas? de som|fone\w*|microfone\w*)\b")),
+    ("cupom", re.compile(r"\b(cupom|cupon|cupons|cupoes|voucher|codigo (?:promocional|de desconto|de cupom))\b")),
     ("promocao", re.compile(
         r"\b(promocao|promocoes|desconto\w*|black friday|oferta\w*|liquidacao|queima de estoque|"
         r"valendo|vigente)\b")),
@@ -241,6 +242,12 @@ QUANTIDADE = re.compile(
     r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
     r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
     r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
+# Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
+CAMPANHA_CITADA = re.compile(
+    r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"
+    r"volta as aulas|aniversario da loja|semana do consumidor|liquida\w+ de \w+)\b")
+CUPOM = re.compile(r"\b(cupom|cupon|cupons|cupoes|voucher|codigo (?:promocional|de desconto|de cupom))\b")
+DESCONTO_CITADO = re.compile(r"\b(\d{1,2})\s*(?:%|por cento)")
 # "e agora?", "o que eu faço?": pede o próximo passo do assunto de pós-venda em andamento
 PROXIMO_PASSO = re.compile(r"\b(e agora|o que (eu )?faco|o que fazer|como (eu )?faco|e depois)\b")
 DESGASTE = re.compile(

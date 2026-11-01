@@ -726,7 +726,11 @@ class RegrasDecisor:
             return ferramenta("listar_promocoes", **args)
         if r.estado == "falha":
             return self._erro(estado, r)
-        return responder("promocoes")
+        return responder("promocoes", citado=estado.slots.get("desconto_citado"))
+
+    def _i_cupom(self, estado: Estado) -> Acao:
+        """Cupom: a loja só tem as promoções ativas e o desconto do PIX; qualquer código citado não existe."""
+        return self._info(estado, ["pagamento"], "cupom_inexistente")
 
     def _i_tentativa_manipulacao(self, estado: Estado) -> Acao:
         return self._info(estado, ["pagamento"], "recusa_manipulacao")
@@ -789,6 +793,18 @@ class RegrasDecisor:
             extra["quantidade"] = estado.slots["quantidade"]
         if estado.slots.get("pergunta_promocao"):
             extra["pergunta_promocao"] = True
+        nome_promo = estado.slots.get("promo_nome")
+        if nome_promo or estado.slots.get("desconto_citado"):
+            from ..texto import radical, tokens
+
+            promo = produto.get("promocao") or {}
+            chaves = [radical(t) for t in tokens(nome_promo or "")]
+            desc = normalizar(str(promo.get("descricao") or ""))
+            ativa = bool(promo) and not promo.get("ambigua") and (not chaves or all(c in desc for c in chaves))
+            if nome_promo and not ativa:
+                extra["promo_inativa"] = nome_promo
+            if estado.slots.get("desconto_citado") and promo.get("percentual") != estado.slots["desconto_citado"]:
+                extra["desconto_citado"] = estado.slots["desconto_citado"]
         if compra:
             extra["compra"] = True  # o próximo passo é o botão de carrinho, não outra pergunta
         if (r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro":

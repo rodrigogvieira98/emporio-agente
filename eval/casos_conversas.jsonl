@@ -45,3 +45,5 @@
 {"id":"c45","cat":"qa_lia","turnos":["quanto custa o ukulele Shelby SU-21S?","moro em campo grande, quanto e o frete?"],"contem":["taxa fixa de R$ 35,00"],"nao_contem":["valor aproximado do pedido"],"chamado":false}
 {"id":"c46","cat":"qa_lia","turnos":["quanto custa o Yamaha F310?","coloca no carrinho"],"contem":["Adicionar ao carrinho"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c47","cat":"qa_lia","turnos":["quero um violao","tenho 500 reais, qual voce indica?"],"contem":["Minha sugestão"],"nao_contem":["Qual tipo de instrumento","R$ 549,00"],"chamado":false}
+{"id":"c48","cat":"qa_lia","turnos":["e cupom PRIMEIRACOMPRA funciona?"],"contem":["Não existe esse cupom"],"nao_contem":["Formas de pagamento"],"chamado":false}
+{"id":"c49","cat":"qa_lia","turnos":["a promocao de pascoa do Martin D-28 ainda ta valendo?"],"contem":["não está ativa"],"chamado":false}

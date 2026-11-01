@@ -14,6 +14,7 @@ from ..ferramentas.encaminhamento import registrar_encaminhamento
 from ..ferramentas.envelope import Fato, Resultado
 from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
+from ..ferramentas.promocoes import listar_promocoes
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from . import respostas, trace
 from .decisor import Decisor
@@ -26,7 +27,7 @@ log = logging.getLogger("emporio.agente")
 
 MAX_PASSOS = 3
 FERRAMENTAS = {f.__name__: f for f in (buscar_produtos, ver_produto, calcular_condicoes, consultar_pedido,
-                                       consultar_politica, registrar_encaminhamento)}
+                                       consultar_politica, registrar_encaminhamento, listar_promocoes)}
 # só o caminho "encaminhar" (com permissão) pode gravar chamado
 SO_ENCAMINHAR = {"registrar_encaminhamento"}
 NECESSITA_CONVERSA = {"consultar_pedido", "registrar_encaminhamento"}
@@ -79,7 +80,8 @@ class Agente:
                     fatos += fatos_do_resultado(passo.ferramenta, passo.args, passo.resultado)
                     r = passo.resultado
                     acoes.append({"tipo": acao.tipo, "ferramenta": passo.ferramenta, "estado": r.estado,
-                                  "id_consulta": r.id_consulta, "motivo": r.motivo})
+                                  "id_consulta": r.id_consulta, "motivo": r.motivo,
+                                  "args": trace.sanitizar_args(passo.args)})
                     passos_trace.append({"passo": numero, "tipo": acao.tipo, "ferramenta": passo.ferramenta,
                                          "estado": r.estado, "motivo": r.motivo, "id_consulta": r.id_consulta,
                                          "args": trace.sanitizar_args(passo.args)})
@@ -191,7 +193,7 @@ def integrar(estado: Estado, passo: Passo) -> None:
     r, nome = passo.resultado, passo.ferramenta
     if r.estado in ("falha", "negado") and nome in ("consultar_pedido", "buscar_produtos", "ver_produto",
                                                     "calcular_condicoes", "consultar_politica",
-                                                    "registrar_encaminhamento"):
+                                                    "registrar_encaminhamento", "listar_promocoes"):
         estado.falhas_seguidas += 1
     elif r.estado == "ok":
         estado.falhas_seguidas = 0

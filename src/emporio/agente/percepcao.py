@@ -10,6 +10,7 @@ from .. import config
 from ..dinheiro import para_centavos
 from ..ferramentas.encaminhamento import mascarar_dado_pessoal
 from ..texto import normalizar, tokens
+from . import catalogo
 from . import vocabulario as v
 from .estado import Estado
 
@@ -41,6 +42,9 @@ def _reais(texto: str, mil: str | None = None) -> int | None:
     return para_centavos(valor)
 
 
+LIMITE_DISTINTIVO = 4  # marca que aparece em até 4 produtos identifica o item
+NAO_E_CIDADE = {"compra", "pedido", "valor", "mim", "ele", "ela", "um", "uma", "o", "a", "os", "as", "meu", "minha",
+                "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes"}
 PARA_NA_CIDADE = {"com", "um", "uma", "pedido", "valor", "no", "e", "ou", "r", "se", "que", "por", "quanto"}
 
 
@@ -114,11 +118,11 @@ def _numeros_de_pedido(norm: str, estado: Estado) -> dict[str, Any]:
     return out
 
 
-def _limpar_para_referencia(norm: str) -> str:
+def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     s = RE_MAX.sub(" ", norm)
     s = RE_MIN.sub(" ", s)
     s = RE_VALOR.sub(" ", s)
-    s = RE_PARCELAS.sub(" ", s)
+    s = RE_PARCELAS.sub(lambda m: m.group(0) if m.group(0).replace(" ", "") in voc.df else " ", s)
     s = v.DATA.sub(" ", s)
     return s
 
@@ -136,9 +140,14 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         m = RE_VALOR.search(norm)
         if m:
             slots["valor"] = _reais(m.group(1) or m.group(2))
+    voc = catalogo.vocabulario()
     m = RE_PARCELAS.search(norm)
     if m:
-        slots["parcelas"] = int(next(g for g in m.groups() if g))
+        antes = norm[:m.start()].split()
+        token = m.group(0).replace(" ", "")
+        # "Bass 2X" é nome de produto; "em 2x" é parcelamento
+        if not (token in voc.df and (not antes or antes[-1] not in ("em", "ate", "de", "no"))):
+            slots["parcelas"] = int(next(g for g in m.groups() if g))
     if re.search(r"\bpix\b", norm):
         slots["forma"] = "pix"
     elif re.search(r"\bboleto\b", norm):
@@ -147,17 +156,27 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["forma"] = "debito"
     elif re.search(r"\b(credito|cartao|parcel\w*)\b", norm) or "parcelas" in slots:
         slots["forma"] = "credito"
-    sobra = [t for t in tokens(_limpar_para_referencia(norm)) if t not in v.PALAVRAS_SOLTAS]
+    sobra = [t for t in tokens(_limpar_para_referencia(norm, voc)) if t not in v.PALAVRAS_SOLTAS]
     for t in sobra:
         if t in v.CATEGORIAS:
             slots.setdefault("categoria", v.CATEGORIAS[t])
-    conteudo = [t for t in sobra if t not in v.CATEGORIAS]
-    # tokens de intenção não entram na referência do produto
-    conteudo = [t for t in conteudo if not any(p.fullmatch(t) for _, p in v.PADROES_INTENCAO)
+    conteudo = [t for t in sobra if t not in v.CATEGORIAS
+                and not any(p.fullmatch(t) for _, p in v.PADROES_INTENCAO)
                 and not re.fullmatch(r"(comprar|comprei|gostei|interesse|interessado|interessada|fazer|quer)", t)]
-    if conteudo:
+    nomes = [t for t in conteudo if t in voc.df]
+    if nomes:
+        slots["termo"] = " ".join(nomes)
+    # só vale como produto se algum termo identifica (modelo com número, ou marca rara no catálogo);
+    # as demais palavras seguem junto, para que o que não existir resulte em "não encontrei"
+    if any(re.search(r"\d", t) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
         slots["referencia"] = " ".join(conteudo)
-        slots["tem_modelo"] = any(re.search(r"\d", t) for t in conteudo)
+        slots["tem_modelo"] = True
+    palavras_da_msg = set(tokens(norm))
+    for c in voc.campanhas:
+        chaves = [t for t in tokens(c) if t not in ("de", "da", "do", "dos", "das")]
+        if chaves and all(t in palavras_da_msg for t in chaves):
+            slots["termo_promocao"] = c
+            break
     slots["datas"] = _datas(norm)
     if v.CANAL_ONLINE.search(norm):
         slots["canal_compra"] = "online"
@@ -172,9 +191,15 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["nega_reclamacao"] = bool(v.NEGA_RECLAMACAO.search(norm))
     slots["nega_atendente"] = bool(v.NEGA_ATENDENTE.search(norm))
     slots["abrir_reclamacao"] = bool(v.ABRIR_RECLAMACAO.search(norm)) and not slots["nega_reclamacao"]
-    m = RE_CIDADE.search(norm)
-    if m:
-        slots["cidade"] = _cortar_cidade(m.group(1))
+    conhecida = next((c for c in voc.cidades if re.search(rf"\b{re.escape(c)}\b", norm)), None)
+    if conhecida:
+        slots["cidade"] = conhecida
+    else:
+        for m in RE_CIDADE.finditer(norm):
+            cand = _cortar_cidade(m.group(1))
+            if cand and cand.split()[0] not in NAO_E_CIDADE:
+                slots["cidade"] = cand
+                break
     if estado.aguardando == "cidade" and "cidade" not in slots:
         slots["cidade"] = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
     if estado.aguardando == "valor_pedido" and "valor" not in slots:
@@ -186,22 +211,33 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
 
 
 def classificar(norm: str, slots: dict[str, Any]) -> str | None:
+    if v.MANIPULACAO.search(norm):
+        return "tentativa_manipulacao"
+    if v.DADO_DE_TERCEIRO.search(norm):
+        return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
     ref, categoria = slots.get("referencia"), slots.get("categoria")
     for nome in achadas:
+        if nome == "promocao":
+            if ref:
+                return "preco_produto"
+            return "pagamento" if re.search(r"\b(pix|boleto|cartao|credito|debito)\b", norm) else "promocao"
         if nome == "preco_produto":
             return "preco_produto" if ref or not categoria else "busca_produto"
         if nome == "pagamento":
-            if ref and slots.get("tem_modelo"):
-                return "preco_produto"
-            return "pagamento"
+            return "preco_produto" if ref else "pagamento"
         if nome == "disponibilidade":
             return "disponibilidade" if ref or not categoria else "busca_produto"
         return nome
     if categoria or re.search(r"\b(procuro|busco|quero (um|uma)|indica\w*|recomenda\w*|opcoes|catalogo)\b", norm):
         return "busca_produto"
-    if slots.get("tem_modelo"):
-        return "preco_produto"
+    if ref:
+        return "disponibilidade" if re.search(r"\btem\b", norm) else "preco_produto"
+    if slots.get("termo") and re.search(chr(92) + "btem" + chr(92) + "b", norm):
+        return "busca_produto"
+    if v.FORA_DO_ASSUNTO.search(norm):
+        slots["assunto_geral"] = True
+        return "fora_escopo"
     if re.search(v.PADROES_INTENCAO[-1][1].pattern, norm):
         return "saudacao"
     return None

@@ -40,6 +40,10 @@ def fatos_do_resultado(ferramenta: str, args: dict[str, Any], r: Resultado) -> l
         for s, f in zip(d["secoes"], r.fontes):
             for c in s["condicoes"]:
                 add("politica", s["id"], c["chave"], c["valor"], c.get("unidade"), f)
+    elif ferramenta == "listar_promocoes":
+        for i in d["promocoes"]:
+            add("produto", i["produto_id"], "promocao_percentual", i["percentual"])
+            add("produto", i["produto_id"], "preco_final_centavos", i["final_centavos"], "promocao ativa")
     elif ferramenta == "registrar_encaminhamento":
         add("chamado", d["protocolo"], "status", d["status"])
         add("chamado", d["protocolo"], "tipo", d["tipo"])

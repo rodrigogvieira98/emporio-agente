@@ -282,6 +282,69 @@ def escolha_produto(e: Estado, p: dict) -> str:
     return "Achei mais de um modelo parecido:\n" + "\n".join(linhas) + "\nQual deles? Pode responder com o número."
 
 
+def produto_indisponivel(e: Estado, p: dict) -> str:
+    d = _dados(e, "ver_produto")
+    nome, situacao = d["nome"], d["situacao_venda"]
+    if situacao == "descontinuado":
+        txt = f"{nome} foi descontinuado e não faz mais parte do catálogo."
+    elif situacao == "em_breve":
+        txt = f"{nome} ainda não está à venda, então não consigo confirmar disponibilidade."
+    else:
+        txt = f"{nome} está esgotado no momento. Não consigo informar previsão de reposição."
+    r = e.ultimo("buscar_produtos")
+    if r is not None and r.estado == "ok":
+        linhas = [f"- {i['nome']}: {formatar(i['preco_centavos'])}" for i in r.dados["itens"]]
+        txt += (f"\nOpções disponíveis na mesma categoria ({d['categoria']}), preço de tabela:\n" + "\n".join(linhas)
+                + "\nQuer ver as condições de algum deles?")
+    elif r is not None and r.estado == "vazio":
+        txt += f" Também não encontrei alternativas disponíveis em {d['categoria']} agora."
+    else:
+        txt += " Não consegui consultar alternativas agora."
+    return txt
+
+
+def promocoes(e: Estado, p: dict) -> str:
+    r = e.ultimo("listar_promocoes")
+    if r is None:
+        return falha_ferramenta(e, p)
+    if r.estado == "vazio":
+        termo = r.dados.get("termo")
+        if termo:
+            return (f"A promoção {termo.title()} não está ativa no sistema agora, então não posso prometer esse "
+                    "desconto. Se quiser, mostro as promoções que estão ativas.")
+        return "No sistema não há nenhuma promoção ativa agora."
+    linhas = []
+    for i in r.dados["promocoes"]:
+        extra = "" if i["situacao_venda"] == "disponivel" else f" ({SITUACAO.get(i['situacao_venda'])})"
+        if i["conflito"]:
+            linhas.append(f"- {i['produto_nome']}: {i['percentual']}% de desconto, preço original "
+                          f"{formatar(i['original_centavos'])}; há mais de uma promoção ativa e a equipe confirma o valor{extra}")
+        else:
+            linhas.append(f"- {i['produto_nome']}: de {formatar(i['original_centavos'])} por "
+                          f"{formatar(i['final_centavos'])} ({i['percentual']}% de desconto){extra}")
+    return "Promoções ativas no sistema:\n" + "\n".join(linhas) + "\nO desconto do PIX não soma com preço promocional."
+
+
+def recusa_manipulacao(e: Estado, p: dict) -> str:
+    pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
+    extra = f" e o desconto de {pix}% no PIX" if pix else ""
+    return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas no sistema"
+            f"{extra}. Quer ver as promoções ativas?")
+
+
+def recusa_dado_de_terceiro(e: Estado, p: dict) -> str:
+    return ("Não passo dados pessoais de clientes, como telefone, e-mail, endereço ou nome. Se o pedido é seu, posso "
+            "consultar o andamento com o número do pedido e os 4 últimos dígitos do telefone cadastrado.")
+
+
+def fora_escopo_geral(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    if not c.get("escopo.somente_instrumentos"):
+        return sem_dado(e, p)
+    return ("Esse assunto foge do que eu consigo ajudar por aqui. Sou a assistente da loja, que trabalha só com "
+            "instrumentos musicais. Posso ajudar com produtos, preços, pedidos, trocas e devoluções?")
+
+
 def disponibilidade(e: Estado, p: dict) -> str:
     d = _dados(e, "ver_produto")
     return f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque do sistema agora."
@@ -429,8 +492,6 @@ def chamado_registrado(e: Estado, p: dict) -> str:
         txt += " Esse pedido já estava registrado com esse protocolo."
     if d.get("prazo_retorno_horas_uteis"):
         txt += f" A equipe retorna em até {d['prazo_retorno_horas_uteis']} horas úteis."
-    else:
-        txt += " A equipe vai dar sequência e entrar em contato."
     aviso = _aviso_expediente(e)
     return f"{txt} {aviso}".strip()
 
@@ -490,7 +551,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         disponibilidade, preco, preco_promocao_conflitante, pedir_pedido, pedido_negado, pedido_negado_limite,
         status_pedido, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
-        nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro)
+        nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
+        recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral)
 }
 
 

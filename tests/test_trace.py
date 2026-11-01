@@ -68,8 +68,11 @@ def test_trace_sem_nome_telefone_email_ou_final_digitado(sql):
     estado = " ".join(r["estado_json"] for r in sql.execute("SELECT estado_json FROM conversas"))
     execucoes = " ".join(r["entrada_json"] for r in sql.execute("SELECT entrada_json FROM execucoes"))
     for onde in (resumos, estado, execucoes):
-        for pii in ("99812", "jmail", "lucas.mendes", NOME):
+        for pii in ("99812", "jmail", "lucas.mendes"):
             assert pii not in onde, (pii, onde[:200])
+    # o relato livre vai à equipe no chamado (a spec só barra telefone e e-mail), mas não ao estado nem às execuções
+    for onde in (estado, execucoes):
+        assert NOME not in onde
     assert FINAL not in estado and FINAL not in execucoes
 
 

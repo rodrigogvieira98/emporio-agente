@@ -26,7 +26,10 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("fora_escopo", re.compile(
         r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedais?|pedaleiras?|amplificador\w*|ampli|"
         r"afinador\w*|suporte|estante|correia|caixas? de som|fone\w*|microfone\w*)\b")),
-    ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa|desconto|promocao)\b")),
+    ("promocao", re.compile(
+        r"\b(promocao|promocoes|desconto\w*|black friday|oferta\w*|liquidacao|queima de estoque|"
+        r"valendo|vigente)\b")),
+    ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa)\b")),
     ("pagamento", re.compile(
         r"\b(pagamento\w*|pagar|pix|boleto|cartao|credito|debito|parcel\w*|financia\w*)\b")),
     ("disponibilidade", re.compile(r"\b(disponivel|disponibilidade|disponiveis|estoque|tem (ai|ainda|ai ainda))\b")),
@@ -61,6 +64,7 @@ pix boleto cartao credito debito vista vezes vez parcela parcelas parcelar parce
 real reais r ate maximo minimo abaixo acima menos mais mil
 disponivel disponiveis disponibilidade estoque modelo modelos opcao opcoes indica indicar recomenda recomendar
 bom boa dia tarde noite oi ola tudo bem e ai
+hoje agora atualmente mesmo la aquele aquela aquilo coisa negocio
 instrumento instrumentos iniciante iniciantes barato baratos barata baratas melhor melhores
 """.split())
 
@@ -89,3 +93,16 @@ DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b")
 PEDIDO_EXPLICITO = re.compile(r"\b(?:pedido|numero|nro|num)\s*(?:no\s*|n\s*)?#?\s*(\d{1,6})\b|#\s*(\d{1,6})\b")
 FINAL_EXPLICITO = re.compile(r"\b(?:final|ultimos|terminad\w*|terminando)\s*(?:em|com|de|do telefone|e)?\s*(\d{4})\b")
 TELEFONE_COMPLETO = re.compile(r"\(?\b\d{2}\)?[\s.-]*9?\d{4}[\s.-]?\d{4}\b")
+
+# Pedidos que o agente recusa sem consultar nada.
+MANIPULACAO = re.compile(
+    r"\b(ignor\w+|esquec\w+|desconsider\w+)\b.{0,40}\b(instruc\w*|regras?|prompt|anterior\w*|orientac\w*)\b"
+    r"|\b(system prompt|prompt|suas instrucoes|suas regras|modo desenvolvedor|jailbreak|finja que)\b")
+DADO_DE_TERCEIRO = re.compile(
+    r"\b(telefone|celular|fone|e-?mail|endereco|cpf|nome|sobrenome|dados|contato)\b.{0,30}"
+    r"\b(do cliente|da cliente|do comprador|do dono|do titular|de outro cliente|de outra pessoa|de quem comprou)\b"
+    r"|\bquem (comprou|fez o pedido|e o dono|e o cliente)\b")
+FORA_DO_ASSUNTO = re.compile(
+    r"\b(copa|futebol|campeonato|time de|jogo de|presidente|eleicao|eleicoes|politica|previsao do tempo|"
+    r"vai chover|clima|receita de|filme|serie|novela|noticia\w*|bitcoin|piada|horoscopo|signo|loteria|"
+    r"quem (ganhou|descobriu|inventou|foi)|qual a capital|quanto e \d|traduz\w*|escreva um|poema|codigo em)\b")

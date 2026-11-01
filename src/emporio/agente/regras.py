@@ -159,7 +159,8 @@ class RegrasDecisor:
         return self._info(estado, ["pagamento"], "pagamento")
 
     def _i_fora_escopo(self, estado: Estado) -> Acao:
-        return self._info(estado, ["escopo"], "fora_escopo")
+        chave = "fora_escopo_geral" if estado.slots.get("assunto_geral") else "fora_escopo"
+        return self._info(estado, ["escopo"], chave)
 
     def _i_retomada_recusada(self, estado: Estado) -> Acao:
         return responder("ok_sem_retomar")
@@ -197,8 +198,8 @@ class RegrasDecisor:
         args: dict[str, Any] = {}
         if s.get("categoria"):
             args["categoria"] = s["categoria"]
-        if s.get("referencia"):
-            args["termo"] = s["referencia"]
+        if s.get("termo"):
+            args["termo"] = s["termo"]
         for k in ("preco_min", "preco_max"):
             if s.get(k) is not None:
                 args[k] = s[k]
@@ -228,13 +229,42 @@ class RegrasDecisor:
         return self._erro(estado, r), None
 
     def _i_disponibilidade(self, estado: Estado) -> Acao:
-        acao, _ = self._produto(estado)
-        return acao or responder("disponibilidade")
+        acao, produto = self._produto(estado)
+        if acao:
+            return acao
+        if produto["situacao_venda"] != "disponivel":
+            return self._indisponivel(estado, produto)
+        return responder("disponibilidade")
+
+    def _indisponivel(self, estado: Estado, produto: dict[str, Any]) -> Acao:
+        """Esgotado, descontinuado ou em breve: sem condições de pagamento, com alternativas da categoria."""
+        args = {"categoria": produto["categoria"], "limite": 3}
+        r = resultado_de(estado, "buscar_produtos", **args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        return responder("produto_indisponivel")
+
+    def _i_promocao(self, estado: Estado) -> Acao:
+        args = {"termo": estado.slots["termo_promocao"]} if estado.slots.get("termo_promocao") else {}
+        r = resultado_de(estado, "listar_promocoes", **args)
+        if r is None:
+            return ferramenta("listar_promocoes", **args)
+        if r.estado == "falha":
+            return self._erro(estado, r)
+        return responder("promocoes")
+
+    def _i_tentativa_manipulacao(self, estado: Estado) -> Acao:
+        return self._info(estado, ["pagamento"], "recusa_manipulacao")
+
+    def _i_dado_de_terceiro(self, estado: Estado) -> Acao:
+        return responder("recusa_dado_de_terceiro")
 
     def _i_preco_produto(self, estado: Estado) -> Acao:
         acao, produto = self._produto(estado)
         if acao:
             return acao
+        if produto["situacao_venda"] != "disponivel":
+            return self._indisponivel(estado, produto)
         forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
         parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
         args = {"produto_id": produto["id"], "forma": forma, "parcelas": parcelas}

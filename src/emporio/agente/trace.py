@@ -10,7 +10,7 @@ from typing import Any
 
 from .. import config
 
-ARGS_TEXTUAIS_PERMITIDOS = {"forma", "tipo"}  # enumerações fechadas
+ARGS_TEXTUAIS_PERMITIDOS = {"forma", "tipo", "categoria", "termo"}  # fechadas: vêm do léxico e do catálogo, não do texto livre
 
 
 def sanitizar_args(args: dict[str, Any]) -> dict[str, Any]:

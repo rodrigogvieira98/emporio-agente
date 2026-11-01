@@ -362,6 +362,10 @@ def busca(e: Estado, p: dict) -> str:
 
 
 def pedir_categoria(e: Estado, p: dict) -> str:
+    cats = p.get("categorias") or []
+    if cats:
+        return (f"Temos {_lista(cats)}. Qual tipo de instrumento te interessa? "
+                "Pode dizer também uma marca ou uma faixa de preço.")
     return "Que tipo de instrumento você procura? Pode dizer também uma marca ou uma faixa de preço."
 
 

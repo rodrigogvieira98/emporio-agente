@@ -56,6 +56,12 @@ RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento rui
 
 PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|dias uteis|chega em)\b")
 
+# Pedido de produto sem dizer qual: a Lia lista as categorias que têm o que vender.
+PEDIDO_GENERICO = (r"\b(me ajuda\w* (a|na|com a) escolh\w+|ajuda\w* (a|na) escolh\w+|"
+                   r"o que (voces|vcs) (tem|vendem|trabalham)|(quais|que) (instrumentos|produtos) (voces )?(tem|vendem|existem)|"
+                   r"(quero|queria|gostaria de|preciso de|procuro|busco|estou procurando) (encontrar|ver|comprar|achar)?\s*"
+                   r"(um|uma|algum|alguns)?\s*instrumentos?)\b")
+
 # palavra do cliente -> termo de categoria entendido por buscar_produtos
 CATEGORIAS = {
     "violao": "violao", "violoes": "violao", "guitarra": "guitarra", "guitarras": "guitarra",

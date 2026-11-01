@@ -174,3 +174,28 @@ def test_contagens_da_redacao_tem_tentada_exibida_e_descartada():
     assert "redacao_exibida" not in b.contagens
     c = Agente().responder("t2", "qual o endereço da loja?", "eval")  # sem modelo: nada tentado
     assert "redacao_tentada" not in c.contagens
+
+
+# pedido genérico de produto: lista as categorias com produto vendável e a resposta curta vira busca --------
+
+@pytest.mark.parametrize("frase", ["Quero encontrar um instrumento", "quero um instrumento", "me ajuda a escolher",
+                                   "o que vocês têm?", "o que vocês vendem?", "quais instrumentos vocês têm?"])
+def test_pedido_generico_lista_categorias_vendaveis_e_pergunta_qual(frase, sql):
+    (r,) = conversar(frase)
+    vendaveis = {c for (c,) in sql.execute(
+        "SELECT DISTINCT c.nome FROM produtos p JOIN categorias c ON c.id = p.categoria_id "
+        "WHERE p.status = 'active' AND p.estoque > 0")}
+    todas = [c[0] for c in sql.execute("SELECT nome FROM categorias")]
+    assert all(c in r.texto for c in vendaveis) and "Qual tipo de instrumento" in r.texto
+    assert not any(c in r.texto for c in set(todas) - vendaveis)  # categoria sem produto vendável não é oferecida
+    assert r.estado == "aguardando:categoria" and "Não entendi" not in r.texto
+
+
+def test_resposta_curta_depois_da_lista_vira_busca():
+    r = conversar("me ajuda a escolher", "violões")
+    assert "buscar_produtos" in ferramentas(r[1]) and "Encontrei" in r[1].texto
+
+
+def test_pedido_generico_nao_atrapalha_pergunta_de_produto_especifico():
+    (r,) = conversar("quero o Yamaha C40")
+    assert "Yamaha C40" in r.texto and "Temos" not in r.texto

@@ -18,6 +18,7 @@ class Vocabulario:
     df: dict[str, int] = field(default_factory=dict)  # token de nome de produto -> em quantos produtos aparece
     cidades: list[str] = field(default_factory=list)
     campanhas: list[str] = field(default_factory=list)
+    categorias: list[str] = field(default_factory=list)  # nomes do cadastro, na ordem dos ids
 
 
 @lru_cache(maxsize=4)
@@ -30,6 +31,7 @@ def _ler(caminho: str, mtime_ns: int) -> Vocabulario:
                 voc.df[t] = voc.df.get(t, 0) + 1
         voc.cidades = sorted({normalizar(c) for (c,) in conn.execute("SELECT cidade FROM clientes WHERE cidade IS NOT NULL")},
                              key=len, reverse=True)
+        voc.categorias = [c for (c,) in conn.execute("SELECT nome FROM categorias ORDER BY id")]
         voc.campanhas = sorted({normalizar(c) for (c,) in conn.execute("SELECT descricao FROM promocoes")},
                                key=len, reverse=True)
     finally:

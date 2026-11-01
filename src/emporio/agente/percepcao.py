@@ -262,6 +262,8 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         if nome == "disponibilidade":
             return "disponibilidade" if ref or not categoria else "busca_produto"
         return nome
+    if re.search(v.PEDIDO_GENERICO, norm) and not ref and not categoria:
+        return "busca_produto"  # "quero um instrumento", "me ajuda a escolher": a Lia oferece as categorias
     if categoria or re.search(r"\b(procuro|busco|quero (um|uma)|indica\w*|recomenda\w*|opcoes|catalogo)\b", norm):
         return "busca_produto"
     if ref:

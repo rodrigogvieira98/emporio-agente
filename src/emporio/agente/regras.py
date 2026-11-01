@@ -28,6 +28,14 @@ def propor(chave: str, tipo: str, resumo: str, **parametros: Any) -> Acao:
                 parametros={"propor_registro": {"tipo": tipo, "resumo": resumo}, **parametros})
 
 
+def categorias_com_produto() -> list[str]:
+    """Categorias do cadastro em que a busca acha produto vendável (a consulta é a própria ferramenta de busca)."""
+    from ..ferramentas.produtos import buscar_produtos
+    from . import catalogo
+
+    return [nome for nome in catalogo.vocabulario().categorias if buscar_produtos(categoria=nome, limite=1).estado == "ok"]
+
+
 def _trecho_excluido(r: Resultado, texto: str) -> str | None:
     """Linha do manual que exclui da troca o item citado, se o cliente citou algum (casamento por palavras
     distintivas de cada item da lista, nunca por palavra genérica)."""
@@ -281,7 +289,7 @@ class RegrasDecisor:
             if s.get(k) is not None:
                 args[k] = s[k]
         if not args:
-            return perguntar("pedir_categoria", "categoria")
+            return perguntar("pedir_categoria", "categoria", categorias=categorias_com_produto())
         r = resultado_de(estado, "buscar_produtos", **args)
         if r is None:
             return ferramenta("buscar_produtos", **args)

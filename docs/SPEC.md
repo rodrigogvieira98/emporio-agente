@@ -271,7 +271,14 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 
 **Endereço só no rodapé.** Referência observada: Teclacenter, KaBuM! e Thomann concentram contato e endereço no rodapé e em área própria de atendimento. O endereço sai do corpo da home e da página Fale Conosco. A página offline mantém o endereço, porque não tem rodapé.
 
-**Seção "Fale conosco".** A seção "Visite a loja" da home vira "Fale conosco", com título literal, uma frase curta, horário de atendimento e botão para `/fale-conosco`, sem repetir telefone, e-mail ou WhatsApp, que ficam no rodapé. A coluna "Atendimento" do rodapé passa a se chamar "Fale conosco". Em `/fale-conosco`, "Onde estamos" vira "Horário de atendimento". O rótulo "Falar com a loja" deixa de existir.
+**Faixa "Fale conosco".** Modelo enviado pelo Rodrigo em 01/11/2026: um card branco de cantos arredondados, logo acima do rodapé, com três blocos lado a lado separados por divisórias verticais, cada um com ícone de traço fino à esquerda. Usa as cores e fontes da Empório, sem copiar a marca da referência:
+1. ícone de envelope e botão contornado "Fale conosco", para `/fale-conosco`;
+2. ícone de telefone, número em destaque e horário de atendimento em uma linha curta, com os dados do manual;
+3. ícone de pacote, a frase "Já fez seu pedido e quer saber onde ele está?" e botão contornado "Rastrear pedido", para `/rastreio`.
+
+A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
+
+A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé deixa de repetir canais: a coluna "Atendimento" sai, assim como "Todos os canais", e ficam nome, endereço, "Comprar" e "Informações". Telefone, e-mail e WhatsApp com ícones continuam em `/fale-conosco`, onde "Onde estamos" vira "Horário de atendimento". O rótulo "Falar com a loja" deixa de existir.
 
 **Sugestões da Lia não enviam sozinhas.** Clicar numa sugestão, ou em "Quero comprar com a Lia", abre o painel, preenche o campo e põe o foco nele. A mensagem só sai quando o cliente envia, com Enter ou com o botão Enviar, e o texto pode ser editado antes.
 

@@ -102,6 +102,47 @@ CREATE INDEX ix_tentativas_conversa ON tentativas_pedido(conversa_id);
 CREATE INDEX ix_promocoes_produto ON promocoes(produto_id);
 """
 
+# Compra de demonstração (incremento 1). Tabelas à parte: os dados originais e `pedidos` não mudam.
+# IF NOT EXISTS porque `garantir_tabelas_demo` também as cria em bancos gerados antes do incremento.
+ESQUEMA_DEMO = """
+CREATE TABLE IF NOT EXISTS carrinhos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sessao TEXT NOT NULL,
+    produto_id INTEGER NOT NULL REFERENCES produtos(id),
+    quantidade INTEGER NOT NULL CHECK (quantidade BETWEEN 1 AND 3),
+    criado_em TEXT NOT NULL,
+    UNIQUE (sessao, produto_id)
+);
+CREATE TABLE IF NOT EXISTS pedidos_demo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero TEXT NOT NULL UNIQUE,
+    sessao TEXT NOT NULL,
+    forma TEXT NOT NULL,
+    parcelas INTEGER NOT NULL,
+    cidade TEXT NOT NULL,
+    frete_situacao TEXT NOT NULL,
+    frete_centavos INTEGER,
+    total_centavos INTEGER NOT NULL CHECK (total_centavos > 0),
+    parcela_centavos INTEGER,
+    aviso TEXT NOT NULL,
+    criado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS itens_pedido_demo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id INTEGER NOT NULL REFERENCES pedidos_demo(id),
+    produto_id INTEGER NOT NULL REFERENCES produtos(id),
+    nome TEXT NOT NULL,
+    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+    original_unit_centavos INTEGER NOT NULL,
+    final_unit_centavos INTEGER NOT NULL,
+    percentual INTEGER,
+    pix_aplicado INTEGER NOT NULL,
+    subtotal_centavos INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_carrinhos_sessao ON carrinhos(sessao);
+CREATE INDEX IF NOT EXISTS ix_pedidos_demo_sessao ON pedidos_demo(sessao);
+"""
+
 
 def conectar(caminho: Path | str | None = None) -> sqlite3.Connection:
     destino = Path(caminho) if caminho else config.caminho_banco()
@@ -113,3 +154,9 @@ def conectar(caminho: Path | str | None = None) -> sqlite3.Connection:
 
 def criar_esquema(conn: sqlite3.Connection) -> None:
     conn.executescript(ESQUEMA)
+    conn.executescript(ESQUEMA_DEMO)
+
+
+def garantir_tabelas_demo(conn: sqlite3.Connection) -> None:
+    """Cria as tabelas da compra de demonstração em bancos antigos; não toca nas demais."""
+    conn.executescript(ESQUEMA_DEMO)

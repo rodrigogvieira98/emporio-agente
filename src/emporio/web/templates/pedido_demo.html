@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Pedido {{ d.numero }}{% endblock %}
+{% block conteudo %}
+<div class="contorno pagina">
+<h1>Pedido feito</h1>
+<p>Guarde o número para consultar em <a href="/rastreio">Rastrear pedido</a> ou perguntar para a Lia.</p>
+{% include "_pedido_demo.html" %}
+<p class="acoes-compra"><a class="botao" href="/catalogo">Voltar ao catálogo</a></p>
+</div>
+{% endblock %}

@@ -60,6 +60,7 @@
       </details>{% endblock %}
       <a href="/politicas">Políticas</a>
       <a href="/rastreio">Rastrear pedido</a>
+      {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
       <a class="botao botao-lia" href="#chat" data-abrir-chat>Falar com a Lia</a>
     </nav>
   </div>

@@ -322,4 +322,53 @@ a.indice-item:hover strong { text-decoration: underline; text-underline-offset: 
 .offline-loja .visite-rua { margin-bottom: var(--s4); }
 @media (min-width: 768px) { .offline-grade { grid-template-columns: 7fr 5fr; } .offline-arte { display: block; width: 100%; max-width: 12rem; justify-self: end; color: var(--jacaranda); } }
 
+/* compra de demonstração: carrinho, checkout, pedido */
+.aviso-demo { border-left-color: var(--jacaranda); }
+.aviso-erro { border-left-color: var(--alerta); }
+.link-carrinho { color: var(--tinta); font-weight: 500; text-decoration: none; padding-block: var(--s3); border-bottom: 2px solid transparent; }
+.link-carrinho:hover { border-bottom-color: var(--jacaranda); }
+.contagem-carrinho { display: inline-block; min-width: 1.5em; padding: 0 var(--s1); text-align: center; background: var(--ipe); color: var(--tinta);
+  border: 1px solid var(--tinta); border-radius: 2px; font: 700 .8125rem/1.4 var(--texto); font-variant-numeric: tabular-nums; }
+.form-compra { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: end; margin: var(--s4) 0; }
+.form-compra label, .form-qtd label, .checkout-campos label { display: flex; flex-direction: column; gap: var(--s1); font-size: .875rem; font-weight: 600; }
+.vazio-msg { color: var(--cinza-texto); font-size: 1.0625rem; }
+.itens-compra { list-style: none; border-top: 1px solid var(--tinta); margin: var(--s6) 0 var(--s4); }
+.item-compra { display: grid; grid-template-columns: 5rem 1fr; gap: var(--s3) var(--s4); padding-block: var(--s4); border-bottom: 1px solid var(--tinta); align-items: start; }
+.item-arte { display: grid; place-items: center; width: 5rem; height: 5rem; background: var(--papel-claro); border: 1px solid var(--tinta); border-radius: var(--raio); }
+.item-arte svg { width: 3.5rem; height: 3.5rem; }
+.item-nome { font-size: 1.125rem; margin-bottom: var(--s2); }
+.item-nome a { color: var(--tinta); text-decoration: none; }
+.item-nome a:hover { color: var(--jacaranda); text-decoration: underline; }
+.item-compra .preco-final { font-size: 1.25rem; }
+.item-acoes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--s4); align-items: end; justify-content: space-between; }
+.form-qtd { display: flex; gap: var(--s2); align-items: end; }
+.botao-link { border: 0; background: transparent; text-decoration: underline; text-underline-offset: 3px; color: var(--jacaranda); padding-inline: 0; }
+.botao-link:hover { background: transparent; color: var(--tinta); }
+.nota-valores { color: var(--cinza-texto); font-size: .9375rem; }
+.acoes-compra { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s6); }
+.checkout-campos { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin: var(--s4) 0 var(--s6); padding-block: var(--s4); border-block: 1px solid var(--tinta); }
+.checkout-campos input, .checkout-campos select { width: 100%; font-size: 1rem; }
+.resumo, .pedido-demo { background: var(--papel-claro); border: 1px solid var(--tinta); border-radius: var(--raio); padding: var(--s4); max-width: 40rem; }
+.resumo h2 { font-size: 1.25rem; margin-bottom: var(--s3); }
+.resumo-linhas { list-style: none; border-top: 1px solid var(--cinza); }
+.resumo-linhas li { display: grid; grid-template-columns: 1fr auto; gap: var(--s1) var(--s3); padding-block: var(--s3); border-bottom: 1px solid var(--cinza); font-variant-numeric: tabular-nums; }
+.resumo-nome { font-weight: 600; grid-column: 1 / -1; }
+.resumo-sub { font: 700 1.0625rem/1.2 var(--titulo); text-align: right; }
+.resumo-nota { grid-column: 1 / -1; color: var(--cinza-texto); }
+.resumo-total { margin: var(--s3) 0 0; font-variant-numeric: tabular-nums; }
+.resumo-total > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding-block: var(--s2); border-bottom: 1px dashed var(--cinza); }
+.resumo-total dt { color: var(--cinza-texto); }
+.resumo-total dd { margin: 0; text-align: right; font-weight: 600; }
+.resumo-total .resumo-final dt { color: var(--tinta); font-weight: 700; }
+.resumo-total .resumo-final dd { font: 700 1.625rem/1.2 var(--titulo); }
+.selo-confirmar { color: var(--alerta); border-color: var(--alerta); white-space: normal; text-align: right; }
+.pendencias { list-style: none; margin-top: var(--s4); display: grid; gap: var(--s2); }
+.pendencias li { padding: var(--s2) var(--s3); border-left: 4px solid var(--alerta); background: var(--papel); color: var(--tinta); }
+.pedido-numero { font-size: 2rem; letter-spacing: .02em; margin-bottom: var(--s3); font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) {
+  .checkout-campos { grid-template-columns: repeat(3, 1fr) auto; align-items: end; }
+  .item-compra { grid-template-columns: 5rem 1fr auto; }
+  .item-acoes { grid-column: auto; flex-direction: column; align-items: flex-end; }
+}
+
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }

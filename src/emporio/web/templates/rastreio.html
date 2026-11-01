@@ -3,12 +3,14 @@
 {% block conteudo %}
 <div class="contorno pagina">
 <h1>Rastrear pedido</h1>
+<p class="nota-valores">Pedido de demonstração (começa com DEMO-): informe só o número, sem o telefone.</p>
 <form class="filtros" action="/rastreio" method="post">
-  <label>Número do pedido <input name="pedido" inputmode="numeric" value="{{ pedido }}" required></label>
-  <label>Final do telefone (4 dígitos) <input name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+  <label>Número do pedido <input name="pedido" value="{{ pedido }}" required></label>
+  <label>Final do telefone (4 dígitos) <input name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}"></label>
   <button type="submit">Consultar</button>
 </form>
 {% if aviso %}<p class="aviso" role="alert">{{ aviso }}</p>{% endif %}
+{% if demo %}{% set d = demo %}{% include "_pedido_demo.html" %}{% endif %}
 {% if resultado %}
 <section class="pedido" aria-label="Pedido">
   <h2>Pedido {{ resultado.pedido_id }}</h2>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Catálogo{% endblock %}
 {% block conteudo %}
+<div class="contorno pagina">
 <h1>Catálogo</h1>
 <form class="filtros" action="/catalogo" method="get">
   <label>Categoria
@@ -23,4 +24,5 @@
   {% for p in itens %}{% include "_card.html" %}{% endfor %}
   </div>
 {% endif %}
+</div>
 {% endblock %}

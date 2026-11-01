@@ -2,33 +2,104 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="{{ cores().tinta }}">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="{{ loja().nome.split(' ', 1)[0] }}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icones/apple-touch-icon-180.png">
 <title>{% block titulo %}Início{% endblock %} | {{ loja().nome }}</title>
+<link rel="preload" href="/static/fontes/ZillaSlab-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="/static/marca.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/site.css">
 <script src="/static/htmx-2.0.4.min.js" defer></script>
 <script src="/static/chat.js" defer></script>
+<script src="/static/vitrine.js" defer></script>
+<script src="/static/pwa.js" defer></script>
 </head>
-<body>
+<body{% block corpo_attr %}{% endblock %}>
+{% set L = loja() %}{% set S = situacao_loja() %}
+<a class="pular" href="#conteudo">Ir para o conteúdo</a>
+
+{% block faixa %}<div class="faixa">
+  <div class="contorno faixa-in">
+    {% if L.endereco_curto %}<p class="faixa-endereco">{{ L.endereco_curto }}</p>{% endif %}
+    {% if S.conhecida %}
+    <p class="faixa-estado {{ 'aberta' if S.aberto else 'fechada' }}">
+      <span class="ponto" aria-hidden="true"></span>
+      {% if S.aberto %}<strong>Aberta agora</strong>{% if S.hoje %}<span class="faixa-detalhe">hoje até {{ S.hoje.fecha }}</span>{% endif %}
+      {% else %}<strong>Fechada</strong>{% if S.retorno %}<span class="faixa-detalhe">abre {{ S.retorno.quando }} às {{ S.retorno.hora }}</span>{% endif %}{% endif %}
+    </p>
+    {% endif %}
+  </div>
+</div>{% endblock %}
+
 <header class="topo">
-  <a class="marca" href="/">{{ loja().nome }}</a>
-  <nav aria-label="Principal">
-    <a href="/catalogo">Catálogo</a>
-    <a href="/rastreio">Rastrear pedido</a>
-    <a href="/politicas">Políticas</a>
-  </nav>
+  <div class="contorno topo-in">
+    <a class="marca" href="/" aria-label="{{ L.nome }}, página inicial">
+      <svg class="marca-svg" viewBox="0 0 32 32" aria-hidden="true"><use href="/static/ilustracoes.svg#marca"/></svg>
+      <span class="marca-nome">{% set partes = L.nome.split(' ', 1) %}<span class="marca-1">{{ partes[0] }}</span>{% if partes | length > 1 %} <span class="marca-2">{{ partes[1] }}</span>{% endif %}</span>
+    </a>
+    <form class="busca-topo" action="/catalogo" method="get" role="search">
+      <label class="so-leitor" for="busca-termo">Buscar instrumento</label>
+      <input id="busca-termo" name="termo" type="search" placeholder="Buscar instrumento" autocomplete="off">
+      <button type="submit">Buscar</button>
+    </form>
+    <nav class="menu" aria-label="Principal">
+      {% block menu_categorias %}<details class="menu-categorias">
+        <summary>Categorias</summary>
+        <ul>
+        {% for c in menu_categorias() %}
+          {% if c.total %}<li><a href="/catalogo?categoria={{ c.nome | urlencode }}">{{ c.nome }}</a></li>
+          {% else %}<li class="em-breve"><span>{{ c.nome }}</span><small>em breve</small></li>{% endif %}
+        {% endfor %}
+        </ul>
+      </details>{% endblock %}
+      <a href="/politicas">Políticas</a>
+      <a href="/rastreio">Rastrear pedido</a>
+      <a class="botao botao-lia" href="#chat" data-abrir-chat>Falar com a Lia</a>
+    </nav>
+  </div>
 </header>
-<main>{% block conteudo %}{% endblock %}</main>
+
+<main id="conteudo">{% block conteudo %}{% endblock %}</main>
+
 <footer class="rodape">
-  {% set L = loja() %}
-  <p><strong>{{ L.nome }}</strong>{% if L.endereco %} | {{ L.endereco }}{% endif %}</p>
-  {% if L.horario %}<p>Horário: {{ L.horario | join(" | ") }}</p>{% endif %}
-  {% if L.contatos %}<p>Contatos que constam no manual da loja:</p>
-  <ul class="contatos">{% for c in L.contatos %}<li>{{ c.valor }} ({{ c.origem }})</li>{% endfor %}</ul>{% endif %}
+  <div class="contorno rodape-grade">
+    <div class="rodape-loja">
+      <p class="rodape-marca">{{ L.nome }}</p>
+      {% if L.endereco %}<p>{{ L.endereco }}</p>{% endif %}
+      {% if L.horario %}<p class="rodape-horario">Horário: {{ L.horario | join(" | ") }}</p>{% endif %}
+    </div>
+    <div>
+      <h2 class="rodape-titulo">Navegar</h2>
+      <ul class="rodape-lista">
+        <li><a href="/catalogo">Catálogo</a></li>
+        <li><a href="/politicas">Políticas</a></li>
+        <li><a href="/rastreio">Rastrear pedido</a></li>
+        <li><a href="/#visite">Visite a loja</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="rodape-titulo">Contatos que constam no manual da loja</h2>
+      {% if L.contatos %}<ul class="rodape-lista contatos">{% for c in L.contatos %}<li>{{ c.valor }} <span>({{ c.origem }})</span></li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div>
+      <h2 class="rodape-titulo">Aceitamos</h2>
+      <p>{{ formas_pagamento() | capitalize }}.</p>
+    </div>
+  </div>
+  <div class="contorno rodape-fim">
+    <p class="aviso-ficticia">Loja fictícia criada para um desafio técnico; dados de demonstração.</p>
+  </div>
 </footer>
 
 <section id="chat" class="chat" aria-label="Chat com a Lia">
   <button id="chat-alternar" class="chat-cabeca" type="button" aria-expanded="true" aria-controls="chat-corpo">
-    Converse com a Lia
+    <span>Converse com a Lia</span><small class="chat-sub">assistente virtual</small><small class="chat-fechar">Fechar</small>
   </button>
   <div id="chat-corpo" class="chat-corpo">
     <div id="chat-log" class="chat-log" role="log" aria-live="polite">
@@ -37,7 +108,7 @@
     <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
           hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
       <label class="so-leitor" for="chat-mensagem">Mensagem</label>
-      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off"
+      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
              placeholder="Escreva sua mensagem" required>
       <button id="chat-enviar" type="submit">Enviar</button>
     </form>

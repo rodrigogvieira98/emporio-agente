@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Rastrear pedido{% endblock %}
 {% block conteudo %}
+<div class="contorno pagina">
 <h1>Rastrear pedido</h1>
 <form class="filtros" action="/rastreio" method="post">
   <label>Número do pedido <input name="pedido" inputmode="numeric" value="{{ pedido }}" required></label>
@@ -20,4 +21,5 @@
   {% if resultado.nota %}<p>Observação: {{ resultado.nota }}</p>{% endif %}
 </section>
 {% endif %}
+</div>
 {% endblock %}

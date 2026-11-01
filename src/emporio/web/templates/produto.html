@@ -1,22 +1,31 @@
 {% extends "base.html" %}
 {% block titulo %}{{ p.nome }}{% endblock %}
 {% block conteudo %}
-<p><a href="/catalogo">Voltar ao catálogo</a></p>
-<h1>{{ p.nome }}</h1>
-{% if categoria %}<p class="categoria">{{ categoria }}</p>{% endif %}
-{% include "_preco.html" %}
-<p><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>
-{% if descricao %}<p class="descricao">{{ descricao }}</p>{% endif %}
-{% if p.pode_comprar %}
-  <button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button>
-  {% if condicoes %}
-  <h2>Formas de pagamento</h2>
-  <ul class="condicoes">
-    {% for c in condicoes.a_vista %}<li>{{ c.forma }}: {{ c.valor | brl }}</li>{% endfor %}
-    {% if condicoes.parcelamento %}<li>Cartão de crédito: até {{ condicoes.parcelamento.parcelas }}x de {{ condicoes.parcelamento.parcela | brl }}{% if condicoes.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
-  </ul>
-  {% endif %}
-{% else %}
-  <p class="aviso">Este produto não está disponível para compra no momento. A Lia pode sugerir alternativas.</p>
-{% endif %}
+<div class="contorno pagina">
+<p class="migalha"><a href="/catalogo">Voltar ao catálogo</a></p>
+<div class="produto-grade">
+  <div class="produto-arte"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg></div>
+  <div class="produto-info">
+    {% if categoria %}<p class="categoria">{{ categoria }}</p>{% endif %}
+    <h1>{{ p.nome }}</h1>
+    <div class="etiqueta etiqueta-grande">
+      {% include "_preco.html" %}
+      <p class="et-selo"><span class="selo selo-{{ p.situacao }}">{{ p.rotulo }}</span></p>
+    </div>
+    {% if descricao %}<p class="descricao">{{ descricao }}</p>{% endif %}
+    {% if p.pode_comprar %}
+      <p><button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button></p>
+      {% if condicoes %}
+      <h2>Formas de pagamento</h2>
+      <ul class="condicoes">
+        {% for c in condicoes.a_vista %}<li>{{ c.forma }}: {{ c.valor | brl }}</li>{% endfor %}
+        {% if condicoes.parcelamento %}<li>Cartão de crédito: até {{ condicoes.parcelamento.parcelas }}x de {{ condicoes.parcelamento.parcela | brl }}{% if condicoes.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
+      </ul>
+      {% endif %}
+    {% else %}
+      <p class="aviso">Este produto não está disponível para compra no momento. A Lia pode sugerir alternativas.</p>
+    {% endif %}
+  </div>
+</div>
+</div>
 {% endblock %}

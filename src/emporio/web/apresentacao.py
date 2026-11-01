@@ -148,9 +148,9 @@ def loja() -> dict[str, Any]:
         info["endereco_resumido"] = f"{e['logradouro']}, {e['numero']}, {e['cidade']}/{e['uf']}"
         info["endereco_curto"] = f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}"
     todos = {c["valor"]: c for c in contatos()}
-    # um telefone e um e-mail dos dados da empresa; as demais variantes ficam no registro de ambiguidades
-    info["contatos"] = [{"valor": str(f.valor)} for chave in ("contato.telefone_whatsapp_dados_empresa",
-                                                              "contato.email_dados_empresa")
+    # a mesma fonte da Lia, da faixa e do /fale-conosco: telefone e e-mail da capa; a ressalva das variantes do
+    # manual fica em /politicas e no README, não em toda resposta
+    info["contatos"] = [{"valor": str(f.valor)} for chave in ("contato.telefone_capa", "contato.email_capa")
                         if (f := fato(chave)) is not None and str(f.valor) in todos]
     info["contato_nota"] = "O manual traz outros canais; se não conseguir contato, fale com a Lia."
     f = fato("horario.funcionamento")

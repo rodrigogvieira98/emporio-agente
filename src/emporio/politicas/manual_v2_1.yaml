@@ -450,12 +450,12 @@ ambiguidades:
     descricao: O manual traz dois números diferentes, (67) 3341-4444 como telefone e WhatsApp nos dados da empresa e (67) 3321-4500 como canal de WhatsApp na seção 7.
     secoes: [capa, "1.2", "7"]
     temas: [contato]
-    tratamento: informar_ambos_e_pedir_confirmacao_da_equipe
+    tratamento: usar_telefone_da_capa_e_whatsapp_da_secao_7_com_ressalva_em_politicas_e_readme
   - id: email
     descricao: O e-mail aparece grafado de duas formas, sem acento na capa e com acento nos dados da empresa.
     secoes: [capa, "1.2"]
     temas: [contato]
-    tratamento: informar_ambos_e_pedir_confirmacao_da_equipe
+    tratamento: usar_grafia_da_capa_com_ressalva_em_politicas_e_readme
   - id: parcela_minima
     descricao: A tabela de pagamento exige parcela mínima de R$ 100,00 no crédito, enquanto as regras de parcelamento têm faixas de R$ 50,00, R$ 80,00 e R$ 100,00.
     secoes: ["3", "3.1"]

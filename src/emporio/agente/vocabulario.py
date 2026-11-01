@@ -19,6 +19,25 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"o que (voce|vc|a lia) (faz|sabe|pode|consegue)|o que (voces|vcs) (fazem|sabem|podem|conseguem)|"
         r"(voce|vc) (faz|sabe fazer|serve para|serve pra) o que|para que (voce )?serve|"
         r"(em|com) o que (voce|vc) (pode|consegue) (me )?ajudar|como (voce|vc) pode (me )?ajudar)\b")),
+    # "vou pensar": responde com respeito, manda o link do produto e não insiste
+    ("vou_pensar", re.compile(
+        r"\b(vou pensar|vou pensando|deixa eu pensar|deixe-me pensar|preciso pensar|vou ver isso|vou analisar|"
+        r"vou avaliar|vou ver com calma|depois eu (vejo|volto|decido)|talvez depois|quero pensar)\b")),
+    # seção 9 do manual: privacidade e dados pessoais (antes de "dado de terceiro" e de "fora de escopo")
+    ("privacidade", re.compile(
+        r"\b(privacidade|lgpd|dados pessoais|(meus|nossos) dados|(excluir|apagar|deletar|remover) .{0,15}dados|"
+        r"compartilh\w+ .{0,15}dados)\b")),
+    ("empresa_dados", re.compile(
+        r"\b(desde quando (a loja|voces|vcs|existe|funciona)|quando (a loja )?(foi )?(fundad\w+|criad\w+|aberta)|"
+        r"fundad[oa]|fundacao|razao social|cnpj|quantos anos (a loja|de loja|de mercado|de atuacao)|"
+        r"ha quanto tempo (a loja|voces|vcs) (existe|funciona|atua\w*))\b")),
+    ("rain_check", re.compile(
+        r"\b(rain check|segurar (o )?(preco|valor|promocao)|garantir (o )?(preco|valor) da promocao|"
+        r"manter (o )?(preco|valor) da promocao|reservar (o )?(preco|valor)|congelar (o )?(preco|valor))\b")),
+    ("devolucao_frete", re.compile(r"\b(frete\b.{0,40}\bdevol\w*|devol\w*.{0,40}\bfrete)\b")),
+    ("rastreio_como", re.compile(
+        r"\bcomo\b.{0,25}\b(recebo|receber|ganho|consigo|acompanho|acho|vejo|sei)\b.{0,30}\b(rastre\w*|codigo)\b|"
+        r"\bonde\b.{0,20}\bcodigo de rastre\w*")),
     ("pedir_atendente", re.compile(
         r"\b(atendente|atendimento humano|humano|pessoa de verdade|gerente|responsavel|"
         r"falar com (alguem|uma pessoa|um humano|gente)|passa (pra|para) (alguem|um))\b")),
@@ -43,11 +62,16 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"(qual|e a) (a )?previsao( de entrega| de chegada)?|ja (saiu|foi enviado|foi despachado)|chega (quando|que dia|hoje|amanha))\b")),
     ("status_pedido", re.compile(r"\b(pedido|rastre\w*|encomenda|onde esta (meu|minha)|status)\b")),
     ("fora_escopo", re.compile(
-        r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedais?|pedaleiras?|amplificador\w*|ampli|"
+        r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
         r"afinador\w*|suporte|estante|correia|caixas? de som|fone\w*|microfone\w*)\b")),
     ("promocao", re.compile(
         r"\b(promocao|promocoes|desconto\w*|black friday|oferta\w*|liquidacao|queima de estoque|"
         r"valendo|vigente)\b")),
+    # objeção de preço ("tá caro"); "o mais caro" é pergunta de lista, não objeção
+    ("objecao_preco", re.compile(
+        r"(?<!mais )\b(ta |esta |achei |muito |bem |meio |super |um pouco )+(caro|salgado)\b|\bcaro demais\b|"
+        r"\bsem condicoes de pagar\b|\bnao cabe no (meu )?(bolso|orcamento)\b|"
+        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b")),
     ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa)\b")),
     ("pagamento", re.compile(
         r"\b(pagamento\w*|pagar|pix|boleto|cartao|credito|debito|parcel\w*|financia\w*)\b")),
@@ -129,6 +153,8 @@ hoje agora atualmente mesmo la aquele aquela aquilo coisa negocio
 instrumento instrumentos iniciante iniciantes barato baratos barata baratas melhor melhores
 vende vendem vendo vender existe existem trabalha trabalham confirma confirmar confirmo
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
+ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
+ta caro salgado super pouco muito achei meio demais pensar analisar avaliar depois talvez calma volto vejo decido
 """.split())
 
 AFIRMATIVO = re.compile(
@@ -173,3 +199,27 @@ FORA_DO_ASSUNTO = re.compile(
     r"\b(copa|futebol|campeonato|time de|jogo de|presidente|eleicao|eleicoes|politica|previsao do tempo|"
     r"vai chover|clima|receita de|filme|serie|novela|noticia\w*|bitcoin|piada|horoscopo|signo|loteria|"
     r"quem (ganhou|descobriu|inventou|foi)|qual a capital|quanto e \d|traduz\w*|escreva um|poema|codigo em)\b")
+
+# Conformidade com o manual: sinais lidos na fala do cliente, nunca fatos da loja.
+MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|umidade|chuva|bati|batida)\b")
+AVARIA = re.compile(
+    r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
+    r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*")
+DIAS_DESDE_COMPRA = re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
+EMPRESA_CNPJ = re.compile(r"\b(cnpj)\b")
+EMPRESA_RAZAO = re.compile(r"\b(razao social)\b")
+EMPRESA_FUNDACAO = re.compile(r"\b(desde quando|fundad\w+|fundacao|quantos anos|ha quanto tempo|quando (a loja )?(foi )?criad\w+)\b")
+DEBITO_BANDEIRA = re.compile(r"\bbandeiras?\b")
+
+# Intenção de compra ("quero comprar o Yamaha C40"): o texto segue sendo o preço; o botão de carrinho é gerado por código.
+COMPRA = re.compile(
+    r"\b((quero|queria|vou|gostaria de|posso|pretendo|decidi|bora|vamos|preciso) (comprar|levar|fechar)|"
+    r"comprar (o|a|esse|essa|ele|ela|este|esta)|adicion\w+ (ao|no|o) carrinho|fechar (a )?compra|quero levar|"
+    r"vou levar|levo (o|a|esse|essa|ele|ela))\b")
+# Nível e orçamento ditos em palavras: qualificam a busca sem perguntar de novo.
+NIVEL_INICIANTE = re.compile(r"\b(iniciantes?|principiantes?|comecando|comecar|aprender|aprendendo|estudantes?|"
+                             r"primeiro (violao|instrumento|teclado|baixo|ukulele|bateria|guitarra))\b")
+NIVEL_OUTRO = re.compile(r"\b(intermediari\w+|avancad\w+|profissional|profissionais|palco|banda|igreja|estudio|gravar)\b")
+# Resposta que dispensa a pergunta de qualificação ("tanto faz", "sem preferência").
+SEM_PREFERENCIA = re.compile(r"\b(tanto faz|qualquer (um|uma|coisa|modelo)|sem preferencia|nao tenho preferencia|nao sei)\b")
+ORCAMENTO_BAIXO = re.compile(r"\b(barat\w+|em conta|economic\w+|pouco dinheiro|sem gastar muito)\b")

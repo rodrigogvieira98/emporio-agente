@@ -43,6 +43,21 @@ OFERTA_GENERICA = re.compile(
     r"posso ajudar (em )?(mais|algo|alguma)|mais alguma coisa|mais alguma duvida|precisando|sempre que (precisar|quiser)|"
     r"para o que precisar|no que precisar|foi um prazer)\b")
 LIMIAR_REPETE_BLOCO = 0.8
+LIMIAR_COBERTURA = 0.75  # parte das palavras de conteúdo da frase que já estão numa frase do bloco
+# "null" em texto (o modelo às vezes devolve a palavra no lugar do JSON null) nunca chega ao cliente.
+NULO_LITERAL = re.compile(r"\b(null|none|undefined|nan)\b")
+NULOS = {"null", "none", "undefined", "nan", "nil"}
+NEGACAO = {"nao", "nunca", "jamais", "nenhum", "nenhuma", "sem", "impossivel", "ninguem"}
+PALAVRAS_VAZIAS = {"a", "o", "as", "os", "um", "uma", "de", "do", "da", "dos", "das", "e", "em", "no", "na", "nos", "nas",
+                   "para", "pra", "por", "com", "que", "se", "eu", "voce", "te", "me", "ao", "aos", "ou", "mas", "ja",
+                   "esse", "essa", "isso", "este", "esta", "isto", "ser", "sao", "foi", "esta", "estao", "tem", "ter",
+                   "mais", "muito", "so", "aqui", "la", "como", "qual", "quais", "seu", "sua", "meu", "minha"}
+# Pares que se excluem: se o bloco diz um lado, a frase do modelo não pode dizer o outro.
+ANTONIMOS = (
+    ({"disponivel", "disponiveis"}, {"esgotado", "esgotada", "indisponivel", "descontinuado", "descontinuada"}),
+    ({"gratis", "gratuito", "gratuita"}, {"cobrado", "cobrada", "pago", "paga"}),
+    ({"aberta", "aberto"}, {"fechada", "fechado"}),
+)
 MAX_FRASES = 2
 MAX_PERGUNTAS = 1
 MAX_CARACTERES = 220
@@ -57,20 +72,50 @@ def _frases(texto: str) -> list[str]:
     return [f for f in re.split(r"(?<=[.!?])\s+", texto.strip()) if f]
 
 
+def _conteudo(texto: str) -> set[str]:
+    return {t for t in tokens(texto) if t not in PALAVRAS_VAZIAS and t not in NEGACAO}
+
+
+def _partes_do_bloco(bloco: str) -> list[str]:
+    return [parte for linha in bloco.splitlines() for parte in _frases(linha) if normalizar(parte)]
+
+
 def repete_o_bloco(frase: str, bloco: str) -> bool:
     """Frase do modelo que só repete, com outras palavras ou por inteiro, o que o bloco factual já diz."""
     n = normalizar(frase)
     palavras = len(n.split())
-    for linha in bloco.splitlines():
-        for parte in _frases(linha):
-            b = normalizar(parte)
-            if not b:
-                continue
-            if palavras >= 3 and (n in b or (len(b.split()) >= 3 and b in n)):
-                return True
-            if SequenceMatcher(None, n, b).ratio() >= LIMIAR_REPETE_BLOCO:
-                return True
+    conteudo = _conteudo(frase)
+    for parte in _partes_do_bloco(bloco):
+        b = normalizar(parte)
+        if palavras >= 3 and (n in b or (len(b.split()) >= 3 and b in n)):
+            return True
+        if SequenceMatcher(None, n, b).ratio() >= LIMIAR_REPETE_BLOCO:
+            return True
+        # mesma informação com outras palavras: quase tudo o que a frase diz já está numa frase do bloco
+        if len(conteudo) >= 3 and len(conteudo & _conteudo(parte)) / len(conteudo) >= LIMIAR_COBERTURA:
+            return True
     return False
+
+
+def contradiz_o_bloco(frase: str, bloco: str) -> bool:
+    """Frase do modelo que diz o oposto do bloco factual: antônimo do dado ou a mesma afirmação com polaridade
+    trocada ("o frete não é grátis" contra "o frete é grátis"). Heurística conservadora: exige palavras em comum."""
+    nt = set(tokens(frase))
+    for parte in _partes_do_bloco(bloco):
+        bt = set(tokens(parte))
+        for lado_a, lado_b in ANTONIMOS:
+            if (nt & lado_a and bt & lado_b) or (nt & lado_b and bt & lado_a):
+                return True
+        comuns = _conteudo(frase) & _conteudo(parte)
+        if len(comuns) >= 2 and bool(nt & NEGACAO) != bool(bt & NEGACAO):
+            return True
+    return False
+
+
+def _campo_livre(valor: Any) -> str:
+    """Texto do campo do modelo; a palavra "null" no lugar do JSON null conta como campo vazio."""
+    texto = (valor or "").strip() if isinstance(valor, (str, type(None))) else ""
+    return "" if normalizar(texto).strip(" .\"'`") in NULOS else texto
 
 
 def validar(livre: str, bloco: str, estado: Estado) -> str | None:
@@ -78,6 +123,8 @@ def validar(livre: str, bloco: str, estado: Estado) -> str | None:
     norm = normalizar(livre)
     if ECO_DE_ROTULO.search(normalizar(livre)) or ECO_DE_ROTULO.search(livre):
         return "eco_de_rotulo"
+    if NULO_LITERAL.search(norm):
+        return "null_literal"
     if re.search(r"\d", livre):
         return "digito"
     if MOEDA.search(livre):
@@ -94,6 +141,8 @@ def validar(livre: str, bloco: str, estado: Estado) -> str | None:
         return "oferta_generica"
     if len(_frases(livre)) > MAX_FRASES:
         return "frases"
+    if any(contradiz_o_bloco(f, bloco) for f in _frases(livre)):
+        return "contradiz_bloco"
     if livre.count("?") + bloco.count("?") > MAX_PERGUNTAS:
         return "perguntas"
     if estado.ja_saudou and tem_saudacao(livre):
@@ -139,13 +188,19 @@ class Redator:
                    latencia_ms=r.latencia_ms, num_ctx=getattr(r, "num_ctx", None))
         try:
             dados = json.loads(r.conteudo)
-            abertura = (dados.get("abertura") or "").strip()
-            fechamento = (dados.get("fechamento") or "").strip() if permitir_fechamento else ""
+            abertura = _campo_livre(dados.get("abertura"))
+            fechamento = _campo_livre(dados.get("fechamento")) if permitir_fechamento else ""
             if not isinstance(dados.get("abertura"), (str, type(None))) or not isinstance(dados.get("fechamento"), (str, type(None))):
                 raise ValueError("campos com tipo errado")
         except (ValueError, AttributeError):
             self._contar("redacao_descartada")
             reg.update(resultado="descartada:formato")
+            self.telemetria.append(reg)
+            return bloco
+        # contradição vem antes da repetição: "o frete não é grátis" parece cópia do bloco, mas diz o oposto
+        if any(contradiz_o_bloco(f, bloco) for f in _frases(f"{abertura} {fechamento}")):
+            self._contar("redacao_descartada")
+            reg.update(resultado="descartada:contradiz_bloco")
             self.telemetria.append(reg)
             return bloco
         # frase do modelo que repete o bloco sai; o bloco nunca é alterado

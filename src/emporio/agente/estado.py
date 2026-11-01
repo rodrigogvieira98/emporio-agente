@@ -63,6 +63,9 @@ class Estado(BaseModel):
     # Concisão: o que já foi entregue na conversa. chave -> {"valor": ..., "intencao": ...}
     ja_informados: dict[str, dict[str, str]] = {}
     ja_saudou: bool = False
+    # Condições de valor já citadas ao cliente (uma por vez): "frete_gratis", "parcelas".
+    valores_citados: list[str] = []
+    turno_fechamento: int = 0  # último turno em que a Lia fechou perguntando se precisa de mais alguma coisa
 
     @property
     def sentimento(self) -> str:
@@ -92,6 +95,15 @@ class Resposta(BaseModel):
     fatos: list[Fato] = []
     estado: str = "em_andamento"
     contagens: dict[str, int] = {}
+    # Links e botão de carrinho da resposta: gerados só por código (links.py), nunca pelo modelo. No máximo 2.
+    links: list[dict[str, Any]] = []
+
+    def texto_terminal(self) -> str:
+        """O texto com os endereços como texto simples, para quem não tem página (terminal)."""
+        extra = [f"{x['rotulo']}: {x['href']}" for x in self.links if x.get("tipo") == "link"]
+        carrinho = [x for x in self.links if x.get("tipo") == "carrinho"]
+        extra += [f"{x['rotulo']}: use o site, em /produto/{x['produto_id']}" for x in carrinho]
+        return self.texto + (chr(10) + chr(10).join(extra) if extra else "")
 
 
 def carregar_estado(conversa_id: str) -> Estado:

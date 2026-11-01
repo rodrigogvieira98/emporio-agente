@@ -111,7 +111,7 @@ def test_compra_na_loja_fisica_explica_que_a_regra_nao_se_aplica_e_nao_oferece_r
 
 def test_frete_da_devolucao_e_por_conta_da_loja():
     (r,) = conversar("Quem paga o frete da devolução por arrependimento?")
-    assert "por conta da loja" in r.texto and "Para consultar o pedido" not in r.texto
+    assert "por nossa conta" in r.texto and "Para consultar o pedido" not in r.texto
 
 
 def test_defeito_depois_de_30_dias_aciona_o_fabricante_com_intermediacao():

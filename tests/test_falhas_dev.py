@@ -116,14 +116,14 @@ def test_atendente_sobre_outro_assunto_abre_outro_chamado(sql):
 def test_atendente_repetido_sobre_o_mesmo_assunto_informa_o_protocolo(sql):
     r = conversar("quanto custa o Yamaha C40?", "quero falar com um atendente", "quero falar com um atendente")
     assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
-    assert "EM-000001" in r[2].texto and "na fila da equipe" in r[2].texto
+    assert "EM-000001" in r[2].texto and "na fila de atendimento" in r[2].texto
 
 
 # concisão revisada: o aviso do assunto volta quando a ação pedida muda ---------------------------
 
 def test_info_trocas_nao_parece_confirmar_elegibilidade():
     (r,) = conversar("como funciona a troca e a garantia?")
-    assert "A equipe confirma se o seu caso se enquadra" in r.texto and len(r.texto) <= 600
+    assert "Daqui eu não consigo confirmar se o seu caso se enquadra" in r.texto and len(r.texto) <= 600
 
 
 # variações (eval/casos_variacoes.jsonl): a causa, não a frase ----------------------------------

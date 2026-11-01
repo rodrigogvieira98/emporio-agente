@@ -125,4 +125,4 @@ def test_dedupe_so_age_com_concisao_ligada():
 def test_resposta_de_pedido_do_cliente_sobrevive_a_concisao(ligada):
     textos = [r.texto for r in rodar(["quero devolver", "pedido 4 final 3456", "online, recebi em 15/12/2025, sem uso", "sim"],
                                     concisao=ligada)]
-    assert "R$ 799,90" in textos[2] and "Chamado registrado. Protocolo: EM-000001" in textos[3]
+    assert "R$ 799,90" in textos[2] and "Registrei o seu chamado. Protocolo: EM-000001" in textos[3]

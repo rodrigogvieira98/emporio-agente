@@ -107,7 +107,7 @@ def test_atendente_depois_de_reclamacao_nao_abre_segundo_chamado(sql):
     r = conversar("quero abrir reclamação", "o violão chegou riscado e ninguém me responde, que absurdo",
                   "quero falar com um atendente")
     assert protocolos(sql) == ["EM-000001"]
-    assert "EM-000001" in r[2].texto and "na fila da equipe" in r[2].texto
+    assert "EM-000001" in r[2].texto and "na fila de atendimento" in r[2].texto
 
 
 def test_atendente_em_outra_conversa_abre_chamado_proprio(sql):
@@ -132,8 +132,8 @@ def test_pergunta_geral_de_troca_e_curta_completa_e_sem_pedir_pedido(frase):
     for prazo in ("Arrependimento: 7 dias corridos", "Defeito: 30 dias corridos", "Preferência: 7 dias",
                   "Garantia legal: 90 dias"):
         assert prazo in r.texto, prazo
-    assert "de quando a contagem parte depende de confirmação da nossa equipe" in r.texto  # ressalva da preferência
-    assert "a equipe confirma" in r.texto and "30 dias do defeito" in r.texto  # ressalva 30 x 90
+    assert "de quando a contagem parte eu não consigo confirmar daqui" in r.texto  # ressalva da preferência
+    assert "eu não consigo confirmar daqui" in r.texto and "30 dias do defeito" in r.texto  # ressalva 30 x 90
     assert r.texto.count("?") == 1 and "verificar um pedido seu" in r.texto
     assert "Não entram em troca" not in r.texto and "não cobre:" not in r.texto  # listas ficam para o "sim"
     assert r.texto.count("30 dias") == 2  # sem repetir o prazo do defeito além da ressalva

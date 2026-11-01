@@ -243,7 +243,7 @@ def test_resposta_com_dado_pessoal_no_resumo_e_mascarada():
                            proposta(resposta="chamado_registrado"))
     agente = agente_com(cliente)
     r = agente.responder("c1", "quero falar com um atendente", "eval")
-    assert "Chamado registrado" in r.texto
+    assert "Registrei o seu chamado" in r.texto
     import sqlite3
     resumo = sqlite3.connect(config.caminho_banco()).execute("SELECT resumo FROM chamados").fetchone()[0]
     assert "99812" not in resumo and "joao@x.com" not in resumo

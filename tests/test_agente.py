@@ -42,14 +42,14 @@ def test_devolucao_do_pedido_4_conversa_completa(sql):
     # 3) propõe registro separando sistema, declarado e equipe, sem afirmar elegibilidade
     assert "O que consta no seu pedido" in r3.texto and "R$ 799,90" in r3.texto
     assert "(não verificado)" in r3.texto and "compra online" in r3.texto and "15/12/2025" in r3.texto
-    assert "O que a equipe confirma" in r3.texto and "Posso registrar" in r3.texto
+    assert "O que um atendente precisa confirmar" in r3.texto and "Posso registrar" in r3.texto
     assert "Eu não consigo garantir a elegibilidade" in r3.texto
     assert r3.estado == "aguardando:confirmacao_registro"
     # chamado só é anunciado depois do ok da ferramenta
     for r in (r1, r2, r3):
         assert "chamado registrado" not in r.texto.lower() and "protocolo:" not in r.texto.lower()
     assert protocolos(sql) == ["EM-000001"] and "EM-000001" in r4.texto
-    assert "Chamado registrado" in r4.texto and r4.estado == "encaminhado"
+    assert "Registrei o seu chamado" in r4.texto and r4.estado == "encaminhado"
     assert "24 horas" not in r4.texto  # prazo de 24h úteis é só de reclamação
     chamado = sql.execute("SELECT * FROM chamados").fetchone()
     assert chamado["tipo"] == "atendente" and "pedido 4" in chamado["resumo"]
@@ -77,7 +77,7 @@ def test_falha_ao_registrar_nao_anuncia_chamado(sql):
     sql.execute("DROP TABLE chamados")
     sql.commit()
     r = conversar("sim", conversa="c1")[0]
-    assert "Protocolo" not in r.texto and "Chamado registrado" not in r.texto
+    assert "Protocolo" not in r.texto and "Registrei o seu chamado" not in r.texto
     assert "ainda não existe protocolo" in r.texto and r.estado != "encaminhado"
 
 
@@ -94,7 +94,7 @@ def test_quero_abrir_reclamacao_registra_com_prazo_de_24h(sql):
     assert r1.estado == "aguardando:relato" and protocolos(sql) == []
     r2 = agente.responder("c1", "o pedido 8 chegou quebrado e ninguém me respondeu", "eval")
     assert protocolos(sql) == ["EM-000001"]
-    assert "Chamado registrado" in r2.texto and "24 horas úteis" in r2.texto
+    assert "Registrei o seu chamado" in r2.texto and "24 horas úteis" in r2.texto
     assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "reclamacao"
 
 
@@ -119,7 +119,7 @@ def test_recusar_a_proposta_nao_registra(sql):
 
 def test_pedido_de_atendente_registra_e_negacao_nao_encaminha(sql):
     (r,) = conversar("quero falar com um atendente")
-    assert "Chamado registrado" in r.texto and "24 horas" not in r.texto
+    assert "Registrei o seu chamado" in r.texto and "24 horas" not in r.texto
     assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "atendente"
     (n,) = conversar("não quero falar com atendente", conversa="c2")
     assert protocolos(sql) == ["EM-000001"] and "sigo te ajudando" in n.texto
@@ -179,7 +179,7 @@ def test_takamine_ambiguo_lista_quatro_e_aceita_o_numero():
 
 def test_shelby_em_6x_pede_confirmacao_da_equipe_e_registra_duvida(sql):
     r1, r2 = conversar("Shelby SN-100 em 6x", "sim")
-    assert "precisa de confirmação da nossa equipe" in r1.texto
+    assert "eu não consigo confirmar daqui" in r1.texto
     assert "R$ 91,50" in r1.texto
     assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "duvida_politica" and "EM-000001" in r2.texto
 
@@ -254,7 +254,7 @@ def test_horario_endereco_e_contato_vem_do_manual():
 
 def test_pagamento_cita_as_duas_leituras_da_parcela_minima():
     (r,) = conversar("quais as formas de pagamento?")
-    assert "5% de desconto" in r.texto and "até 12x" in r.texto and "equipe confirma" in r.texto
+    assert "5% de desconto" in r.texto and "até 12x" in r.texto and "eu não consigo confirmar daqui" in r.texto
 
 
 def test_frete_campo_grande_e_outra_cidade():
@@ -296,7 +296,7 @@ def test_mensagem_incompreendida_e_depois_oferta_de_atendente(sql):
 
 def test_garantia_informa_prazos_e_aponta_a_ambiguidade():
     (r,) = conversar("como funciona a garantia?")
-    assert "90 dias" in r.texto and "30 dias corridos" in r.texto and "depende de confirmação da nossa equipe" in r.texto
+    assert "90 dias" in r.texto and "30 dias corridos" in r.texto and "eu não consigo confirmar daqui" in r.texto
 
 
 # --- percepção por intenção -----------------------------------------------------------------
@@ -406,7 +406,7 @@ def test_falhas_seguidas_oferecem_registro_do_problema(tmp_path, monkeypatch, sq
     monkeypatch.setenv("EMPORIO_MANUAL", str(ruim))
     r1, r2, r3 = conversar("qual o horário?", "qual o horário?", "sim")
     assert "registro o problema" in r2.texto and r2.estado == "aguardando:confirmacao_registro"
-    assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "falhas" and "Chamado registrado" in r3.texto
+    assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "falhas" and "Registrei o seu chamado" in r3.texto
 
 
 def test_yaml_alterado_muda_a_resposta_do_agente(tmp_path, monkeypatch):

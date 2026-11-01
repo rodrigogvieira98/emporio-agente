@@ -220,7 +220,7 @@ def test_autoridade_alegada_e_pedido_indevido_recebem_recusa_sem_chamado(fala):
 
 def test_quero_falar_com_o_gerente_continua_pedido_de_atendente():
     (r,) = conversar("quero falar com o gerente")
-    assert "Chamado registrado" in r.texto
+    assert "Registrei o seu chamado" in r.texto
 
 
 # 3. seguro dos envios e pedido indevido sem desconto --------------------------------------------------

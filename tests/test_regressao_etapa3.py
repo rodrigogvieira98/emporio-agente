@@ -197,15 +197,15 @@ def test_dado_pessoal_de_cliente_e_recusado_direto_sem_consulta(frase, sql):
 
 def test_chamado_so_diz_registrado_e_protocolo_exceto_reclamacao():
     (a,) = dizer("quero falar com um atendente", conversa="a")
-    assert a.texto == "Chamado registrado. Protocolo: EM-000001."
+    assert a.texto == "Registrei o seu chamado. Protocolo: EM-000001."
     assert "contato" not in a.texto.lower()
     (rec,) = dizer("quero abrir uma reclamação porque o pedido 8 atrasou muito e ninguém avisou", conversa="b")
-    assert rec.texto == "Chamado registrado. Protocolo: EM-000002. A equipe retorna em até 24 horas úteis."
+    assert rec.texto == "Registrei o seu chamado. Protocolo: EM-000002. Você recebe o retorno de um atendente em até 24 horas úteis."
 
 
 def test_posvenda_e_duvida_tambem_nao_prometem_contato(sql):
     textos = [r.texto for r in dizer("quero devolver", "pedido 4 final 3456", "online, recebi dia 15/12/2025, sem uso", "sim")]
-    assert textos[-1] == "Chamado registrado. Protocolo: EM-000001."
+    assert textos[-1] == "Registrei o seu chamado. Protocolo: EM-000001."
 
 
 # 10. extração de produto ---------------------------------------------------------------------

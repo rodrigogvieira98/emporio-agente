@@ -2,6 +2,7 @@
 
 Uso: python eval/rodar.py --conjunto dev --rotulo controle
 O holdout exige --holdout-congelado e confere o hash do pré-registro.
+Conversas (ajuste, achados da revisão da Lia) roda livre; frescos exige --holdout-congelado, sem conferência de hash aqui.
 """
 from __future__ import annotations
 
@@ -92,12 +93,14 @@ def avaliar(caso: dict, respostas: list, chamados: int) -> dict:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--conjunto", choices=("dev", "holdout", "variacoes"), required=True)
+    p.add_argument("--conjunto", choices=("dev", "holdout", "variacoes", "conversas", "frescos"), required=True)
     p.add_argument("--rotulo", required=True)
     p.add_argument("--holdout-congelado", action="store_true")
     p.add_argument("--modelo", default=None, help="modelo Ollama; sem ele roda o controle por regras")
     a = p.parse_args()
     caminho = RAIZ / "eval" / f"casos_{a.conjunto}.jsonl"
+    if a.conjunto == "frescos" and not a.holdout_congelado:
+        sys.exit("Frescos roda uma vez, no sistema congelado: use --holdout-congelado.")
     if a.conjunto == "holdout":
         if not a.holdout_congelado:
             sys.exit("Holdout roda uma vez, no sistema congelado: use --holdout-congelado.")

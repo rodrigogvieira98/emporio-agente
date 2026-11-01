@@ -812,6 +812,8 @@ class RegrasDecisor:
                               f"Produto {pid} com mais de uma promocao ativa; cliente pediu a soma de dois produtos.")
             if r.estado != "ok":
                 return self._erro(estado, r)
+        if estado.slots.get("diferenca_dois"):
+            return responder("diferenca_dois", ids=ids, forma=forma)
         return responder("soma_dois", ids=ids, forma=forma, parcelas=parcelas)
 
     def _i_preco_produto(self, estado: Estado) -> Acao:

@@ -1340,6 +1340,22 @@ def soma_dois(e: Estado, p: dict) -> str:
     return "Somando os dois últimos produtos que você viu:\n" + "\n".join(linhas) + "\n" + fecho
 
 
+def diferenca_dois(e: Estado, p: dict) -> str:
+    """Diferença de preço entre os dois últimos produtos citados, calculada sobre os valores das ferramentas."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"][-2:]
+    a, b = calc
+    maior, menor = (a, b) if a["original_centavos"] >= b["original_centavos"] else (b, a)
+    dif = maior["original_centavos"] - menor["original_centavos"]
+    if dif == 0:
+        return f"{a['produto_nome']} e {b['produto_nome']} têm o mesmo preço de tabela, {formatar(a['original_centavos'])}."
+    txt = (f"O {maior['produto_nome']} custa {formatar(dif)} a mais que o {menor['produto_nome']} no preço de tabela "
+           f"({formatar(maior['original_centavos'])} contra {formatar(menor['original_centavos'])}).")
+    dif_final = maior["final_centavos"] - menor["final_centavos"]
+    if p.get("forma", "pix") == "pix" and dif_final != dif:
+        txt += f" No PIX, a diferença é de {formatar(dif_final)}."
+    return txt
+
+
 def parecidos(e: Estado, p: dict) -> str:
     """Outros modelos da mesma categoria do produto em foco, em faixa de preço próxima (ou mais baratos)."""
     d = _dados(e, "ver_produto")
@@ -1369,7 +1385,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
+        frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
         preco_pix_e_parcelas, combinacao_formas)
 }

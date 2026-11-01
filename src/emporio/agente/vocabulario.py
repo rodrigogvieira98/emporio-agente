@@ -371,3 +371,23 @@ CARRINHO = re.compile(
     r"^(?!.*\b(?:adicion\w*|coloc\w*|poe|ponha|joga|bota|mand\w+|comprar|finaliz\w+|fechar)\b).*"
     r"(?:\b(?:quanto|qual|valor|total|soma|ver|mostr\w+|cade|onde|que tem|conteudo)\b.{0,30}\bcarrinho\b|"
     r"\bcarrinho\b.{0,25}\b(?:total|ficou|fica|valor|soma|quanto|deu)\b)")
+
+
+# Abreviações de modelo que o cliente usa na fala ("a tele", "uma strato"): viram o nome inteiro antes da leitura.
+ABREVIACOES = {"tele": "telecaster", "teles": "telecasters", "strato": "stratocaster", "stratos": "stratocasters",
+               "strat": "stratocaster", "strats": "stratocasters"}
+_RE_ABREVIACAO = re.compile(r"\b(" + "|".join(ABREVIACOES) + r")\b(?!-)")
+
+
+def expandir_abreviacoes(norm: str) -> str:
+    return _RE_ABREVIACAO.sub(lambda m: ABREVIACOES[m.group(1)], norm)
+
+
+# Diferença de preço entre os dois produtos que o cliente acabou de ver: o código calcula, a Lia não faz conta.
+DIFERENCA_PRECO = re.compile(
+    r"\b(?:diferenca|diferencas)\b.{0,25}\b(?:preco|precos|valor|valores|custo)\b|"
+    r"\b(?:preco|precos|valor|valores)\b.{0,15}\bdiferenca\b|"
+    r"\bquanto\b.{0,25}\b(?:a mais|mais caro|mais cara|mais barato|mais barata|de diferenca)\b|"
+    r"\bquanto (?:e|fica|ficou|deu|da) a diferenca\b")
+OS_DOIS_REF = re.compile(r"\b(?:entre (?:eles|elas)|um e (?:o )?outro|uma e (?:a )?outra|que (?:o|a) outr[oa]|"
+                         r"(?:um|uma) custa)\b")

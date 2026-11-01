@@ -331,7 +331,8 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["mau_uso"] = bool(v.MAU_USO.search(v.NEGA_MAU_USO.sub(" ", norm)))  # "sem queda" nega o gatilho
     slots["avaria"] = bool(v.AVARIA.search(norm))
     slots["demonstrativo"] = bool(v.DEMONSTRATIVO.search(norm))
-    slots["os_dois"] = bool(v.OS_DOIS.search(norm))
+    slots["diferenca_dois"] = bool(v.DIFERENCA_PRECO.search(norm))
+    slots["os_dois"] = bool(v.OS_DOIS.search(norm)) or (slots["diferenca_dois"] and bool(v.OS_DOIS_REF.search(norm)))
     mq = v.QUANTIDADE.search(norm)
     if mq:
         bruto = mq.group(1) or mq.group(2)
@@ -598,7 +599,7 @@ def _aplicar_slots(estado: Estado) -> None:
 
 def perceber(estado: Estado, mensagem: str) -> None:
     """Atualiza o estado com a mensagem do turno e define `estado.intencao`."""
-    norm = normalizar(mensagem)
+    norm = v.expandir_abreviacoes(normalizar(mensagem))
     estado.turno += 1
     sentimento.registrar(estado, mensagem)  # rótulo do turno; só o tom depende dele
     estado.passos = []

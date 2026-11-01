@@ -125,6 +125,36 @@ def test_pedir_para_adicionar_ao_carrinho_segue_o_fluxo_de_compra():
     assert any(x.get("tipo") == "carrinho" for x in r[1].links)
 
 
+# --- item 5: abreviações e diferença de preço entre os dois ---------------------------------
+
+@pytest.mark.parametrize("pergunta,nome", [
+    ("quanto custa a tele?", "Fender Telecaster Player Series"),
+    ("quanto custa a strato?", "Fender Stratocaster American Pro II"),
+    ("tem strato?", "Fender Stratocaster American Pro II"),
+    ("tem alguma tele aí?", "Fender Telecaster Player Series"),
+])
+def test_tele_e_strato_sao_telecaster_e_stratocaster(pergunta, nome):
+    (r,) = conversar(pergunta)
+    assert nome in r.texto and "acessórios" not in r.texto and "Qual produto" not in r.texto, r.texto
+
+
+def test_comparacao_com_abreviacoes():
+    (r,) = conversar("qual a diferença entre a tele e a strato?")
+    assert "Telecaster" in r.texto and "Stratocaster" in r.texto and "Comparando" in r.texto, r.texto
+
+
+@pytest.mark.parametrize("pergunta", ["qual a diferença de preço entre os dois?", "quanto uma custa a mais que a outra?",
+                                      "e a diferença de valor entre elas?", "quanto é a diferença de preço entre eles?"])
+def test_diferenca_de_preco_entre_os_dois_e_calculada_pelo_codigo(pergunta):
+    r = conversar("quanto custa a Telecaster", "e a Stratocaster?", pergunta)
+    assert "R$ 7.100,00" in r[2].texto and "Somando" not in r[2].texto, r[2].texto
+
+
+def test_diferenca_de_preco_depois_de_uma_comparacao():
+    r = conversar("compara a tele e a strato", "qual a diferença de preço entre os dois?")
+    assert "R$ 7.100,00" in r[1].texto, r[1].texto
+
+
 # --- item 3: pedido explícito de atendente traz prazo e canais ------------------------------
 
 @pytest.mark.parametrize("mensagem", ["quero falar com um atendente", "me passa para uma pessoa de verdade",

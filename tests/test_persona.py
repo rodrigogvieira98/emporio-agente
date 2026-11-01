@@ -80,9 +80,13 @@ def test_nenhuma_resposta_em_execucao_cita_bastidor_nem_expressao_proibida():
     assert achados == {}
 
 
-def test_o_proibido_inclui_os_termos_de_bastidor():
-    for termo in ("manual", "sistema", "ferramenta", "seção", "origem", "demonstração", "teste", "desafio", "fictícia"):
-        assert persona.proibida_em(f"isso vem do {termo} da loja"), termo
+def test_o_proibido_inclui_os_detalhes_internos_e_nao_palavras_soltas():
+    for termo in ("no sistema", "do sistema", "manual", "ferramenta", "seção", "origem do dado", "demonstração",
+                  "fictícia", "desafio"):
+        assert persona.proibida_em(f"isso vem {termo} da loja"), termo
+    for legitima in ("Vou testar o violão com você? Pode testar na loja.", "O teste de som é na loja.",
+                     "Qual a origem do instrumento?", "Aceitamos mais de um sistema de pagamento."):
+        assert not persona.proibida_em(legitima), legitima
 
 
 def test_o_detector_de_proibidas_pega_o_que_deveria():

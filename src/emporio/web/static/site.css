@@ -65,7 +65,7 @@ code { font-size: .9em; background: var(--creme-claro); padding: 0 var(--s1); bo
 
 /* formulários e botões */
 input, select, textarea, button { font: inherit; color: var(--tinta); }
-input, select, textarea { min-height: 44px; padding: var(--s2) var(--s3); border: 1px solid var(--tinta); border-radius: var(--raio); background: var(--creme-claro); }
+input, select, textarea { font-size: 1rem; min-height: 44px; padding: var(--s2) var(--s3); border: 1px solid var(--tinta); border-radius: var(--raio); background: var(--creme-claro); }
 textarea { width: 100%; min-height: 8rem; resize: vertical; }
 input::placeholder { color: var(--cinza-texto); opacity: 1; }
 button, .botao { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--s2) var(--s4);
@@ -91,7 +91,7 @@ button:disabled { opacity: .55; cursor: wait; }
 /* cabeçalho compacto, com a busca à vista */
 .topo { background: var(--palco); color: var(--creme-claro); border-bottom: 3px solid var(--ipe); position: relative; z-index: 20; }
 .topo-in { display: grid; grid-template-columns: 1fr auto; gap: var(--s2) var(--s4); padding-block: var(--s4); align-items: center; }
-.marca { display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; color: var(--creme-claro); justify-self: start; }
+.marca { min-height: 44px; display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; color: var(--creme-claro); justify-self: start; }
 .marca-svg { width: 44px; height: 44px; color: var(--ipe); --furo: var(--palco); flex: none; }
 .marca-nome { font-family: var(--titulo); font-weight: 700; font-size: 1.75rem; line-height: 1; letter-spacing: -.01em; white-space: nowrap; }
 .marca-2 { font-weight: 600; font-size: 1.125rem; color: var(--ipe); letter-spacing: 0; }
@@ -559,3 +559,10 @@ html.chat-tela-cheia .lia-camada { display: block; position: fixed; left: 0; rig
 .busca-vazia-caminhos li { padding-block: var(--s1); }
 .politicas-conteudo, .politica { min-width: 0; }
 .credito-lia { display: flex; align-items: center; gap: var(--s4); } .credito-lia img { border-radius: 50%; }
+
+/* alvos de toque de 44 px (QA movel): links soltos, migalhas, telefone, e-mail e pontos do carrossel */
+.secao-cabeca > a, .migalha a, a.bloco-fone, .enviar-email, .legenda-ilustrativa, .catalogo-aviso a, .card-acesso { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.carrossel-pontos button { width: 44px; }
+.carrossel-controles { flex-wrap: wrap; }
+.carrossel-controles > button { flex: none; }
+@media (max-width: 480px) { .carrossel-pontos { order: 3; width: 100%; justify-content: center; flex-wrap: wrap; gap: 0; } }

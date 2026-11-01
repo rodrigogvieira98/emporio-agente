@@ -21,6 +21,14 @@
     p.focus({ preventScroll: true });
   }
 
+  // Resultado do rastreio: a página já chega com a resposta; rola até ela e leva o foco (teclado e leitor de tela).
+  document.addEventListener("DOMContentLoaded", function () {
+    var r = document.querySelector("[data-resultado-rastreio]");
+    if (!r) return;
+    r.scrollIntoView({ block: "start" });
+    r.focus({ preventScroll: true });
+  });
+
   document.addEventListener("submit", function (e) {
     var form = e.target;
     if (!form.matches || !form.matches("form") || (form.method || "").toLowerCase() !== "post") return;

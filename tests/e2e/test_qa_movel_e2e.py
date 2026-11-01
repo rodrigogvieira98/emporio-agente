@@ -186,3 +186,43 @@ def test_ritmo_da_conversa_cliente_escrevendo_resposta(servidor_movel, movel):
     pagina.tap("#chat-alternar")
     assert pagina.locator("#chat-log .escrevendo").count() == 0
     assert pagina.locator("#chat-log .msg.voce").count() == 1 and pagina.locator("#chat-log .msg.lia").count() == 2
+
+
+def test_campos_com_fonte_de_16px_e_atributos_de_teclado(servidor_movel, movel):
+    pagina, _, _ = movel
+    ruins = []
+    for caminho in ("/", "/catalogo", "/fale-conosco", "/rastreio", "/carrinho"):
+        pagina.goto(servidor_movel + caminho)
+        ruins += pagina.evaluate("""() => [...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select, textarea')]
+            .filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.name + ':' + getComputedStyle(e).fontSize)""")
+    assert ruins == []  # abaixo de 16 px o iOS aproxima a tela ao focar o campo
+    pagina.goto(servidor_movel + "/produto/90")
+    pagina.click("text=Adicionar ao carrinho")
+    pagina.goto(servidor_movel + "/checkout")
+    assert pagina.get_attribute("#cep", "autocomplete") == "postal-code"
+    assert pagina.evaluate("parseFloat(getComputedStyle(document.querySelector('#forma')).fontSize)") >= 16
+    pagina.goto(servidor_movel + "/rastreio")
+    assert pagina.get_attribute("#r-pedido", "autocapitalize") == "characters"
+
+
+def test_rastreio_rola_e_leva_foco_ao_resultado(servidor_movel, movel):
+    pagina, _, _ = movel
+    pagina.goto(servidor_movel + "/rastreio")
+    pagina.fill("#r-pedido", "PED-999999")
+    pagina.fill("#r-final", "1234")
+    pagina.tap("main form button[type=submit]")
+    pagina.wait_for_selector("[data-resultado-rastreio]")
+    pagina.wait_for_timeout(300)
+    m = pagina.evaluate("""() => { const r = document.querySelector('[data-resultado-rastreio]');
+        return {foco: document.activeElement === r, topo: r.getBoundingClientRect().top, h: innerHeight}; }""")
+    assert m["foco"] and 0 <= m["topo"] < m["h"] * 0.6, m
+
+
+def test_fotos_do_catalogo_e_carrosseis_lazy(servidor_movel, movel):
+    pagina, _, _ = movel
+    pagina.goto(servidor_movel + "/catalogo")
+    modos = pagina.evaluate("[...document.querySelectorAll('.grade-catalogo img')].map(i => i.getAttribute('loading'))")
+    assert len(modos) > 3 and modos[:2] == ["eager", "eager"] and set(modos[2:]) == {"lazy"}, modos
+    pagina.goto(servidor_movel + "/")
+    modos = pagina.evaluate("[...document.querySelectorAll('.carrossel img')].map(i => i.getAttribute('loading'))")
+    assert modos and set(modos) == {"lazy"}, modos

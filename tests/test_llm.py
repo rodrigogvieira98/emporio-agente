@@ -328,3 +328,15 @@ def test_saudacao_nao_recebe_redacao():
     redator = Redator("falso:1b", ClienteFalso({"abertura": "Olá!", "fechamento": None}))
     r = Agente(LlmDecisor("falso:1b", cliente), redator).responder("c1", "oi", "eval")
     assert r.texto.startswith("Oi! Eu sou a Lia") and redator.cliente.chamadas == []
+
+
+def test_fabrica_regras_decidem_e_modelo_so_redige(monkeypatch):
+    from emporio.agente.fabrica import criar_agente
+    from emporio.agente.regras import RegrasDecisor
+
+    monkeypatch.setenv("EMPORIO_DECISOR", "regras")
+    ag = criar_agente("falso:1b", ClienteFalso({"abertura": "Claro.", "fechamento": None}))
+    assert isinstance(ag.decisor, RegrasDecisor) and ag.redator is not None and ag.concisao
+    assert ag.responder("c1", "qual o horário de vocês?", "eval").texto.startswith("Claro.")
+    monkeypatch.delenv("EMPORIO_DECISOR")
+    assert isinstance(criar_agente("falso:1b", ClienteFalso({})).decisor, LlmDecisor)

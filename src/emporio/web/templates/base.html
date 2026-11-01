@@ -64,14 +64,12 @@
       {% block menu_categorias %}<details class="menu-categorias" data-sobreposicao>
         <summary data-gatilho>Categorias</summary>
         <ul data-painel>
-          <li><a href="/catalogo">Todos os instrumentos</a></li>
         {% for c in menu_categorias() %}
           <li><a href="/catalogo?categoria={{ c.nome | urlencode }}">{{ c.nome }}</a></li>
         {% endfor %}
         </ul>
       </details>{% endblock %}
       <a href="/catalogo">Catálogo</a>
-      <a href="/perguntas-frequentes">Perguntas frequentes</a>
       <a href="/rastreio">Rastrear pedido</a>
         </div>
       </details>

@@ -132,7 +132,7 @@ def test_cabecalho_movel_compacto_com_menu_recolhido_e_carrinho_visivel(servidor
     assert m["carrinho"]["height"] >= 44 and 0 <= m["carrinho"]["x"] and m["carrinho"]["x"] + m["carrinho"]["width"] <= largura
     assert not m["itens_visiveis"] and m["sobra"] <= 0
     pagina.tap(".menu-botao")
-    alvos = pagina.evaluate("""() => ['/catalogo', '/perguntas-frequentes', '/rastreio'].map(h =>
+    alvos = pagina.evaluate("""() => ['/catalogo', '/rastreio'].map(h =>
         { const r = document.querySelector('.menu-itens > a[href="' + h + '"]').getBoundingClientRect(); return [h, r.height, r.width, r.right]; })""")
     for _, alt, lar, dir_ in alvos:
         assert alt >= 44 and dir_ <= largura
@@ -151,8 +151,9 @@ def test_cabecalho_em_1280_nao_muda(servidor_movel):
             pagina = nav.new_page(viewport={"width": 1280, "height": 800})
             pagina.goto(servidor_movel + "/")
             assert pagina.locator(".menu-botao").is_hidden()
-            for h in ("/catalogo", "/perguntas-frequentes", "/rastreio", "/carrinho"):
+            for h in ("/catalogo", "/rastreio", "/carrinho"):
                 assert pagina.locator(f".menu a[href='{h}']").last.is_visible()
+            assert pagina.locator(".menu a[href='/perguntas-frequentes']").count() == 0  # agora só no rodapé
             assert pagina.locator(".menu-categorias summary").is_visible()
             assert pagina.evaluate("document.querySelector('.topo').getBoundingClientRect().height") < 120
         finally:

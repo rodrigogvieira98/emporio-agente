@@ -11,6 +11,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -32,6 +33,27 @@ def hash_holdout(caminho: Path) -> str:
     return hashlib.sha256(caminho.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
+def proibido_presente(termo: str, texto: str) -> bool:
+    """Termo proibido só conta no início de palavra: "é grátis" não casa com "frete grátis"."""
+    return re.search(r"(?<!\w)" + re.escape(norm(termo)), texto) is not None
+
+
+def identificacao(caminho: Path, modelo: str | None) -> dict:
+    """Liga o resultado à versão exata do código, do gabarito e da configuração."""
+    def git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=RAIZ, capture_output=True, text=True).stdout.strip()
+
+    return {
+        "commit": git("rev-parse", "--short", "HEAD"),
+        "arvore_alterada": bool(git("status", "--porcelain", "--", "src", "eval/rodar.py")),
+        "gabarito_sha256": hash_holdout(caminho),
+        "modelo": modelo,
+        "decisor": os.environ.get("EMPORIO_DECISOR", "modelo") if modelo else "regras",
+        "redacao": bool(modelo) and os.environ.get("EMPORIO_REDACAO", "1") != "0",
+        "num_ctx": os.environ.get("EMPORIO_NUM_CTX", "8192"),
+    }
+
+
 def conferir_holdout(caminho: Path) -> None:
     pre = (RAIZ / "eval" / "PREREGISTRO.md").read_text(encoding="utf-8")
     esperado = re.search(r"holdout\.jsonl`: ([0-9a-f]{64})", pre).group(1)
@@ -44,7 +66,7 @@ def avaliar(caso: dict, respostas: list, chamados: int) -> dict:
     todas = [a for r in respostas for a in r.acoes]
     usadas = {a.get("ferramenta") for a in todas if a.get("ferramenta")}
     faltou = [c for c in caso.get("contem", []) if norm(c) not in final]
-    proibido = [c for c in caso.get("nao_contem", []) if norm(c) in final]
+    proibido = [c for c in caso.get("nao_contem", []) if proibido_presente(c, final)]
     falta_ferr = [f for f in caso.get("ferramentas", []) if f not in usadas]
     ferr_proib = [f for f in caso.get("proibe_ferramentas", []) if f in usadas]
     esperado_chamado = caso.get("chamado")
@@ -134,7 +156,7 @@ def main() -> int:
         "chamados_perdidos": f"{sum(r['chamado_perdido'] for r in resultados)}/{len(espera_chamado)}",
         "chamados_indevidos": sum(r["chamado_indevido"] for r in resultados),
         "falhas_tecnicas": sum("excecao" in r for r in resultados),
-        "modelo": a.modelo,
+        "versao": identificacao(caminho, a.modelo),
         "contagens": dict(sorted(sum((Counter(r.get("contagens", {})) for r in resultados), Counter()).items())),
         "tempo_total_s": round(sum(r["segundos"] for r in resultados), 1),
         "caracteres_mediana": sorted(r["caracteres"] for r in resultados)[n // 2],

@@ -52,8 +52,9 @@
     });
     // Sugestões saem de cena com o campo em foco (o teclado ocupa a tela) e depois da primeira mensagem do cliente.
     var corpo = document.getElementById("chat-corpo");
+    var enviadas = 0;
     function marcarConversa() {
-      var conversou = !!log.querySelector(".msg.voce");
+      var conversou = enviadas > 0;  // só mensagens enviadas nesta página: o histórico restaurado não esconde as sugestões
       if (corpo) corpo.classList.toggle("ja-conversou", conversou);
     }
     marcarConversa();
@@ -144,6 +145,7 @@
     function desfazerPendente() {
       if (!pendente) return;
       if (pendente.bolha.parentNode) pendente.bolha.parentNode.removeChild(pendente.bolha);
+      enviadas = Math.max(0, enviadas - 1);
       marcarConversa();
       campo.value = pendente.texto;
       pendente = null;
@@ -167,7 +169,8 @@
       log.scrollTop = log.scrollHeight;
       pendente = { bolha: bolha, texto: texto };
       mostrarEscrevendo();
-      if (corpo) corpo.classList.add("ja-conversou");
+      enviadas++;
+      marcarConversa();
       campo.value = "";
     });
     document.body.addEventListener("htmx:sendError", function (e) {

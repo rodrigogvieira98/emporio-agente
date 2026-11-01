@@ -183,6 +183,15 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         # modelo com número que o catálogo não conhece ("Stradivarius 1715"): a ferramenta diz se existe
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
+    slots["desconhecidas"] = [t for t in conteudo if t not in voc.df and not re.search(r"\d", t)]
+    if slots.get("referencia"):
+        # núcleo do nome: o que o catálogo conhece, o que tem número e o que o cliente escreveu com maiúscula
+        # (nome próprio); o resto ("tá", "né", "disseram") é conversa. Só vale se identifica por modelo.
+        capitalizadas = {normalizar(w) for w in re.findall(r"[A-ZÀ-Ý][\wÀ-ÿ-]*", mensagem)[1:]}
+        nucleo = [t for t in conteudo if t in voc.df or re.search(r"\d", t) or t in capitalizadas]
+        modelo = any(re.search(r"\d", t) for t in nucleo) or sum(t in voc.df for t in nucleo) >= 2
+        if modelo:
+            slots["referencia"] = " ".join(nucleo)
     palavras_da_msg = set(tokens(norm))
     for c in voc.campanhas:
         chaves = [t for t in tokens(c) if t not in ("de", "da", "do", "dos", "das")]
@@ -216,7 +225,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     if estado.aguardando == "cidade" and "cidade" not in slots:
         slots["cidade"] = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
     if estado.aguardando == "valor_pedido" and "valor" not in slots:
-        m = re.search(r"(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)", norm)
+        m = re.search(r"\b(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\b", norm)
         if m:
             slots["valor"] = _reais(m.group(1))
     slots["texto_limpo"] = mascarar_dado_pessoal(mensagem.strip())[:300]
@@ -259,6 +268,9 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "disponibilidade" if re.search(r"\btem\b", norm) else "preco_produto"
     if slots.get("termo") and re.search(chr(92) + "btem" + chr(92) + "b", norm):
         return "busca_produto"
+    if (re.search(r"\b(vende\w*|trabalha\w*|tem|existe\w*)\b", norm) and slots.get("desconhecidas")
+            and not achadas and not ref and not categoria):
+        return "fora_escopo"  # "vocês vendem boquilha?": item que o catálogo não conhece, pergunta de escopo
     if v.FORA_DO_ASSUNTO.search(norm):
         slots["assunto_geral"] = True
         return "fora_escopo"

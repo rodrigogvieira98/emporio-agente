@@ -109,6 +109,7 @@ class Redator:
                  anteriores: list[str] | None = None) -> str:
         reg: dict[str, Any] = {"componente": "redacao", "modelo": self.modelo}
         entrada = json.dumps({"mensagem_do_cliente": mensagem[:300], "texto_da_loja": bloco}, ensure_ascii=False)
+        self._contar("redacao_tentada")  # denominador dos descartes: só turno com chamada ao modelo
         try:
             r = self.cliente.conversar(self.modelo, llm.mensagens_do_modelo(self.modelo, sistema(), entrada),
                                        formato=SCHEMA, maximo_tokens=120)
@@ -153,6 +154,7 @@ class Redator:
             self.telemetria.append(reg)
             return bloco
         reg["resultado"] = "aceita"
+        self._contar("redacao_exibida")
         self.telemetria.append(reg)
         partes = [abertura, bloco, fechamento]
         return "\n".join(p for p in partes if p)

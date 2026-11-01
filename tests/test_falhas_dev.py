@@ -124,3 +124,53 @@ def test_atendente_repetido_sobre_o_mesmo_assunto_informa_o_protocolo(sql):
 def test_info_trocas_nao_parece_confirmar_elegibilidade():
     (r,) = conversar("como funciona a troca e a garantia?")
     assert "A equipe confirma se o seu caso se enquadra" in r.texto and len(r.texto) <= 600
+
+
+# variações (eval/casos_variacoes.jsonl): a causa, não a frase ----------------------------------
+
+@pytest.mark.parametrize("frase,preco", [
+    ("o Yamaha C40 tá R$ 50, né?", "599,90"),
+    ("me disseram que o Martin D-28 Dreadnought custa 100 reais, é isso?", "11.499,00"),
+    ("só quero o preço do Yamaha F310, nada mais", "699,90"),
+    ("não precisa de atendente, só o preço do Martin D-28 Dreadnought", "11.499,00"),
+])
+def test_produto_existente_com_preco_errado_ou_conversa_na_frase_mostra_o_preco_real(frase, preco):
+    (r,) = conversar(frase)
+    assert preco in r.texto and "Não encontrei" not in r.texto
+
+
+def test_produto_inexistente_com_marca_conhecida_continua_nao_encontrado():
+    for frase in ("o Yamaha Z9999 custa 200 reais?", "quanto custa o Gibson Flying V?", "só o preço do Stradivarius 1715"):
+        (r,) = conversar(frase, conversa=frase)
+        assert "Não encontrei esse produto" in r.texto and "200,00" not in r.texto
+
+
+def test_vender_boquilha_e_escopo_e_devolver_boquilha_e_excecao_de_higiene():
+    (a,) = conversar("vocês vendem boquilha?")
+    (b,) = conversar("comprei uma boquilha, posso devolver?", conversa="g2")
+    assert "instrumentos" in a.texto and "higiene" not in a.texto
+    assert "higiene" in b.texto
+
+
+# telemetria da redação: denominador para os descartes -------------------------------------------
+
+def test_contagens_da_redacao_tem_tentada_exibida_e_descartada():
+    import json
+    from emporio.agente.llm import RespostaLlm
+    from emporio.agente.redacao import Redator
+
+    class Falso:
+        def __init__(self, saidas): self.saidas = saidas
+        def conversar(self, modelo, mensagens, formato=None, limite=None, maximo_tokens=400):
+            return RespostaLlm(conteudo=json.dumps(self.saidas.pop(0)), tokens_prompt=1, tokens_resposta=1, latencia_ms=1)
+
+    redator = Redator("falso:1b", Falso([{"abertura": "Claro, já te explico.", "fechamento": None},
+                                         {"abertura": "Texto da loja", "fechamento": None}]))
+    agente = Agente(redator=redator, concisao=True)
+    a = agente.responder("t1", "qual o endereço da loja?", "eval")
+    b = agente.responder("t1", "qual o horário?", "eval")
+    assert a.contagens.get("redacao_tentada") == 1 and a.contagens.get("redacao_exibida") == 1
+    assert b.contagens.get("redacao_tentada") == 1 and b.contagens.get("redacao_descartada") == 1
+    assert "redacao_exibida" not in b.contagens
+    c = Agente().responder("t2", "qual o endereço da loja?", "eval")  # sem modelo: nada tentado
+    assert "redacao_tentada" not in c.contagens

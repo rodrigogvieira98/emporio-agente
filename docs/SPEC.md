@@ -123,6 +123,21 @@ Pedido do Rodrigo em 01/11/2026: homepage com header e footer a partir do manual
 
 **Testes.** Rota `/` com vitrine contendo os 4 produtos em promoção ativa e seus valores (Crafter HT-100: 2.399,00, 18%, 1.967,18), nenhuma promoção inativa, categoria vazia sem link, faixa de expediente aberta e fechada por `EMPORIO_DATA_REFERENCIA`, aviso de loja fictícia no footer. Playwright: carrossel navegável por teclado, captura de tela em 390px e 1280px anexada à entrega.
 
+## PWA (site inteiro e a Lia)
+
+Exigência do Rodrigo em 01/11/2026: o projeto todo é otimizado para PWA, inclusive o chat da Lia.
+
+- `manifest.webmanifest` com nome, nome curto, `start_url` `/`, `display` `standalone`, `theme_color` e `background_color` dos tokens, ícones 192 e 512 em PNG e versão `maskable`, gerados a partir da marca SVG própria (renderizados localmente, por exemplo com Playwright; nada baixado).
+- Service worker em `/sw.js` (escopo raiz), versionado por constante. Estratégias:
+  - estáticos (CSS, JS, fontes, SVG, ícones): cache-first, pré-cache na instalação;
+  - páginas HTML: network-first com página offline própria como fallback;
+  - `/chat`, `/rastreio`, `/saude` e qualquer POST: network-only, nunca em cache. Preço, estoque, pedido e resposta da Lia nunca são servidos de cache, porque fato velho é fato errado.
+- Offline: página própria no estilo do site, dizendo que preços, pedidos e a Lia precisam de conexão, com endereço e horário do manual (pré-cacheados a partir do HTML gerado pelo servidor na instalação). O chat, sem rede, mostra aviso no painel e mantém o texto digitado para reenviar; não finge resposta.
+- Mobile primeiro: a Lia abre em tela cheia abaixo de 768px, com campo de texto fixo acima do teclado (`100dvh`, `env(safe-area-inset-*)`), alvos de toque de no mínimo 44px, `enterkeyhint="send"`, sem zoom automático no foco (fonte de 16px no campo).
+- Metas: `viewport` com `viewport-fit=cover`, `theme-color`, `apple-touch-icon`, `apple-mobile-web-app-capable`.
+- Instalação exige HTTPS ou localhost; o README diz isso.
+- Testes: manifest válido e servido com o tipo correto, `sw.js` servido com `Service-Worker-Allowed` adequado e cabeçalho sem cache, rota offline existe. Playwright: service worker registrado, página offline aparece com a rede cortada, `/chat` sem rede mostra aviso e preserva o texto, layout da Lia em 390px sem rolagem horizontal. Lighthouse não é exigido.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

@@ -114,3 +114,42 @@ def test_atendente_em_outra_conversa_abre_chamado_proprio(sql):
     conversar("quero falar com um atendente", conversa="a")
     conversar("quero falar com um atendente", conversa="b")
     assert protocolos(sql) == ["EM-000001", "EM-000002"]
+
+
+# 5. pergunta geral sobre troca, devolução e garantia ------------------------------------------
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("frase", [
+    "Quero saber como funciona a troca e a garantia.", "como funciona a troca?", "qual a política de devolução?",
+    "como funciona a troca e a garantia?", "vocês trocam produto?",
+])
+def test_pergunta_geral_de_troca_responde_a_politica_sem_pedir_pedido(frase):
+    (r,) = conversar(frase)
+    assert "consultar_pedido" not in [a.get("ferramenta") for a in r.acoes]
+    assert "número do pedido" not in r.texto.split("Se quiser")[0]
+    assert "Devolução por arrependimento" in r.texto and "Troca por defeito" in r.texto
+    assert "Troca por preferência" in r.texto and "Garantia legal" in r.texto
+    assert "Se quiser, posso verificar um pedido" in r.texto
+    assert "o manual não diz se a contagem parte da compra" in r.texto  # a ambiguidade do manual aparece
+    assert r.estado == "concluido"
+
+
+@pytest.mark.parametrize("frase", [
+    "quero trocar meu violão", "quero devolver", "Me arrependi da minha compra, posso devolver meu pedido?",
+    "comprei um violão e quero trocar",
+])
+def test_caso_proprio_continua_no_fluxo_do_pedido(frase):
+    (r,) = conversar(frase)
+    assert "me diga o número do pedido" in r.texto and "Como funcionam troca" not in r.texto
+
+
+def test_garantia_sozinha_continua_com_a_resposta_de_garantia():
+    (r,) = conversar("como funciona a garantia?")
+    assert "Garantia legal" in r.texto and "Como funcionam troca" not in r.texto
+
+
+def test_pergunta_geral_depois_do_caso_proprio_nao_perde_o_fluxo(sql):
+    r = conversar("quero devolver", "pedido 4, final 3456", "como funciona a troca?")
+    assert "Como funcionam troca" in r[2].texto and "Quer retomar" in r[2].texto

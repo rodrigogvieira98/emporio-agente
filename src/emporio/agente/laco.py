@@ -59,6 +59,8 @@ class Agente:
         antes = estado.resumo_curto()
         estado.concisao = self.concisao
         perceber(estado, mensagem)
+        if estado.objetivo and estado.objetivo != "pedir_atendente":
+            estado.ultimo_assunto = estado.objetivo
         completar_datas(estado)
         contagens: Counter[str] = Counter()
         telemetria: list[dict[str, Any]] = []
@@ -272,6 +274,7 @@ def integrar(estado: Estado, passo: Passo) -> None:
         estado.coletados["protocolo"] = r.dados["protocolo"]
         if not r.dados.get("repetido"):
             estado.acoes_concluidas.append(f"chamado:{r.dados['protocolo']}")
+            estado.chamados_assunto[estado.ultimo_assunto or "geral"] = r.dados["protocolo"]
 
 
 def completar_datas(estado: Estado) -> None:

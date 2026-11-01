@@ -93,11 +93,14 @@ def aviso(e: Estado, id_: str, texto: str, valor: str = "", proprio: bool = Fals
     (proprio=True). Aviso acessório (formato de preço, expediente) só volta se o valor mudar."""
     chave = f"aviso:{id_}"
     anterior = e.ja_informados.get(chave)
-    repetido = anterior is not None and anterior["valor"] == valor
+    contexto = str(e.coletados.get("ultimo_produto") or "") if proprio else ""  # aviso acessório não depende do produto
+    repetido = anterior is not None and anterior["valor"] == valor and anterior.get("contexto", "") == contexto
     pediu_de_novo = repetido and proprio and anterior["intencao"] == (e.intencao or "")
-    omitir = e.concisao and repetido and not pediu_de_novo
-    e.avisos_turno.append({"chave": chave, "valor": valor, "reapresentado": repetido and not pediu_de_novo,
-                           "omitido": omitir})
+    # mudou a ação pedida: o aviso do assunto é condição para interpretar a nova resposta
+    acao_mudou = repetido and proprio and anterior["intencao"] != (e.intencao or "")
+    omitir = e.concisao and repetido and not pediu_de_novo and not acao_mudou
+    e.avisos_turno.append({"chave": chave, "valor": valor, "contexto": contexto,
+                           "reapresentado": repetido and not pediu_de_novo and not acao_mudou, "omitido": omitir})
     return "" if omitir else texto
 
 
@@ -325,6 +328,7 @@ def trocas_info(e: Estado, p: dict) -> str:
     if not linhas:
         return sem_dado(e, p)
     return ("Troca, devolução e garantia:\n" + "\n".join(linhas)
+            + "\nA equipe confirma se o seu caso se enquadra."
             + "\nQuer ver o que não entra em troca e o que a garantia não cobre? Se preferir, posso verificar um pedido seu.")
 
 

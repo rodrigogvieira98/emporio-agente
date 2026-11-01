@@ -48,6 +48,9 @@ class Estado(BaseModel):
     oferta_humano: str = ""  # "", "feita" ou "recusada"
     turno_oferta: int = 0
     reconhecimentos_usados: list[str] = []
+    # Chamados por assunto: pedir atendente de novo sobre o MESMO assunto informa o protocolo; outro assunto abre outro.
+    ultimo_assunto: str = ""
+    chamados_assunto: dict[str, str] = {}
 
     # Transitórios do turno: nunca persistidos (inclui o final de telefone digitado).
     intencao: str | None = Field(default=None, exclude=True)

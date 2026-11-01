@@ -103,3 +103,24 @@ def test_d60_e_no_pix_depois_do_preco_continua_no_mesmo_produto():
 def test_e_no_pix_sem_produto_anterior_lista_as_formas():
     (r,) = conversar("e no pix?")
     assert "Formas de pagamento" in r.texto
+
+
+# chamado só é reutilizado para o MESMO assunto ------------------------------------------------
+
+def test_atendente_sobre_outro_assunto_abre_outro_chamado(sql):
+    r = conversar("quero falar com um atendente", "quanto custa o Yamaha C40?", "quero falar com um atendente")
+    protocolos = [x[0] for x in sql.execute("SELECT protocolo FROM chamados ORDER BY id")]
+    assert protocolos == ["EM-000001", "EM-000002"] and "EM-000002" in r[2].texto
+
+
+def test_atendente_repetido_sobre_o_mesmo_assunto_informa_o_protocolo(sql):
+    r = conversar("quanto custa o Yamaha C40?", "quero falar com um atendente", "quero falar com um atendente")
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
+    assert "EM-000001" in r[2].texto and "na fila da equipe" in r[2].texto
+
+
+# concisão revisada: o aviso do assunto volta quando a ação pedida muda ---------------------------
+
+def test_info_trocas_nao_parece_confirmar_elegibilidade():
+    (r,) = conversar("como funciona a troca e a garantia?")
+    assert "A equipe confirma se o seu caso se enquadra" in r.texto and len(r.texto) <= 600

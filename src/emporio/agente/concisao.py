@@ -49,7 +49,7 @@ def registrar_entregas(estado: Estado, texto: str, fatos: list[Fato]) -> dict[st
             continue
         contagem["avisos_exibidos"] += 1
         contagem["avisos_reapresentados"] += int(a["reapresentado"])
-        estado.ja_informados[a["chave"]] = {"valor": a["valor"], "intencao": intencao}
+        estado.ja_informados[a["chave"]] = {"valor": a["valor"], "intencao": intencao, "contexto": a.get("contexto", "")}
     norm = normalizar(texto)
     nomeadas = _entidades_pedidas(estado)
     vistos: set[str] = set()

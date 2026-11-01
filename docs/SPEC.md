@@ -437,6 +437,7 @@ Fica como limitação declarada no README: saudação pelo nome (escolha de priv
 Pedidos do Rodrigo em 01/11/2026.
 - O rodapé deixa de ter "Rastrear pedido", "Créditos das imagens" e "Catálogo". "Catálogo" entra no cabeçalho, ao lado de "Categorias".
 - "Políticas" passa a "Políticas da Loja" no rodapé, no título da página e nos links.
+- O rodapé deixa de mostrar o horário de atendimento, por decisão do Rodrigo, e mantém nome, endereço e links. O horário segue na faixa de contato e em `/fale-conosco`.
 - Horário de atendimento sem a linha de domingo, em todo o site. A informação de que fecha aos domingos continua em Políticas e na Lia, que vêm do manual.
 - Banner principal da home mais baixo: até 360 px de altura em 1280 px e até 260 px da foto em 390 px, com título menor e proporcional, deixando "Categorias" visível na primeira tela do computador. Só CSS, sem mudar conteúdo.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.

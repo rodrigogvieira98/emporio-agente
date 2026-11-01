@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+from difflib import SequenceMatcher
 from typing import Any
 
 from ..texto import normalizar, tokens
@@ -32,6 +33,10 @@ VERBOS_NAO_CONFIRMADOS = re.compile(
     r"\b(transferi|reservei|cancelei|aprovei|estornei|reembolsei|enviei|agendei|liberei|registrei|encaminhei|"
     r"confirmei|devolvi|garanto|garantimos|prometo|vou reservar|vou transferir|vou cancelar)\b")
 MOEDA = re.compile(r"R\$|\breais?\b|\bcentavos?\b|%")
+# Rótulos do prompt (chaves do JSON de entrada e campos da saída) que o modelo às vezes devolve como texto.
+ECO_DE_ROTULO = re.compile(
+    r"\b(texto[ _]da[ _]loja|mensagem[ _]do[ _]cliente)\b|(?:^|\n)\s*(?:abertura|fechamento)\s*[:=-]|[{}]", re.I)
+LIMIAR_REPETE_BLOCO = 0.8
 MAX_FRASES = 2
 MAX_PERGUNTAS = 1
 MAX_CARACTERES = 220
@@ -41,9 +46,27 @@ def _frases(texto: str) -> list[str]:
     return [f for f in re.split(r"(?<=[.!?])\s+", texto.strip()) if f]
 
 
+def repete_o_bloco(frase: str, bloco: str) -> bool:
+    """Frase do modelo que só repete, com outras palavras ou por inteiro, o que o bloco factual já diz."""
+    n = normalizar(frase)
+    palavras = len(n.split())
+    for linha in bloco.splitlines():
+        for parte in _frases(linha):
+            b = normalizar(parte)
+            if not b:
+                continue
+            if palavras >= 3 and (n in b or (len(b.split()) >= 3 and b in n)):
+                return True
+            if SequenceMatcher(None, n, b).ratio() >= LIMIAR_REPETE_BLOCO:
+                return True
+    return False
+
+
 def validar(livre: str, bloco: str, estado: Estado) -> str | None:
     """Devolve o motivo da reprovação, ou None se o texto livre pode ser exibido."""
     norm = normalizar(livre)
+    if ECO_DE_ROTULO.search(normalizar(livre)) or ECO_DE_ROTULO.search(livre):
+        return "eco_de_rotulo"
     if re.search(r"\d", livre):
         return "digito"
     if MOEDA.search(livre):
@@ -107,6 +130,9 @@ class Redator:
             reg.update(resultado="descartada:formato")
             self.telemetria.append(reg)
             return bloco
+        # frase do modelo que repete o bloco sai; o bloco nunca é alterado
+        abertura = " ".join(f for f in _frases(abertura) if not repete_o_bloco(f, bloco))
+        fechamento = " ".join(f for f in _frases(fechamento) if not repete_o_bloco(f, bloco))
         if anteriores:  # frase livre já dita antes não se repete (o bloco factual nunca passa por aqui)
             abertura, _ = deduplicar_frases(abertura, anteriores)
             fechamento, _ = deduplicar_frases(fechamento, anteriores)

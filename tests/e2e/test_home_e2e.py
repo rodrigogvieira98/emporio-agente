@@ -60,3 +60,29 @@ def test_sem_rolagem_horizontal_nas_larguras_intermediarias(url_site, navegador,
     pagina = _pagina(navegador, largura)
     pagina.goto(url_site + "/")
     assert pagina.evaluate("document.documentElement.scrollWidth") <= largura
+
+
+def test_rodape_compacto_altura_em_1280_links_em_linha_e_lia_fora_dos_links(url_site, navegador):
+    pagina = _pagina(navegador, 1280)
+    pagina.goto(url_site + "/")
+    pagina.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+    assert pagina.locator(".rodape").bounding_box()["height"] <= 96
+    links = [pagina.locator(".rodape a").nth(i).bounding_box() for i in range(pagina.locator(".rodape a").count())]
+    assert len(links) == 6 and len({round(b["y"]) for b in links}) == 1  # linha única
+    assert pagina.locator(".rodape h2").count() == 0
+    lia = pagina.locator("#chat-alternar").bounding_box()
+    for b in links:
+        assert b["x"] + b["width"] <= lia["x"] or b["y"] + b["height"] <= lia["y"] or b["y"] >= lia["y"] + lia["height"]
+
+
+def test_rodape_em_390px_sem_rolagem_horizontal_alvos_de_toque_e_lia_fora_dos_links(url_site, navegador):
+    pagina = _pagina(navegador, 390, 800)
+    pagina.goto(url_site + "/")
+    pagina.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+    assert pagina.evaluate("document.documentElement.scrollWidth") <= 390
+    lia = pagina.locator("#chat-alternar").bounding_box()
+    for i in range(pagina.locator(".rodape a").count()):
+        b = pagina.locator(".rodape a").nth(i).bounding_box()
+        assert b["height"] >= 44
+        assert (b["x"] + b["width"] <= lia["x"] or b["x"] >= lia["x"] + lia["width"]
+                or b["y"] + b["height"] <= lia["y"] or b["y"] >= lia["y"] + lia["height"])

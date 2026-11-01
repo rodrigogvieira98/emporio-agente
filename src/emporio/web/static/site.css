@@ -231,18 +231,16 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .protocolo { font: 700 1.25rem var(--titulo); font-variant-numeric: tabular-nums; }
 
 /* rodapé enxuto */
-.rodape { background: var(--tinta); color: var(--papel); padding-top: var(--s10); padding-bottom: calc(var(--s4) * 2 + 3.25rem + env(safe-area-inset-bottom)); font-size: .9375rem; margin-top: var(--s10); }
+.rodape { background: var(--tinta); color: var(--papel); padding-block: var(--s2) calc(var(--s4) * 2 + 3.25rem + env(safe-area-inset-bottom)); font-size: .875rem; margin-top: var(--s10); }
 .rodape a { color: var(--papel); }
-.rodape-grade { display: grid; gap: var(--s6); }
-.rodape-marca { font: 700 1.5rem/1.2 var(--titulo); margin-bottom: var(--s2); }
-.rodape-titulo { font: 600 .8125rem/1.3 var(--texto); letter-spacing: .08em; text-transform: uppercase; margin-bottom: var(--s2); }
-.rodape-lista { list-style: none; display: grid; gap: 0; }
-.rodape p { margin-bottom: var(--s2); }
-.rodape-grade { padding-bottom: calc(var(--s16) + env(safe-area-inset-bottom)); }
+.rodape-grade { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s1) var(--s6); }
+.rodape-marca { font: 700 1.25rem/1.2 var(--titulo); margin: 0; }
+.rodape-lista { list-style: none; display: flex; flex-wrap: wrap; gap: 0 var(--s4); margin: 0; padding: 0; }
+.rodape p { margin: 0; }
 .rodape :focus-visible { outline-color: var(--papel); box-shadow: none; }
-@media (min-width: 640px) { .rodape-grade { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1024px) { .rodape-grade { grid-template-columns: 5fr 3fr 3fr; gap: var(--s8); } }
-.rodape-lista a, .migalha a { display: inline-block; padding-block: 10px; }
+@media (min-width: 1024px) { .rodape { padding-block: var(--s2); } .rodape-grade { padding-right: 12rem; flex-wrap: nowrap; } }  /* o botão da Lia fica à direita, fora dos links */
+.rodape-lista a { display: inline-flex; align-items: center; min-height: 44px; }
+.migalha a { display: inline-block; padding-block: 10px; }
 
 /* catálogo: filtros à esquerda no desktop, recolhidos no celular */
 .catalogo-layout { display: grid; gap: var(--s4); }

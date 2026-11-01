@@ -94,12 +94,12 @@ def test_variavel_do_email_substitui_o_mailto_padrao(cliente, monkeypatch):
     assert 'href="mailto:outro@example.com"' in html and html.count("mailto:") == 1
 
 
-def test_rodape_sem_fale_conosco_e_so_dois_links_em_informacoes(cliente):
+def test_rodape_sem_fale_conosco_e_termina_em_privacidade_e_creditos(cliente):
     html = cliente.get("/").text
     rodape = html[html.index('<footer class="rodape">'):html.index("</footer>")]
     assert "Fale conosco" not in rodape and "/fale-conosco" not in rodape
-    info = rodape[rodape.index("Informações"):]
-    assert re.findall(r"<a [^>]*>([^<]+)</a>", info) == ["Privacidade e cookies", "Créditos das imagens"]
+    links = re.findall(r"<a [^>]*>([^<]+)</a>", rodape)  # rodapé compacto: sem títulos de coluna, links em linha única
+    assert links[-2:] == ["Privacidade e cookies", "Créditos das imagens"]
 
 
 @pytest.mark.parametrize("caminho", ["/perguntas-frequentes", "/privacidade"])

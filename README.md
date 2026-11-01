@@ -19,8 +19,8 @@ Requer Python 3.11 ou superior.
 ```
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python -m emporio.dados.carga
 set PYTHONPATH=src
+.venv\Scripts\python -m emporio.dados.carga
 .venv\Scripts\python -m uvicorn emporio.web.app:app --port 8000
 ```
 

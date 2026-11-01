@@ -140,6 +140,28 @@ Exigência do Rodrigo em 01/11/2026: o projeto todo é otimizado para PWA, inclu
 - Instalação exige HTTPS ou localhost; o README diz isso.
 - Testes: manifest válido e servido com o tipo correto, `sw.js` servido com `Service-Worker-Allowed` adequado e cabeçalho sem cache, rota offline existe. Playwright: service worker registrado, página offline aparece com a rede cortada, `/chat` sem rede mostra aviso e preserva o texto, layout da Lia em 390px sem rolagem horizontal. Lighthouse não é exigido.
 
+## Incremento 1: compra de demonstração
+
+Do plano v3 aprovado (incremento 1, aceito pelo Rodrigo: "compra de demonstração sem pagamento real").
+
+- Carrinho por sessão do navegador, guardado no servidor (tabela nova `carrinhos` e `pedidos_demo`; os dados originais e a tabela `pedidos` não mudam).
+- Só produto vendável entra no carrinho; quantidade de 1 a 3 por item; estoque não é baixado e a página diz isso.
+- Checkout: forma de pagamento, parcelas, cidade. Totais, promoção, PIX, parcela e frete vêm só de `calcular_condicoes`, item a item e no total. Opção com `requer_confirmacao` (parcela mínima ambígua, frete de exatamente R$ 500) aparece marcada "a confirmar com a equipe" e não pode ser finalizada como confirmada; cidade fora de Campo Grande mostra "frete calculado pela equipe".
+- Finalizar cria `pedidos_demo` com número `DEMO-0001`, total por item gravado em centavos e aviso fixo "pedido de demonstração, nenhum pagamento é feito". Rastreio e Lia reconhecem `DEMO-` e respondem como demonstração, sem misturar com os pedidos dos dados.
+- Nova ferramenta só se necessária para a Lia consultar pedido de demonstração, com o mesmo envelope `Resultado`.
+- Botão "Quero comprar" da página do produto passa a adicionar ao carrinho; "Quero comprar com a Lia" continua.
+- Testes: carrinho com produto em promoção e PIX (sem somar), parcela com `requer_confirmacao`, frete exato de R$ 500, produto descontinuado recusado, total igual à soma das ferramentas, `DEMO-` no rastreio, nada gravado em `pedidos`. E2E do fluxo completo em 390px.
+
+## Incremento 2: sentimento adapta o tom
+
+Do plano v3 aprovado. Sentimento muda só o tom, nunca fatos, permissões nem ferramentas.
+
+- Detector determinístico por turno: `neutro`, `frustrado`, `irritado`. Sinais: vocabulário de frustração e raiva, ofensa, CAIXA ALTA em boa parte da mensagem, pontuação repetida, "de novo", "ninguém responde", repetição da mesma pergunta, falhas seguidas do agente. Ironia não é tentada.
+- Efeitos: `frustrado` acrescenta uma frase curta de reconhecimento antes do bloco (texto em `respostas.py`, variando entre poucas formas e nunca repetida na mesma conversa) e encurta o restante; `irritado` faz o mesmo e oferece atendimento humano com pergunta de sim ou não. Dois turnos seguidos frustrados também oferecem. Oferta recusada não se repete na conversa. Chamado só com "sim" explícito, como hoje.
+- Sem frase de empatia em turno neutro, sem desculpa por fato correto, sem prometer prazo fora do manual.
+- O estado guarda o sentimento por turno; o trace registra o rótulo, não o texto.
+- Testes: rótulos em frases de exemplo (incluindo negações e falsos positivos como "não estou bravo, só quero saber o preço"), reconhecimento sem fatos alterados, oferta de humano com irritação, oferta recusada não volta, nenhuma frase de empatia em neutro, controle no dev sem regressão.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

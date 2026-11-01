@@ -73,6 +73,7 @@ def main() -> int:
     p.add_argument("--conjunto", choices=("dev", "holdout"), required=True)
     p.add_argument("--rotulo", required=True)
     p.add_argument("--holdout-congelado", action="store_true")
+    p.add_argument("--modelo", default=None, help="modelo Ollama; sem ele roda o controle por regras")
     a = p.parse_args()
     caminho = RAIZ / "eval" / f"casos_{a.conjunto}.jsonl"
     if a.conjunto == "holdout":
@@ -81,8 +82,16 @@ def main() -> int:
         conferir_holdout(caminho)
     casos = [json.loads(l) for l in caminho.read_text(encoding="utf-8").splitlines() if l.strip()]
 
-    from emporio.agente.laco import Agente
+    from emporio.agente.fabrica import criar_agente
     from emporio.dados import carga
+    if a.modelo:
+        from emporio.agente import llm
+        from emporio.agente.llm_decisor import prompt
+        try:
+            llm.conferir_modelo(a.modelo)
+            print(f"carga do modelo {a.modelo}: {llm.aquecer(a.modelo)} ms", flush=True)
+        except llm.ErroModelo as exc:
+            sys.exit(f"Ollama indisponivel, medicao interrompida sem simular resultado: {exc}")
 
     tmp = Path(tempfile.mkdtemp(prefix="emporio-eval-"))
     modelo = tmp / "modelo.db"
@@ -94,7 +103,7 @@ def main() -> int:
         os.environ["EMPORIO_DB"] = str(db)
         os.environ["EMPORIO_TRACE"] = str(tmp / "trace.jsonl")
         os.environ["EMPORIO_DATA_REFERENCIA"] = caso.get("data_ref", "2026-03-25T10:00:00")
-        agente = Agente()
+        agente = criar_agente(a.modelo)
         inicio = time.perf_counter()
         try:
             respostas = [agente.responder(caso["id"], m, "eval") for m in caso["turnos"]]
@@ -103,6 +112,7 @@ def main() -> int:
             with sqlite3.connect(db) as c:
                 chamados = c.execute("SELECT COUNT(*) FROM chamados").fetchone()[0]
             r = avaliar(caso, respostas, chamados)
+            r["contagens"] = dict(sum((Counter(x.contagens) for x in respostas), Counter()))
         except Exception as exc:  # falha técnica vira contagem, não aborta a rodada
             r = {"id": caso["id"], "cat": caso["cat"], "ok": False, "fato_ok": False, "acao_ok": False,
                  "chamado_ok": False, "chamado_perdido": False, "chamado_indevido": False,
@@ -124,6 +134,9 @@ def main() -> int:
         "chamados_perdidos": f"{sum(r['chamado_perdido'] for r in resultados)}/{len(espera_chamado)}",
         "chamados_indevidos": sum(r["chamado_indevido"] for r in resultados),
         "falhas_tecnicas": sum("excecao" in r for r in resultados),
+        "modelo": a.modelo,
+        "contagens": dict(sorted(sum((Counter(r.get("contagens", {})) for r in resultados), Counter()).items())),
+        "tempo_total_s": round(sum(r["segundos"] for r in resultados), 1),
         "caracteres_mediana": sorted(r["caracteres"] for r in resultados)[n // 2],
         "por_categoria": dict(sorted(Counter(r["cat"] for r in resultados if r["ok"]).items())),
         "total_categoria": dict(sorted(Counter(r["cat"] for r in resultados).items())),

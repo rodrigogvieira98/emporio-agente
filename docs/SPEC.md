@@ -181,6 +181,36 @@ Teste que conte que o e-mail aparece uma vez por página, e que nenhuma frase lo
 
 **Testes:** varredura de termos proibidos ao cliente em todo HTML renderizado, em `chat.js` e em todos os textos de `respostas.py`; links do Fale Conosco; formulário gravando e rejeitando inválido; FAQ com valores iguais aos do manual; carrossel por teclado, clique e toque; chat flutuante abre, conversa e fecha em 390 e 1280 px; toda imagem com crédito. Rejeitos de gabarito por mudança de frase são listados para aprovação.
 
+## Composição "Loja acolhedora" (etapa 6d)
+
+Revisão enviada pelo Rodrigo em 01/11/2026. Prevalece sobre a etapa 6c e as seções anteriores de site onde houver conflito.
+
+**Homepage:** cabeçalho compacto com busca visível, abertura estática com fotografia editorial, título curto ("Seu próximo som começa aqui") e uma ação principal ("Explorar instrumentos"); categorias antes da vitrine; vitrine; 4 perguntas frequentes (pagamento, entrega, acompanhamento, trocas) com link para detalhes; visita à loja; rodapé enxuto. Identidade: fundo claro quente, texto escuro, verde nas ações principais, enquadramento consistente nas fotos, cores verificadas quanto à legibilidade. A etiqueta com barbante fica como detalhe menor.
+
+**Cartão de produto:** foto, nome, preço, condição principal, acesso ao produto, nessa ordem. Promoção com preço original, percentual e final.
+
+**Carrossel:** só para destaques, controlado pelo usuário, sem avanço automático. O Radar é referência de movimento, com cartões legíveis e sem perda de comparação. Controles identificados, teclado e redução de movimento, conforme o tutorial de carrosséis da W3C. O resto dos produtos em grade.
+
+**Repetição:** substitui a regra de uma vez por página. Não repetir blocos completos sem necessidade; repetir ações quando isso facilitar a tarefa. Contatos com uma fonte única, sem variantes contraditórias. Sai o teste que conta e-mails.
+
+**Lia:** botão com retrato e rótulo "Lia · conversar", inicialmente fechado, nunca abre sozinho e não cobre ações de compra. O painel mostra nome, identificação como assistente virtual, fechar visível e sugestões curtas ("Encontrar instrumento", "Consultar pedido", "Trocas e devoluções"), preserva a conversa ao navegar e, no celular, é amplo com campo acima do teclado.
+
+**Fotos:** genéricas reais só em categorias e conteúdo editorial. Produto específico usa foto correspondente com uso autorizado verificado na origem; sem ela, indicação clara "Foto do produto indisponível", com a ilustração da categoria. Sai a tag "Imagem ilustrativa". Foto de fabricante não é proibida por princípio, mas exige permissão conferida.
+
+**Fale Conosco por intenção:** Conversar (WhatsApp, ícone e texto), Ligar, Escrever, Deixar uma mensagem. Formulário com assunto, mensagem e contato para retorno; sem campo inútil; texto preservado em erro; confirma só "Mensagem registrada". Canais operacionais só viram link quando verificados: `EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK`. Sem essas variáveis, os contatos aparecem como texto com ícone, porque os números do manual são fictícios e podem pertencer a terceiros.
+
+**FAQ:** ajuda, não segunda página de políticas. Na página completa, agrupada por tema. Condição essencial fica na resposta inicial.
+
+**Compra:** antes de confirmar, o checkout diz com clareza que o pedido não gera cobrança nem entrega. Linguagem de cliente, sem detalhe interno.
+
+**Linguagem ao cliente:** omitir detalhes de implementação (seção do manual, ferramenta, origem do dado) e preservar o necessário para entender o que será realizado. Sem varredura indiscriminada de palavras como "sistema" ou "teste".
+
+**Catálogo:** paginação própria, independente do limite de 5 itens por resposta do chat. `buscar_produtos` ganha `deslocamento` e limite maior para a interface do site; a Lia continua pedindo 5. Regras de preço e disponibilidade são as mesmas.
+
+**Categorias vazias** saem da seleção principal; sem "em breve", porque ausência no catálogo não comprova lançamento. **Frete** sempre com a região explícita ("Em Campo Grande: ...").
+
+**Validação:** encontrar um instrumento, consultar condições, acompanhar pedido, abrir e fechar a Lia, enviar mensagem e entender o alcance da compra, em celular e desktop, inclusive por teclado.
+
 ## Persona da Lia
 
 Orientação do Rodrigo em 01/11/2026. Faz parte do núcleo. A persona muda a maneira de dizer e não autoriza prometer o que o sistema não consegue fazer. Sem treino de modelo nem chamada extra de IA.

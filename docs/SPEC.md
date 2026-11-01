@@ -276,6 +276,13 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 2. ícone de telefone, número em destaque e horário de atendimento em uma linha curta, com os dados do manual;
 3. ícone de pacote, a frase "Já fez seu pedido e quer saber onde ele está?" e botão contornado "Rastrear pedido", para `/rastreio`.
 
+**Canais clicáveis.** Decisão do Rodrigo em 01/11/2026, que substitui a decisão anterior de manter contatos só como texto. Nas telas, cada canal tem ícone e link direto, gerado por padrão a partir dos dados do manual, sem depender de variável de ambiente:
+- botão "Fale conosco" da faixa: `mailto:` para o e-mail do manual, com assunto preenchido, e não mais `/fale-conosco`;
+- bloco do telefone da faixa: número com link `tel:` e, ao lado, ícone do WhatsApp com link `https://wa.me/55DDDNUMERO`, em nova aba;
+- em `/fale-conosco`: WhatsApp, Telefone e E-mail com os mesmos links.
+
+`EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK` continuam podendo substituir os links padrão. O link "Fale conosco" do rodapé segue para `/fale-conosco`, onde fica o formulário. O README avisa que os números são os do manual da loja fictícia.
+
 A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
 
 A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé deixa de repetir canais: a coluna "Atendimento" sai, assim como "Todos os canais", e ficam nome, endereço, "Comprar" e "Informações". O rótulo "Falar com a loja" deixa de existir.

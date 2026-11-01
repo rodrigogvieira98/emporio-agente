@@ -247,6 +247,24 @@ QUANTIDADE = re.compile(
     r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
     r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
     r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
+# Pergunta em inglês: palavras que não existem em português; duas ou mais, e nenhuma palavra comum do português.
+INGLES = {"the", "is", "what", "you", "ship", "shipping", "how", "much", "hi", "hello", "thanks", "thank", "open", "hours",
+          "where", "can", "your", "are", "have", "buy", "delivery", "deliver", "return", "refund", "does", "store",
+          "cost", "with", "for", "this", "that", "please", "price", "do", "time", "any", "guitar", "want", "need",
+          "help", "ok", "order"}
+INGLES_FORTE = INGLES - {"do", "ok", "order", "price", "time", "hi", "help", "any"}
+PORTUGUES_COMUM = {"os", "as", "de", "da", "que", "para", "pra", "uma", "um", "nao", "quero", "preco",
+                   "quanto", "voce", "voces", "vcs", "tem", "na", "por", "oi", "ola", "pedido", "obrigado",
+                   "obrigada", "qual", "como", "isso", "esse", "essa", "meu", "minha", "custa", "quanto"}
+TEMAS_INGLES = (
+    (re.compile(r"\b(ship\w*|deliver\w*|freight|postage)\b"), "frete e entrega"),
+    (re.compile(r"\b(price\w*|cost\w*|how much)\b"), "preço"),
+    (re.compile(r"\b(open|opens|hours|close|closing|schedule)\b|what time"), "horário"),
+    (re.compile(r"\b(return\w*|refund\w*|exchange|warranty)\b"), "troca, devolução ou garantia"),
+    (re.compile(r"\b(order|tracking|track)\b"), "pedido"),
+    (re.compile(r"\b(guitar\w*|bass|drum\w*|piano|keyboard|ukulele|violin|buy|product\w*)\b"), "produtos"),
+)
+AGRADECIMENTO_INGLES = re.compile(r"^\W*(?:ok\W+)?(?:thanks?|thank you|thx|bye|goodbye)\b")
 # Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
 CAMPANHA_CITADA = re.compile(
     r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"

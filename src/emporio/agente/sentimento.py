@@ -26,12 +26,12 @@ PONTOS_FALHAS = 4
 FORTE = re.compile(
     r"\b(absurdo|ridicul\w*|lixo|porcaria|palhacada|incompetent\w*|vergonha|vergonhos\w*|pessim\w*|horrivel|horriveis|"
     r"odio|inutil|inuteis|merda|procon|processar|nunca mais|furios\w*|puto|puta|revoltad\w*|indignad\w*|idiota\w*|"
-    r"burr\w*|estupid\w*|desrespeit\w*)\b")
+    r"burr\w*|estupid\w*|desrespeit\w*|bosta|lixos?)\b")
 MEDIO = re.compile(
     r"\b(de novo|ninguem (me )?(responde|ajuda|resolve|atende|explica)|ja (falei|disse|expliquei|perguntei)|cansei|"
     r"cansad\w*|irritante|irritad\w*|bravo|brava|chatead\w*|chato|nervos\w*|decepcionad\w*|sem resposta|"
     r"ate agora nada|nao resolve\w*|nao (me )?entende\w*|que demora|demora demais|sempre a mesma coisa|"
-    r"de novo isso|estressad\w*)\b")
+    r"de novo isso|estressad\w*|lent[oa]s?|demorad[oa]s?)\b")
 NEGACAO = {"nao", "nem", "sem", "nunca", "jamais"}
 PONTUACAO_REPETIDA = re.compile(r"(!{2,}|\?{2,}|\?!|!\?)")
 

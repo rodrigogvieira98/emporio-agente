@@ -253,6 +253,13 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         if chaves and all(t in palavras_da_msg for t in chaves):
             slots["termo_promocao"] = c
             break
+    palavras = tokens(norm)
+    fortes = sum(t in v.INGLES_FORTE for t in palavras)
+    todas = sum(t in v.INGLES for t in palavras)
+    slots["ingles"] = fortes >= 1 and todas >= 2 and not any(t in v.PORTUGUES_COMUM for t in palavras)
+    if slots["ingles"]:
+        slots["tema_ingles"] = next((tema for p, tema in v.TEMAS_INGLES if p.search(norm)), None)
+        slots["agradecimento_ingles"] = bool(v.AGRADECIMENTO_INGLES.search(norm))
     camp = v.CAMPANHA_CITADA.search(norm)
     if camp:
         slots["promo_nome"] = camp.group(1)
@@ -350,6 +357,8 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
 def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm):
         return "tentativa_manipulacao"
+    if slots.get("ingles"):
+        return "encerramento" if slots.get("agradecimento_ingles") else "ingles"
     if v.PEDIDO_INSTRUCOES.search(norm):
         return "pedido_instrucoes"
     if v.DADO_DE_TERCEIRO.search(norm):

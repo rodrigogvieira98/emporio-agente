@@ -343,13 +343,14 @@ SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "rec
                "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta",
                # toda recusa fica sem texto livre do modelo: ele não pode abrir brecha nem suavizar o "não"
                "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",
-               "preco_promocao_conflitante", "cupom_inexistente", "endereco_pedido_privado", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
+               "preco_promocao_conflitante", "cupom_inexistente", "endereco_pedido_privado", "acolhimento", "so_portugues",
+               "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
                "sem_dado", "dado_recusado",
                # lead: a resposta de objeção e a de "vou pensar" não ganham convite do modelo
                "objecao_preco", "vou_pensar"}
 
 # Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
-SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
+SEM_AJUSTE_DE_TOM = {"acolhimento", "so_portugues", "saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
                      "confirmar_registro", "registro_cancelado", "registro_falhou", "perguntas_repetidas",
                      "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao", "dado_recusado",
                      "encerramento", "identidade", "confirmacao_solta"}

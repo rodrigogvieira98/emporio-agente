@@ -914,7 +914,13 @@ class RegrasDecisor:
             resumo += f" Pedido consultado: {pedido['pedido_id']}."
         return self._registrar(estado, "atendente", resumo)
 
+    def _i_ingles(self, estado: Estado) -> Acao:
+        return responder("so_portugues", tema=estado.slots.get("tema_ingles"))
+
     def _i_desconhecido(self, estado: Estado) -> Acao:
+        if estado.sentimento != "neutro":  # insulto ou queixa sem pedido concreto: acolhe e oferece atendente
+            return propor("acolhimento", "atendente",
+                          "Cliente demonstrou insatisfacao e aceitou atendimento humano.")
         if estado.incompreensoes >= 1:
             return propor("nao_entendi_de_novo", "sem_dado",
                           "Cliente fez uma pergunta que o assistente nao conseguiu entender.")

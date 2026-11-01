@@ -391,6 +391,46 @@ def test_limite_por_pedido_expira_depois_da_janela(sql, monkeypatch):
     assert consultar_pedido(pedido_id=4, final_telefone="3456", conversa_id="nova").estado == "ok"
 
 
+# 14. insulto, caixa alta e inglês ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", ["vcs sao uns lixos, porra", "VOCES SAO MUITO LENTOS", "que merda de loja"])
+def test_insulto_ou_queixa_recebe_acolhimento_e_oferta_de_atendente(sql, msg):
+    (r,) = conversar(msg)
+    assert "Não entendi" not in r.texto and "atendente" in r.texto and "sim ou não" in r.texto
+    assert len(r.texto) < 200 and r.texto.count("?") == 1
+    assert r.estado == "aguardando:confirmacao_registro"
+
+
+def test_sim_depois_do_acolhimento_registra_o_chamado(sql):
+    r = conversar("vcs sao uns lixos, porra", "sim")
+    assert "EM-" in r[1].texto and sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
+
+
+def test_nao_depois_do_acolhimento_nao_registra(sql):
+    r = conversar("vcs sao uns lixos, porra", "nao")
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("msg,tema", [("hi, do you ship to Portugal?", "frete"),
+                                       ("what is the price of the Fender Stratocaster?", "preço"),
+                                       ("what time do you open?", "horário")])
+def test_ingles_recebe_resposta_curta_em_portugues_com_o_tema(msg, tema):
+    (r,) = conversar(msg)
+    assert "em português" in r.texto and tema in r.texto and "Não entendi" not in r.texto
+    assert len(r.texto) < 250 and "Nosso horário de funcionamento" not in r.texto
+
+
+def test_agradecimento_em_ingles_nao_repete_o_preco():
+    t = textos("quanto custa o Yamaha C40?", "ok thanks")
+    assert "preço de tabela" not in t[1]
+
+
+@pytest.mark.parametrize("msg", ["quanto custa o Yamaha C40?", "oi", "tem violao?"])
+def test_portugues_nao_vira_ingles(msg):
+    (r,) = conversar(msg)
+    assert "em português" not in r.texto
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

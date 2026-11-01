@@ -621,6 +621,16 @@ def endereco_pedido_privado(e: Estado, p: dict) -> str:
             "quem comprou." + onde)
 
 
+def acolhimento(e: Estado, p: dict) -> str:
+    return f"Sinto muito por isso. Quer que um atendente da equipe te ajude? {CONFIRMA}"
+
+
+def so_portugues(e: Estado, p: dict) -> str:
+    tema = p.get("tema")
+    entendi = f" Entendi que o assunto é {tema}." if tema else ""
+    return f"O atendimento aqui é em português.{entendi} Pode escrever sua pergunta em português?"
+
+
 def cupom_inexistente(e: Estado, p: dict) -> str:
     pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
@@ -1228,7 +1238,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
-        cupom_inexistente, endereco_pedido_privado)
+        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues)
 }
 
 

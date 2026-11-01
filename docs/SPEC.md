@@ -140,6 +140,22 @@ Exigência do Rodrigo em 01/11/2026: o projeto todo é otimizado para PWA, inclu
 - Instalação exige HTTPS ou localhost; o README diz isso.
 - Testes: manifest válido e servido com o tipo correto, `sw.js` servido com `Service-Worker-Allowed` adequado e cabeçalho sem cache, rota offline existe. Playwright: service worker registrado, página offline aparece com a rede cortada, `/chat` sem rede mostra aviso e preserva o texto, layout da Lia em 390px sem rolagem horizontal. Lighthouse não é exigido.
 
+## Persona da Lia
+
+Orientação do Rodrigo em 01/11/2026. Faz parte do núcleo. A persona muda a maneira de dizer e não autoriza prometer o que o sistema não consegue fazer. Sem treino de modelo nem chamada extra de IA.
+
+1. **Definição curta:** `src/emporio/agente/persona.yaml` com nome, identificação como assistente virtual da loja, tom, exemplos e comportamentos a evitar. Entra nas instruções do modelo em todos os turnos em que ele redige. Nenhum fato de loja nesse arquivo.
+2. **Templates com a mesma voz:** `respostas.py` escrito na voz da persona, sem passar pelo modelo só para ganhar estilo. Exemplos que orientam a voz:
+   - saudação: "Oi! Sou a Lia, assistente virtual da Empório da Música. Como posso te ajudar?";
+   - produto indisponível: "Esse modelo está sem estoque no momento. Quer que eu procure opções parecidas?", e essa oferta só existe porque um "sim" executa `buscar_produtos` na mesma categoria;
+   - falha na consulta: "Não consegui consultar seu pedido agora. Posso tentar novamente.", só com nova tentativa real;
+   - cliente frustrado: "Entendo sua frustração. Vou conferir o que está registrado sobre o seu pedido.", só quando a consulta de fato ocorre no turno.
+3. **Revisão de conversas completas:** conferir principalmente as transições entre template e modelo.
+
+**O que o código verifica:** apresentação nos templates, apresentação no máximo uma vez, campos obrigatórios da persona, expressões proibidas em `persona.yaml` (gíria forçada, "sem enrolação", emoji, tratamento formal como "prezado cliente", brincadeira) em todos os textos de `respostas.py`.
+
+**O que exige avaliação humana:** acolhimento, naturalidade e adequação à situação. `eval/REVISAO_TOM.md` registra as conversas lidas e estas perguntas, com sim ou não: ela se identifica corretamente? Evita repetir a apresentação? Mantém clareza? Evita brincadeiras diante de reclamações? Os templates parecem vir da mesma assistente que escreve as respostas do modelo? A leitura do Planner é marcada como preliminar; a avaliação humana é a do Rodrigo.
+
 ## Incremento 1: compra de demonstração
 
 Do plano v3 aprovado (incremento 1, aceito pelo Rodrigo: "compra de demonstração sem pagamento real").

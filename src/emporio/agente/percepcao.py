@@ -134,11 +134,21 @@ def _nome_de_produto(texto: str, m: re.Match[str], voc: catalogo.Vocabulario) ->
     """"2X" só é nome de produto ("Bass 2X") quando o catálogo o conhece e não vem depois de "em", "até" ou "de":
     "em 3x" é parcelamento e nunca entra na referência do produto."""
     antes = texto[:m.start()].split()
-    return m.group(0).replace(" ", "") in voc.df and (not antes or antes[-1] not in ("em", "ate", "de", "no", "a", "ser"))
+    # "3x" sozinho (sem marca ou modelo antes) é parcelamento; só "Bass 3X" é nome de produto
+    return m.group(0).replace(" ", "") in voc.df and bool(antes) and antes[-1] not in ("em", "ate", "de", "no", "a", "ser")
+
+
+# Números que não são produto: tempo desde a compra, número do pedido, final de telefone, percentual.
+RE_NUMERO_NAO_PRODUTO = re.compile(
+    r"\b\d+\s*(?:dias?|semanas?|mes(?:es)?|anos?|horas?|unidades?)\b"
+    r"|\b(?:pedido|numero|nro|num)\s*(?:no\s*|n\s*)?#?\s*\d+\b|#\s*\d+\b"
+    r"|\b(?:final|ultimos|terminad\w*|terminando)\s*(?:em|com|de|do telefone|e)?\s*\d{4}\b"
+    r"|\b\d+(?:,\d+)?\s*(?:%|por cento)")
 
 
 def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
-    s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b", " ", norm)  # o CEP não faz parte do nome do produto
+    s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b|\b\d{5}-?\d{3}\b", " ", norm)  # o CEP não faz parte do nome do produto
+    s = RE_NUMERO_NAO_PRODUTO.sub(" ", s)
     s = RE_MAX.sub(" ", s)
     s = RE_MIN.sub(" ", s)
     s = RE_VALOR.sub(" ", s)
@@ -168,7 +178,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         antes = norm[:m.start()].split()
         token = m.group(0).replace(" ", "")
         # "Bass 2X" é nome de produto; "em 2x" é parcelamento
-        if not (token in voc.df and (not antes or antes[-1] not in ("em", "ate", "de", "no"))):
+        if not (token in voc.df and antes and antes[-1] not in ("em", "ate", "de", "no")):
             slots["parcelas"] = int(next(g for g in m.groups() if g))
     if re.search(r"\bpix\b", norm):
         slots["forma"] = "pix"
@@ -198,10 +208,12 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["termo"] = " ".join(nomes)
     # só vale como produto se algum termo identifica (modelo com número, ou marca rara no catálogo);
     # as demais palavras seguem junto, para que o que não existir resulte em "não encontrei"
-    if any(re.search(r"\d", t) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
+    # número puro ("8", "10") nunca identifica produto sozinho: precisa de marca ou modelo junto
+    com_letra = any(not t.isdigit() for t in conteudo)
+    if any((re.search(r"\d", t) and (not t.isdigit() or com_letra)) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
-    elif any(re.search(r"\d", t) for t in conteudo) and re.search(
+    elif any(re.search(r"\d", t) and (not t.isdigit() or com_letra) for t in conteudo) and re.search(
             r"\b(preco\w*|custa\w*|valor|quanto|vende\w*|tem|disponivel|estoque)\b", norm):
         # modelo com número que o catálogo não conhece ("Stradivarius 1715"): a ferramenta diz se existe
         slots["referencia"] = " ".join(conteudo)

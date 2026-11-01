@@ -154,6 +154,7 @@ instrumento instrumentos iniciante iniciantes barato baratos barata baratas melh
 vende vendem vendo vender existe existem trabalha trabalham confirma confirmar confirmo
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
+pro faz ha so semana semanas dia dias mes meses ano anos
 ta caro salgado super pouco muito achei meio demais pensar analisar avaliar depois talvez calma volto vejo decido
 """.split())
 

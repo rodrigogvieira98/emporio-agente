@@ -10,7 +10,7 @@ Aviso do repositório: a loja é fictícia e os pedidos não são reais. Nenhum 
 docker compose up -d --build
 ```
 
-Site em http://localhost:8000 e estado em http://localhost:8000/saude. O modelo padrão `qwen2.5:3b` é baixado na primeira subida (cerca de 2 GB); enquanto isso, a Lia já responde só com as regras. Troque o modelo com `EMPORIO_MODELO`.
+Site em http://localhost:8000 e estado em http://localhost:8000/saude. O modelo padrão `qwen3:4b` é baixado na primeira subida (cerca de 2,5 GB); enquanto isso, a Lia já responde só com as regras. Troque o modelo com `EMPORIO_MODELO`.
 Com GPU NVIDIA: `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d`.
 Parar: `docker compose down`.
 O Docker sobe com `EMPORIO_REDACAO=1`: a redação só escreve frases curtas sem números e é validada por código; `EMPORIO_REDACAO=0` desliga (fora do Docker o padrão do código é 0).
@@ -28,7 +28,7 @@ set PYTHONPATH=src
 ```
 
 No Linux ou macOS, use `.venv/bin/` e `export PYTHONPATH=src`.
-Modelo local (opcional): instale o [Ollama](https://ollama.com), rode `ollama pull qwen2.5:3b` e defina `EMPORIO_MODELO=qwen2.5:3b` antes de subir. Sem modelo, a Lia funciona só com as regras.
+Modelo local (opcional): instale o [Ollama](https://ollama.com), rode `ollama pull qwen3:4b` e defina `EMPORIO_MODELO=qwen3:4b` antes de subir. Sem modelo, a Lia funciona só com as regras.
 Conversa pelo terminal: `.venv\Scripts\python -m emporio.cli --origem demo`.
 O PWA só pode ser instalado em `localhost` ou em HTTPS.
 `EMPORIO_DATA_REFERENCIA=2026-03-25T10:00:00` fixa a data e a hora da loja, útil porque os pedidos dos dados são de 2025 e 2026.

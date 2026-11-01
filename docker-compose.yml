@@ -6,7 +6,7 @@ services:
       - "8000:8000"
     environment:
       OLLAMA_HOST: http://ollama:11434
-      EMPORIO_MODELO: ${EMPORIO_MODELO:-qwen2.5:3b}
+      EMPORIO_MODELO: ${EMPORIO_MODELO:-qwen3:4b}
       EMPORIO_DECISOR: regras
       EMPORIO_REDACAO: ${EMPORIO_REDACAO:-1}
       EMPORIO_LLM_TIMEOUT: ${EMPORIO_LLM_TIMEOUT:-60}
@@ -33,7 +33,7 @@ services:
         condition: service_healthy
     environment:
       OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["ollama", "pull", "${EMPORIO_MODELO:-qwen2.5:3b}"]
+    entrypoint: ["ollama", "pull", "${EMPORIO_MODELO:-qwen3:4b}"]
     restart: "no"
 
 volumes:

@@ -5,18 +5,18 @@
 <h1>Rastrear pedido</h1>
 <form class="form-coluna" action="/rastreio" method="post">
   <label for="r-pedido">Número do pedido</label>
-  <input id="r-pedido" name="pedido" value="{{ pedido }}" required>
+  <input id="r-pedido" name="pedido" value="{{ pedido }}" required autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off">
   <label for="r-final">Final do telefone (4 dígitos)</label>
   <input id="r-final" name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" aria-describedby="r-dica">
   <p id="r-dica" class="nota-valores">Para pedidos feitos aqui no site (número começa com {{ prefixo_pedido }}), informe só o número, sem o telefone.</p>
   <button type="submit" class="botao-cheio">Consultar</button>
 </form>
-{% if aviso %}<p class="aviso" role="alert">{{ aviso }}</p>{% endif %}
-{% if bloqueio %}<p class="aviso aviso-erro" role="alert">{{ bloqueio }} Se precisar de ajuda agora, use o <a href="/fale-conosco">Fale conosco</a>.</p>{% endif %}
+{% if aviso %}<p class="aviso" tabindex="-1" data-resultado-rastreio role="alert">{{ aviso }}</p>{% endif %}
+{% if bloqueio %}<p class="aviso aviso-erro" tabindex="-1" data-resultado-rastreio role="alert">{{ bloqueio }} Se precisar de ajuda agora, use o <a href="/fale-conosco">Fale conosco</a>.</p>{% endif %}
 {% if demo %}{% set d = demo %}{% include "_pedido_demo.html" %}
 {% include "_linha_do_tempo.html" %}{% endif %}
 {% if resultado %}
-<section class="pedido" aria-label="Pedido">
+<section class="pedido" aria-label="Pedido" tabindex="-1" data-resultado-rastreio>
   <h2>Pedido {{ resultado.pedido_id }}</h2>
   <p>Situação: <strong>{{ status_pedido.get(resultado.status, resultado.status) }}</strong></p>
   {% include "_linha_do_tempo.html" %}

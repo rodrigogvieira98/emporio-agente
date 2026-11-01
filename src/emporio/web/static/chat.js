@@ -17,8 +17,9 @@
 
     var salvo = ler(CHAVE_LOG);
     if (salvo) log.innerHTML = salvo;
+    log.querySelectorAll(".escrevendo").forEach(function (n) { n.remove(); });  // nunca restaura uma bolha de escrevendo
 
-    var celular = window.matchMedia("(max-width: 767px)");
+    var celular = window.matchMedia("(max-width: 767px), (max-height: 520px) and (pointer: coarse)");  // celular em pé ou deitado
     var html = document.documentElement;
     function aberto() { return !painel.hidden; }
     function aplicar(abrir) {
@@ -32,7 +33,7 @@
     // Teclado virtual: o campo fica colado ao teclado seguindo a área visível (iOS não redimensiona o layout).
     var vv = window.visualViewport;
     function ajustarAltura() {
-      if (vv && celular.matches && aberto()) {
+      if (vv && aberto()) {  // qualquer orientação: o painel nunca passa da área visível
         html.style.setProperty("--altura-visivel", vv.height + "px");
         html.style.setProperty("--topo-visivel", vv.offsetTop + "px");
       } else {
@@ -49,7 +50,39 @@
       abrir: function () { aplicar(true); },
       fechar: function () { aplicar(false); }
     });
-    function abrirChat() { Sobreposicoes.abrir(gestor); if (campo) campo.focus(); }
+    // Sugestões saem de cena com o campo em foco (o teclado ocupa a tela) e depois da primeira mensagem do cliente.
+    var corpo = document.getElementById("chat-corpo");
+    var enviadas = 0;
+    function marcarConversa() {
+      var conversou = enviadas > 0;  // só mensagens enviadas nesta página: o histórico restaurado não esconde as sugestões
+      if (corpo) corpo.classList.toggle("ja-conversou", conversou);
+    }
+    marcarConversa();
+    if (campo && corpo) {
+      campo.addEventListener("focus", function () { if (celular.matches) corpo.classList.add("campo-em-foco"); });
+      campo.addEventListener("blur", function () { corpo.classList.remove("campo-em-foco"); });
+    }
+    // Foco contido na Lia aberta em tela cheia: Tab e Shift+Tab circulam só pelo painel.
+    painel.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab" || !aberto() || !html.classList.contains("chat-tela-cheia")) return;
+      var itens = Array.prototype.filter.call(painel.querySelectorAll("a[href], button, input, select, textarea, [tabindex]:not([tabindex='-1'])"),
+        function (n) { return !n.disabled && n.offsetParent !== null; });
+      if (!itens.length) return;
+      var primeiro = itens[0], ultimo = itens[itens.length - 1];
+      if (e.shiftKey && (document.activeElement === primeiro || document.activeElement === painel)) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+    });
+    var camada = document.getElementById("lia-camada");
+    if (camada) camada.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); Sobreposicoes.fechar(gestor); });
+
+    // no celular o campo não ganha foco ao abrir: o teclado não cobre a conversa nem as sugestões antes da hora
+    function abrirChat() {
+      Sobreposicoes.abrir(gestor);
+      if (!campo) return;
+      if (!celular.matches) { campo.focus(); return; }
+      painel.setAttribute("tabindex", "-1");  // o foco entra no painel (sem teclado) e o Tab circula só dentro dele
+      painel.focus({ preventScroll: true });
+    }
     botao.addEventListener("click", function () { if (aberto()) Sobreposicoes.fechar(gestor); else abrirChat(); });
     // Celular: o toque na faixa da página acima do painel só fecha a Lia; não aciona o que está por baixo.
     document.addEventListener("click", function (e) {
@@ -68,16 +101,52 @@
     }
     var SEM_REDE = "Sem conexão. A Lia precisa de internet para responder. Seu texto foi mantido, envie de novo quando a conexão voltar.";
 
+    // Ritmo da conversa: depois da bolha do cliente aparece "Lia está escrevendo"; a resposta chega do servidor, mas só
+    // entra no lugar dessa bolha depois de min(700 + 15 ms por caractere, 2200 ms) contados desde o envio. Só no navegador.
+    var TEMPO_BASE = 700, TEMPO_CHAR = 15, TEMPO_MAX = 2200;
+    var escrevendo = null, envioEm = 0, esperando = false, temporizador = null;
+    function salvar() {  // o histórico guardado nunca leva a bolha de escrevendo
+      var c = log.cloneNode(true);
+      c.querySelectorAll(".escrevendo").forEach(function (n) { n.remove(); });
+      gravar(CHAVE_LOG, c.innerHTML);
+    }
+    function mostrarEscrevendo() {
+      var p = document.createElement("p");
+      p.className = "msg lia escrevendo";
+      p.innerHTML = '<span class="so-leitor">Lia está escrevendo</span><span class="pontos" aria-hidden="true"><i></i><i></i><i></i></span>';
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
+      escrevendo = p; envioEm = Date.now(); esperando = true;
+    }
+    function tirarEscrevendo() {
+      if (temporizador) { clearTimeout(temporizador); temporizador = null; }
+      if (escrevendo && escrevendo.parentNode) escrevendo.parentNode.removeChild(escrevendo);
+      escrevendo = null; esperando = false;
+    }
+    function entregar(html, espera) {
+      temporizador = setTimeout(function () {
+        temporizador = null;
+        if (escrevendo && escrevendo.parentNode) escrevendo.parentNode.removeChild(escrevendo);
+        escrevendo = null; esperando = false;
+        log.insertAdjacentHTML("beforeend", html);
+        if (window.htmx) window.htmx.process(log);
+        log.scrollTop = log.scrollHeight;
+        salvar();
+      }, Math.max(0, espera));
+    }
+
     document.body.addEventListener("htmx:afterSwap", function (e) {
       if (e.target !== log) return;
       log.scrollTop = log.scrollHeight;
-      gravar(CHAVE_LOG, log.innerHTML);
+      salvar();
     });
     // Bolha otimista: a mensagem aparece no log ao enviar e o campo é limpo; falha desfaz as duas coisas.
     var pendente = null;
     function desfazerPendente() {
       if (!pendente) return;
       if (pendente.bolha.parentNode) pendente.bolha.parentNode.removeChild(pendente.bolha);
+      enviadas = Math.max(0, enviadas - 1);
+      marcarConversa();
       campo.value = pendente.texto;
       pendente = null;
     }
@@ -89,6 +158,7 @@
     }
     document.body.addEventListener("htmx:beforeRequest", function (e) {
       if (e.target !== form) return;
+      if (esperando) { e.preventDefault(); return; }  // a Lia ainda está "escrevendo" a resposta anterior
       if (navigator.onLine === false) { e.preventDefault(); avisar(SEM_REDE); return; }
       var texto = campo.value;
       if (!texto.trim()) return;
@@ -98,13 +168,19 @@
       log.appendChild(bolha);
       log.scrollTop = log.scrollHeight;
       pendente = { bolha: bolha, texto: texto };
+      mostrarEscrevendo();
+      enviadas++;
+      marcarConversa();
       campo.value = "";
     });
     document.body.addEventListener("htmx:sendError", function (e) {
-      if (e.target === form) avisar(SEM_REDE);  // rede caiu no envio: a Lia não responde de cache nem finge resposta
+      if (e.target !== form) return;
+      tirarEscrevendo();
+      avisar(SEM_REDE);  // rede caiu no envio: a Lia não responde de cache nem finge resposta
     });
     document.body.addEventListener("htmx:afterRequest", function (e) {
       if (e.target !== form) return;
+      if (pendente) tirarEscrevendo();
       desfazerPendente();  // sem resposta aproveitada (sem rede, ocupada, inválida): a bolha sai e o texto volta ao campo
       campo.focus();
     });
@@ -114,11 +190,17 @@
       var status = e.detail.xhr.status;
       if (status === 422 || status === 503) {
         e.detail.shouldSwap = true;
+        tirarEscrevendo();
         desfazerPendente();
         e.detail.serverResponse = semBolhaDoUsuario(e.detail.serverResponse);
       } else if (status >= 200 && status < 300 && pendente) {
-        e.detail.serverResponse = semBolhaDoUsuario(e.detail.serverResponse);
+        var corrigido = semBolhaDoUsuario(e.detail.serverResponse);
         pendente = null;  // a bolha otimista fica como a mensagem do cliente
+        var t = document.createElement("template");
+        t.innerHTML = corrigido;
+        var minimo = Math.min(TEMPO_BASE + TEMPO_CHAR * t.content.textContent.trim().length, TEMPO_MAX);
+        e.detail.shouldSwap = false;  // a troca é feita por nós, quando o tempo mínimo de "escrevendo" passar
+        entregar(corrigido, minimo - (Date.now() - envioEm));
       }
     });
     // Sugestão e "Quero comprar" só preparam a conversa: abrem o painel, preenchem o campo e põem o foco nele.

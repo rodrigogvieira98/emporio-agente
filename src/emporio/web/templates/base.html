@@ -20,16 +20,17 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:image" content="{{ imagem or '/static/icones/icon-512.png' }}">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/static/icones/apple-touch-icon-180.png">
+<link rel="apple-touch-icon" href="{{ estatico('/static/icones/apple-touch-icon-180.png') }}">
 <link rel="preload" href="/static/fontes/ZillaSlab-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/static/marca.svg" type="image/svg+xml">
-<link rel="icon" href="/static/icones/icon-192.png" type="image/png" sizes="192x192">
-<link rel="stylesheet" href="/static/site.css">
-<script src="/static/htmx-2.0.4.min.js" defer></script>
-<script src="/static/sobreposicoes.js" defer></script>
-<script src="/static/chat.js" defer></script>
-<script src="/static/vitrine.js" defer></script>
-<script src="/static/pwa.js" defer></script>
+<link rel="icon" href="{{ estatico('/static/marca.svg') }}" type="image/svg+xml">
+<link rel="icon" href="{{ estatico('/static/icones/icon-192.png') }}" type="image/png" sizes="192x192">
+<link rel="stylesheet" href="{{ estatico('/static/site.css') }}">
+<script src="{{ estatico('/static/htmx-2.0.4.min.js') }}" defer></script>
+<script src="{{ estatico('/static/sobreposicoes.js') }}" defer></script>
+<script src="{{ estatico('/static/chat.js') }}" defer></script>
+<script src="{{ estatico('/static/vitrine.js') }}" defer></script>
+<script src="{{ estatico('/static/pwa.js') }}" defer></script>
+<script src="{{ estatico('/static/formularios.js') }}" defer></script>
 </head>
 <body{% block corpo_attr %}{% endblock %}>
 {% set L = loja() %}{% set S = situacao_loja() %}
@@ -57,6 +58,9 @@
       <button type="submit">Buscar</button>
     </form>
     <nav class="menu" aria-label="Principal">
+      <details class="menu-recolhido" data-sobreposicao data-so-celular>
+        <summary class="menu-botao" data-gatilho aria-label="Menu de navegação">Menu</summary>
+        <div class="menu-itens" data-painel>
       {% block menu_categorias %}<details class="menu-categorias" data-sobreposicao>
         <summary data-gatilho>Categorias</summary>
         <ul data-painel>
@@ -69,6 +73,8 @@
       <a href="/catalogo">Catálogo</a>
       <a href="/perguntas-frequentes">Perguntas frequentes</a>
       <a href="/rastreio">Rastrear pedido</a>
+        </div>
+      </details>
       {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
     </nav>
   </div>
@@ -114,10 +120,11 @@
   </div>
 </footer>
 
+<div id="lia-camada" class="lia-camada" aria-hidden="true"></div>
 <div id="lia" class="lia-flutuante" data-sobreposicao data-lia>
   <section id="chat" class="chat" aria-label="Chat com a Lia" data-painel hidden>
     <header class="chat-topo">
-      <img class="lia-retrato" src="/static/lia.svg" width="44" height="44" alt="">
+      <img class="lia-retrato" src="{{ estatico('/static/lia-96.webp') }}" srcset="{{ estatico('/static/lia-96.webp') }} 96w, {{ estatico('/static/lia-192.webp') }} 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
       <div class="chat-id"><strong>Lia</strong><small>assistente virtual do {{ L.nome }}</small></div>
     </header>
     <div id="chat-corpo" class="chat-corpo">
@@ -130,17 +137,16 @@
         <li><button type="button" data-pergunta="Como funcionam as trocas e devoluções?">Trocas e devoluções</button></li>
       </ul>
       <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
-            hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
+            hx-disabled-elt="#chat-enviar">
         <label class="so-leitor" for="chat-mensagem">Mensagem</label>
         <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
                placeholder="Escreva sua mensagem" required>
         <button id="chat-enviar" type="submit">Enviar</button>
       </form>
-      <p id="chat-espera" class="htmx-indicator chat-espera">A Lia está respondendo...</p>
     </div>
   </section>
   <button id="chat-alternar" class="lia-botao" type="button" aria-expanded="false" aria-controls="chat" data-gatilho>
-    <img class="lia-retrato" src="/static/lia.svg" width="44" height="44" alt="">
+    <img class="lia-retrato" src="{{ estatico('/static/lia-96.webp') }}" srcset="{{ estatico('/static/lia-96.webp') }} 96w, {{ estatico('/static/lia-192.webp') }} 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
     <span>Lia &middot; conversar</span>
   </button>
 </div>

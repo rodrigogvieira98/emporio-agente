@@ -72,6 +72,24 @@ def versao_sw() -> str:
     return _HASH_SW["hash"]
 
 
+_HASH_ARQUIVO: dict[str, tuple] = {}
+
+
+def estatico(url: str) -> str:
+    """URL de /static/ versionada pelo hash do conteúdo: mudou o arquivo, mudou a URL e nenhum cache velho serve."""
+    caminho = AQUI / url.removeprefix("/")
+    try:
+        st = caminho.stat()
+    except OSError:
+        return url
+    guardado = _HASH_ARQUIVO.get(url)
+    if guardado and guardado[0] == (st.st_mtime_ns, st.st_size):
+        return f"{url}?v={guardado[1]}"
+    h = hashlib.sha256(caminho.read_bytes()).hexdigest()[:10]
+    _HASH_ARQUIVO[url] = ((st.st_mtime_ns, st.st_size), h)
+    return f"{url}?v={h}"
+
+
 SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline", "/favicon.ico")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja
@@ -160,7 +178,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                                situacao_loja=apresentacao.situacao_loja, cores=apresentacao.cores, ilustracao=apresentacao.ilustracao,
                                menu_categorias=home.categorias, formas_pagamento=apresentacao.formas_de_pagamento,
                                canais=contato.canais, faixa_contato=contato.faixa, itens_no_carrinho=_itens_no_carrinho,
-                               prefixo_pedido=PREFIXO_PEDIDO,
+                               prefixo_pedido=PREFIXO_PEDIDO, estatico=estatico,
                                rotulo_forma=apresentacao.ROTULO_FORMA, parcelas_max=compra.parcelas_max)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
                                pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras,

@@ -20,3 +20,7 @@ Fotografias do Wikimedia Commons, em licença livre. Gerado por `python -m empor
 | ukulele-1.webp | Lardyfatboy | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [página](https://commons.wikimedia.org/wiki/File:Soprano_Ukulele.JPG) | Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto. |
 | ukulele-2.webp | Lardyfatboy | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [página](https://commons.wikimedia.org/wiki/File:Tenor_Ukulele.JPG) | Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto. |
 | abertura.webp | Honza Groh | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0) | [página](https://commons.wikimedia.org/wiki/File:Kytara_a_ruka.jpg) | Recortada e ajustada ao quadro 4:3. |
+
+## Retrato da Lia
+
+`lia-96.webp` e `lia-192.webp`: retrato gerado por inteligência artificial (imagem definida pelo Rodrigo em 01/11/2026), recortado no rosto e ombros. A pessoa retratada é fictícia; a Lia é uma assistente virtual. O original não faz parte do repositório.

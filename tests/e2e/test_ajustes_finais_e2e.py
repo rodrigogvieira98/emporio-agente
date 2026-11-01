@@ -60,14 +60,15 @@ def test_bolha_aparece_antes_da_resposta_e_nao_duplica(url_site, navegador):
     pagina.wait_for_selector("#chat-log .msg.voce")
     assert pagina.locator("#chat-log .msg.voce").inner_text().strip() == TEXTO
     assert pagina.input_value("#chat-mensagem") == ""  # campo limpo
-    assert pagina.locator("#chat-espera").is_visible()  # indicador "A Lia está respondendo..."
-    assert pagina.locator("#chat-log .msg.lia").count() == 1  # só a saudação: a resposta ainda não chegou
+    assert pagina.locator("#chat-log .msg.lia.escrevendo").is_visible()  # "Lia está escrevendo" no lugar do indicador de texto
+    assert pagina.locator("#chat-log .msg.lia:not(.escrevendo)").count() == 1  # só a saudação: a resposta ainda não chegou
     assert len(presas) == 1
     presas[0].continue_()
     pagina.wait_for_selector("#chat-log .msg.lia:has-text('EM-')", timeout=20000)
     assert pagina.locator("#chat-log .msg.voce").count() == 1  # sem duplicar
     classes = pagina.eval_on_selector_all("#chat-log .msg", "ns => ns.map(n => n.classList.contains('voce') ? 'voce' : 'lia')")
     assert classes == ["lia", "voce", "lia"]  # ordem: saudação, cliente, Lia
+    assert pagina.locator("#chat-log .escrevendo").count() == 0  # a bolha de escrevendo foi substituída pela resposta
     pagina.reload()  # o histórico guardado também não duplica
     pagina.click("#chat-alternar")
     assert pagina.locator("#chat-log .msg.voce").count() == 1

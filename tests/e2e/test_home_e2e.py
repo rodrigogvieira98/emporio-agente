@@ -93,7 +93,9 @@ def test_catalogo_no_cabecalho_leva_ao_catalogo_sem_rolagem_horizontal(url_site,
     pagina = _pagina(navegador, largura, 800)
     pagina.goto(url_site + "/")
     assert pagina.evaluate("document.documentElement.scrollWidth") <= largura
-    pagina.locator(".menu > a", has_text="Catálogo").click()
+    if largura < 900:
+        pagina.locator(".menu-botao").click()  # no celular a navegação fica recolhida no botão de menu
+    pagina.locator(".menu-itens > a", has_text="Catálogo").click()
     pagina.wait_for_url("**/catalogo")
     assert pagina.evaluate("document.documentElement.scrollWidth") <= largura
 

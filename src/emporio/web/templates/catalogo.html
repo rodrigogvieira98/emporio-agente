@@ -36,7 +36,7 @@
 {% else %}
   <p class="contagem" data-total="{{ total }}">{{ total }} {{ 'produto' if total == 1 else 'produtos' }}, do menor para o maior preço. Página {{ pagina_atual }} de {{ paginas }}.</p>
   <div class="grade grade-catalogo">
-  {% for p in itens %}{% include "_card.html" %}{% endfor %}
+  {% for p in itens %}{% set foto_prioritaria = loop.index <= 2 %}{% include "_card.html" %}{% endfor %}
   </div>
   {% if paginas > 1 %}
   <nav class="paginacao" aria-label="Páginas do catálogo">

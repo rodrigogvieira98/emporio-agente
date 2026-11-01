@@ -65,7 +65,7 @@ code { font-size: .9em; background: var(--creme-claro); padding: 0 var(--s1); bo
 
 /* formulários e botões */
 input, select, textarea, button { font: inherit; color: var(--tinta); }
-input, select, textarea { min-height: 44px; padding: var(--s2) var(--s3); border: 1px solid var(--tinta); border-radius: var(--raio); background: var(--creme-claro); }
+input, select, textarea { font-size: 1rem; min-height: 44px; padding: var(--s2) var(--s3); border: 1px solid var(--tinta); border-radius: var(--raio); background: var(--creme-claro); }
 textarea { width: 100%; min-height: 8rem; resize: vertical; }
 input::placeholder { color: var(--cinza-texto); opacity: 1; }
 button, .botao { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--s2) var(--s4);
@@ -91,7 +91,7 @@ button:disabled { opacity: .55; cursor: wait; }
 /* cabeçalho compacto, com a busca à vista */
 .topo { background: var(--palco); color: var(--creme-claro); border-bottom: 3px solid var(--ipe); position: relative; z-index: 20; }
 .topo-in { display: grid; grid-template-columns: 1fr auto; gap: var(--s2) var(--s4); padding-block: var(--s4); align-items: center; }
-.marca { display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; color: var(--creme-claro); justify-self: start; }
+.marca { min-height: 44px; display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; color: var(--creme-claro); justify-self: start; }
 .marca-svg { width: 44px; height: 44px; color: var(--ipe); --furo: var(--palco); flex: none; }
 .marca-nome { font-family: var(--titulo); font-weight: 700; font-size: 1.75rem; line-height: 1; letter-spacing: -.01em; white-space: nowrap; }
 .marca-2 { font-weight: 600; font-size: 1.125rem; color: var(--ipe); letter-spacing: 0; }
@@ -100,8 +100,8 @@ button:disabled { opacity: .55; cursor: wait; }
 .busca-topo button { border-radius: 0 var(--raio) var(--raio) 0; background: var(--ipe); color: var(--palco); border-color: var(--ipe); }
 .busca-topo button:hover { background: var(--ipe-escuro); border-color: var(--ipe-escuro); }
 .menu { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s4); grid-column: 1 / -1; grid-row: 3; }
-.menu > a { color: var(--creme-claro); font-weight: 500; text-decoration: none; padding-block: var(--s3); border-bottom: 2px solid transparent; white-space: nowrap; }
-.menu > a:hover { border-bottom-color: var(--ipe); color: var(--creme-claro); }
+.menu-itens > a { color: var(--creme-claro); font-weight: 500; text-decoration: none; padding-block: var(--s3); border-bottom: 2px solid transparent; white-space: nowrap; }
+.menu-itens > a:hover { border-bottom-color: var(--ipe); color: var(--creme-claro); }
 .menu .link-carrinho { margin-left: auto; font-weight: 700; }
 .menu-categorias { position: relative; }
 .menu-categorias summary { color: var(--creme-claro); list-style: none; cursor: pointer; font-weight: 700; padding-block: var(--s3); display: inline-flex; gap: var(--s2); align-items: center; min-height: 44px; }
@@ -112,6 +112,27 @@ button:disabled { opacity: .55; cursor: wait; }
   border: 1px solid var(--tinta); border-radius: var(--raio); padding: var(--s1); z-index: 30; box-shadow: 0 8px 24px rgba(27,20,16,.35); }
 .menu-categorias li a { display: flex; justify-content: space-between; gap: var(--s4); padding: var(--s3); text-decoration: none; color: var(--tinta); min-height: 44px; align-items: center; }
 .menu-categorias li a:hover { background: var(--creme-escuro); }
+.menu-recolhido { display: block; }
+.menu-itens { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s4); }
+.menu-botao { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding-inline: var(--s2);
+  border: 1px solid var(--creme-claro); border-radius: var(--raio); color: var(--creme-claro); font-weight: 700; }
+.menu-botao::-webkit-details-marker { display: none; }
+@media (min-width: 900px) { .menu-botao { display: none; } }
+@media (max-width: 899px) {
+  /* cabeçalho compacto: marca, botão de menu e carrinho na primeira linha; busca na segunda; links recolhidos */
+  .topo-in { padding-block: var(--s2); gap: var(--s2) var(--s3); }
+  .marca-svg { width: 36px; height: 36px; }
+  .marca { min-width: 0; }
+  .marca-nome { font-size: 1.375rem; display: grid; line-height: 1.05; }
+  .marca-2 { font-size: .9375rem; }
+  .menu { grid-column: 2; grid-row: 1; flex-wrap: nowrap; gap: var(--s2); }
+  .menu .link-carrinho { margin-left: 0; display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--s2); color: var(--creme-claro); text-decoration: none; border: 1px solid var(--ipe); border-radius: var(--raio); }
+  .menu-itens { position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; align-items: stretch; gap: 0; padding: var(--s2) var(--lateral) var(--s3);
+    background: var(--palco-claro); border-bottom: 3px solid var(--ipe); z-index: 40; box-shadow: 0 8px 24px rgba(27,20,16,.35); }
+  .menu-itens > a, .menu-categorias summary { display: flex; align-items: center; min-height: 44px; padding-block: 0; border-bottom: 1px solid rgba(245,238,224,.18); }
+  .menu-categorias { position: static; }
+  .menu-categorias ul { position: static; max-width: none; box-shadow: none; margin: 0 0 var(--s2); }
+}
 @media (min-width: 1024px) {
   .topo-in { grid-template-columns: auto minmax(14rem, 1fr) auto; gap: var(--s8); }
   .busca-topo { grid-column: 2; grid-row: 1; }
@@ -320,7 +341,8 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .lia-botao { gap: var(--s2); padding: var(--s1) var(--s4) var(--s1) var(--s1); min-height: 52px; border-radius: 999px; background: var(--ipe); color: var(--palco); border-color: var(--ipe);
   font-weight: 700; box-shadow: 0 2px 0 var(--ipe-escuro), 0 4px 14px rgba(27,20,16,.3); }
 .lia-botao:hover { background: var(--ipe-escuro); color: var(--palco); }
-.lia-retrato { width: 44px; height: 44px; border-radius: 50%; flex: none; background: var(--palco); border: 2px solid var(--palco); }
+.lia-retrato { width: 44px; height: 44px; border-radius: 50%; flex: none; object-fit: cover; background: var(--palco); border: 2px solid var(--palco); }
+.chat-topo .lia-retrato { border-color: var(--ipe); }
 .lia-aberta .lia-botao { display: none; }
 .chat { width: 23rem; max-width: calc(100vw - 2 * var(--s4)); background: var(--creme-claro); border: 1px solid var(--tinta); border-radius: var(--raio); box-shadow: 0 8px 28px rgba(31,26,23,.28); overflow: hidden; }
 .chat[hidden] { display: none; }
@@ -337,15 +359,34 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .chat-sugestoes button { min-height: 44px; border-radius: 999px; font-size: .875rem; padding-inline: var(--s3); }
 .chat-form { display: flex; gap: var(--s2); padding: var(--s3); border-top: 1px solid var(--cinza); }
 .chat-form input { flex: 1; min-width: 0; font-size: 1rem; }
+.msg.escrevendo { display: inline-flex; align-items: center; min-height: 2.25rem; }
+.pontos { display: inline-flex; gap: 5px; }
+.pontos i { width: 7px; height: 7px; border-radius: 50%; background: var(--cinza-texto); animation: escrevendo 1.1s infinite ease-in-out; }
+.pontos i:nth-child(2) { animation-delay: .18s; }
+.pontos i:nth-child(3) { animation-delay: .36s; }
+@keyframes escrevendo { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .pontos i { animation: none !important; opacity: .7; } }
 .chat-espera { margin: 0; padding: 0 var(--s3) var(--s2); color: var(--cinza-texto); font-size: .8125rem; }
 .htmx-indicator { display: none; }
 .htmx-request.htmx-indicator, .htmx-request .htmx-indicator { display: block; }
-.chat-corpo { display: block; }
+.chat { display: flex; flex-direction: column; max-height: calc(var(--altura-visivel, 100dvh) - 2 * var(--s4)); }
+.chat[hidden] { display: none; }
+.chat-corpo { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat-topo, .chat-sugestoes, .chat-form, .chat-espera { flex: none; }
+.chat-log { flex: 1 1 17rem; height: auto; min-height: 4.5rem; }
+.chat-corpo.campo-em-foco .chat-sugestoes, .chat-corpo.ja-conversou .chat-sugestoes { display: none; }
+.lia-camada { display: none; }
+.chat:focus { outline: none; }
+@media (max-height: 420px) { .chat-sugestoes { display: none; } }
+html.chat-tela-cheia .lia-camada { display: block; position: fixed; left: 0; right: 0; top: 0; height: calc(var(--topo-visivel, 0px) + var(--faixa-chat)); z-index: 79; background: transparent; touch-action: none; }
+@media (max-height: 520px) { :root.chat-tela-cheia { --faixa-chat: 2.75rem; } }
 @media (max-width: 767px) {
   .lia-botao span { font-size: .9375rem; }
   /* só o retrato: o botão não cobre rótulos nem links no rodapé da página; o nome acessível continua no texto */
   .lia-botao { padding: var(--s1); }
   .lia-botao span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 767px), (max-height: 520px) and (pointer: coarse) {
   html.chat-tela-cheia, html.chat-tela-cheia body { overflow: hidden; }
   /* celular: o painel não cobre a tela; a faixa superior da página fica visível e um toque nela fecha a Lia */
   html.chat-tela-cheia { --faixa-chat: 4.5rem; }
@@ -517,3 +558,11 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .busca-vazia-caminhos { list-style: none; display: grid; gap: var(--s2); }
 .busca-vazia-caminhos li { padding-block: var(--s1); }
 .politicas-conteudo, .politica { min-width: 0; }
+.credito-lia { display: flex; align-items: center; gap: var(--s4); } .credito-lia img { border-radius: 50%; }
+
+/* alvos de toque de 44 px (QA movel): links soltos, migalhas, telefone, e-mail e pontos do carrossel */
+.secao-cabeca > a, .migalha a, a.bloco-fone, .enviar-email, .legenda-ilustrativa, .catalogo-aviso a, .card-acesso { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.carrossel-pontos button { width: 44px; }
+.carrossel-controles { flex-wrap: wrap; }
+.carrossel-controles > button { flex: none; }
+@media (max-width: 480px) { .carrossel-pontos { order: 3; width: 100%; justify-content: center; flex-wrap: wrap; gap: 0; } }

@@ -22,7 +22,10 @@ function ehEstatico(url) {
 self.addEventListener("install", function (evento) {
   evento.waitUntil(
     caches.open(CACHE)
-      .then(function (cache) { return cache.addAll(ESTATICOS.concat([PAGINA_OFFLINE])); })
+      .then(function (cache) {
+        // cache: "reload" ignora o cache HTTP do navegador: o pré-cache nunca guarda uma cópia velha
+        return cache.addAll(ESTATICOS.concat([PAGINA_OFFLINE]).map(function (u) { return new Request(u, { cache: "reload" }); }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -53,7 +56,8 @@ self.addEventListener("fetch", function (evento) {
   if (soRede(url)) return;  // /chat, /rastreio, /saude: nunca em cache, nem sob falha
   if (ehEstatico(url)) {
     evento.respondWith(
-      caches.match(pedido).then(function (guardado) {
+      // as URLs levam ?v=hash do conteúdo; o cache da versão atual guarda o caminho puro, então a busca ignora a query
+      caches.match(pedido, { ignoreSearch: true }).then(function (guardado) {
         if (guardado) return guardado;
         return fetch(pedido).then(function (resposta) {
           if (resposta.ok) {

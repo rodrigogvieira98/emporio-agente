@@ -150,7 +150,8 @@ def test_toques_de_44px_nos_controles_do_celular(url_site, navegador):
     ctx = navegador.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
     pagina = ctx.new_page()
     pagina.goto(url_site + "/")
-    for seletor in ("#chat-alternar", ".menu > a", ".busca-topo button", ".busca-topo input", ".menu-categorias summary", "[data-seta='1']",
+    pagina.tap(".menu-botao")  # navegação recolhida no celular: abre o menu para medir os alvos dentro dele
+    for seletor in ("#chat-alternar", ".menu-botao", ".link-carrinho", ".menu-itens > a", ".busca-topo button", ".busca-topo input", ".menu-categorias summary", "[data-seta='1']",
                     ".abertura-acoes .botao"):
         assert pagina.locator(seletor).first.bounding_box()["height"] >= 44, seletor
     ctx.close()

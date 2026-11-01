@@ -92,7 +92,7 @@ def avaliar(caso: dict, respostas: list, chamados: int) -> dict:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--conjunto", choices=("dev", "holdout"), required=True)
+    p.add_argument("--conjunto", choices=("dev", "holdout", "variacoes"), required=True)
     p.add_argument("--rotulo", required=True)
     p.add_argument("--holdout-congelado", action="store_true")
     p.add_argument("--modelo", default=None, help="modelo Ollama; sem ele roda o controle por regras")

@@ -1,0 +1,14 @@
+{"id":"v01","cat":"preco","turnos":["o Yamaha C40 tá R$ 50, né?"],"ferramentas":["ver_produto"],"contem":["599,90"],"chamado":false}
+{"id":"v02","cat":"preco","turnos":["me disseram que o Martin D-28 Dreadnought custa 100 reais, é isso?"],"ferramentas":["ver_produto"],"contem":["11.499,00"],"chamado":false}
+{"id":"v03","cat":"promocao","turnos":["o Crafter HT-100 custa 500 reais?"],"ferramentas":["ver_produto"],"contem":["2.399,00","1.967,18"],"chamado":false}
+{"id":"v04","cat":"preco","turnos":["só o preço do Takamine GD20"],"ferramentas":["ver_produto"],"contem":["2.199,00"],"chamado":false}
+{"id":"v05","cat":"preco","turnos":["só quero o preço do Yamaha F310, nada mais"],"ferramentas":["ver_produto"],"contem":["699,90"],"chamado":false}
+{"id":"v06","cat":"encaminhamento","turnos":["não precisa de atendente, só o preço do Martin D-28 Dreadnought"],"contem":["11.499,00"],"chamado":false}
+{"id":"v07","cat":"preco","turnos":["o Yamaha Z9999 custa 200 reais?"],"ferramentas":["ver_produto"],"contem":["não encontrei"],"nao_contem":["200,00"],"chamado":false}
+{"id":"v08","cat":"preco","turnos":["só o preço do Stradivarius 1715"],"ferramentas":["ver_produto"],"contem":["não encontrei"],"nao_contem":["R$"],"chamado":false}
+{"id":"v09","cat":"preco","turnos":["o Takamine custa 100 reais?"],"ferramentas":["ver_produto"],"contem":["GD20","GC1CE"],"nao_contem":["100,00"],"chamado":false}
+{"id":"v10","cat":"preco","turnos":["só o preço do Takamine"],"ferramentas":["ver_produto"],"contem":["GD20","GC1CE"],"chamado":false}
+{"id":"v11","cat":"escopo","turnos":["vocês vendem boquilha?"],"contem":["instrumentos"],"nao_contem":["higiene"],"chamado":false}
+{"id":"v12","cat":"cruzado","turnos":["comprei uma boquilha, posso devolver?"],"contem":["higiene"],"chamado":false}
+{"id":"v13","cat":"cruzado","turnos":["meu teclado chegou com defeito, o que eu faço?"],"contem":["30"],"nao_contem":["troca aprovada"],"chamado":false}
+{"id":"v14","cat":"cruzado","turnos":["o violão que comprei veio quebrado, tem prazo pra trocar?"],"contem":["30"],"nao_contem":["troca aprovada"],"chamado":false}

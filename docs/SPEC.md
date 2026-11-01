@@ -251,6 +251,29 @@ Do plano v3 aprovado. Sentimento muda só o tom, nunca fatos, permissões nem fe
 - O estado guarda o sentimento por turno; o trace registra o rótulo, não o texto.
 - Testes: rótulos em frases de exemplo (incluindo negações e falsos positivos como "não estou bravo, só quero saber o preço"), reconhecimento sem fatos alterados, oferta de humano com irritação, oferta recusada não volta, nenhuma frase de empatia em neutro, controle no dev sem regressão.
 
+## Revisão final do site (etapa 6e)
+
+Aprovada pelo Rodrigo em 01/11/2026. Prevalece sobre as seções anteriores do site nestes pontos. Ferramentas, regras e textos do agente não mudam.
+
+**Checkout recalcula sozinho.** O manual define PIX com 5% sobre o preço de tabela, sem somar com promoção; débito e boleto à vista; crédito até 12x sem juros. Hoje o total só muda ao clicar em "Atualizar valores". Trocar forma, parcelas ou CEP passa a atualizar resumo, total, `total_visto`, pendências e o estado de "Registrar pedido" sem clique extra, com HTMX e sem recarregar a página, preservando o foco no campo. Sem JavaScript, o botão de atualizar continua funcionando (`noscript`). Respostas fora de ordem não podem sobrescrever a escolha mais recente. O campo de parcelas só aparece com crédito. A conferência de `total_visto` no servidor continua.
+
+**Frete por CEP (simulado).** O campo "Cidade da entrega" vira "CEP de entrega". O CEP vale com 8 dígitos, com ou sem hífen. Os dados não têm tabela de CEP, peso nem dimensões, então o CEP só indica se a entrega é em Campo Grande:
+- faixa 79000-000 a 79129-999, ou o CEP da loja no manual (79202-333, fora da faixa): cidade base do manual, com a regra atual de frete;
+- outro CEP válido: `cotacao_necessaria`, com "Frete calculado pela equipe";
+- CEP vazio ou inválido: pendência que impede finalizar, com mensagem clara.
+
+Sem serviço externo. `calcular_condicoes` não muda; quem traduz CEP em cidade é o site. O pedido grava só a cidade derivada, sem o CEP. O aviso do checkout passa a dizer que não se deve informar cartão nem CPF e que o CEP serve só para calcular o frete. A faixa não vem do manual e é declarada no README.
+
+**Endereço só no rodapé.** Referência observada: Teclacenter, KaBuM! e Thomann concentram contato e endereço no rodapé e em área própria de atendimento. O endereço sai do corpo da home e da página Fale Conosco. A página offline mantém o endereço, porque não tem rodapé.
+
+**Seção "Fale conosco".** A seção "Visite a loja" da home vira "Fale conosco", com título literal, uma frase curta, horário de atendimento e botão para `/fale-conosco`, sem repetir telefone, e-mail ou WhatsApp, que ficam no rodapé. A coluna "Atendimento" do rodapé passa a se chamar "Fale conosco". Em `/fale-conosco`, "Onde estamos" vira "Horário de atendimento". O rótulo "Falar com a loja" deixa de existir.
+
+**Sugestões da Lia não enviam sozinhas.** Clicar numa sugestão, ou em "Quero comprar com a Lia", abre o painel, preenche o campo e põe o foco nele. A mensagem só sai quando o cliente envia, com Enter ou com o botão Enviar, e o texto pode ser editado antes.
+
+**Cache do PWA.** A versão do cache passa a ser um hash do conteúdo dos estáticos, calculado pelo servidor, em vez de um número manual. Mudou um arquivo, muda a versão. Assim um navegador que já visitou o site não mistura HTML novo com CSS antigo.
+
+**Testes.** Aprovada a alteração de testes que preenchem cidade no checkout, do rótulo "Falar com a loja" e do teste que espera envio automático ao clicar na sugestão. Nenhum teste é apagado ou enfraquecido: cada um passa a cobrir o comportamento novo.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

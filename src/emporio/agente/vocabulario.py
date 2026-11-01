@@ -314,7 +314,8 @@ COMPRA = re.compile(
     r"vou levar|levo (o|a|esse|essa|ele|ela)|"
     r"(quero|queria|vou querer|pego|vou pegar|fico com) (esse|essa|este|esta|ele|ela|o mesmo|a mesma)|"
     r"(quero|queria|vamos|bora|pode|posso|vou) fechar|fechar (o pedido|a venda)|"
-    r"(coloc\w+|poe|ponha|pon\w+|adicion\w+|joga|bota|mand\w+) (ele |ela |esse |essa |isso )?(no|ao|pro|para o) carrinho)\b")
+    r"(coloc\w+|poe|ponha|pon\w+|por|adicion\w+|joga|bota|mand\w+) (ele |ela |esse |essa |isso |duas |dois |um |uma )?(no|ao|pro|para o) carrinho|"
+    r"como (eu )?(faco |posso |consigo |faz |fa)?(pra |para )?(finaliz\w+|fechar|concluir)( a| o| minha| meu)?( compra| pedido)?)\b")
 # Nível e orçamento ditos em palavras: qualificam a busca sem perguntar de novo.
 NIVEL_INICIANTE = re.compile(r"\b(iniciantes?|principiantes?|comecando|comecar|aprender|aprendendo|estudantes?|"
                              r"primeiro (violao|instrumento|teclado|baixo|ukulele|bateria|guitarra))\b")

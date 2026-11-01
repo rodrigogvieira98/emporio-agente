@@ -81,3 +81,24 @@ def test_saudacao_com_presente_e_teto_pergunta_o_que_falta():
 def test_saudacao_sozinha_continua_saudacao():
     (t,) = textos("bom dia")
     assert t.startswith("Oi! Sou a Lia")
+
+
+# 5. compra com o produto em foco -------------------------------------------------------------------
+
+@pytest.mark.parametrize("fala", ["beleza, coloca ele no carrinho pra mim", "fechado, pode por no carrinho",
+                                  "vou levar", "como eu faço pra finalizar?", "como finalizo"])
+def test_compra_usa_o_produto_em_foco_e_mostra_o_botao(fala):
+    r = conversar("Quanto fica o Tagima Memphis no pix?", fala)[1]
+    assert "não entendi" not in r.texto.lower() and "Tagima Memphis" in r.texto
+    assert any(l.get("acao") == "/carrinho/adicionar" for l in r.links)
+
+
+@pytest.mark.parametrize("fala", ["vou levar", "coloca no carrinho", "como finalizo"])
+def test_compra_sem_produto_pede_o_produto_em_uma_frase(fala):
+    (t,) = textos(fala)
+    assert "marca e o modelo" in t and "não entendi" not in t.lower()
+
+
+def test_agradecimento_com_outro_pedido_nao_encerra():
+    t = textos("Quanto fica o Tagima Memphis no pix?", "valeu, e o horário de vocês?")
+    assert "horário de funcionamento" in t[1].lower() and "foi um prazer" not in t[1].lower()

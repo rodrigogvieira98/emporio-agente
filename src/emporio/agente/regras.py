@@ -656,7 +656,7 @@ class RegrasDecisor:
             ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
         # seguimento ("tá caro", "tem outro parecido?"): o produto em foco vale mesmo com palavras que o catálogo não conhece
         seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar", "extremo_lista", "frete")
-        if ref is None and (seguimento or not s.get("desconhecidas")) and not s.get("tem_modelo"):
+        if ref is None and (seguimento or s.get("compra") or not s.get("desconhecidas")) and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}
             ref = estado.coletados.get("ultimo_produto") or (busca.get("ids") or [None])[0]

@@ -28,7 +28,7 @@ from .reserva import EXECUTA, Reserva
 from .decisor import Decisor
 from .estado import ORIGENS, Acao, Estado, Passo, Resposta, carregar_estado, para_json, salvar_estado
 from .fatos import fatos_do_resultado
-from .percepcao import aplicar_rotulo, perceber
+from .percepcao import AGUARDA_DADO, aplicar_rotulo, perceber
 from .regras import REGRA_POR_INTENCAO, RegrasDecisor
 
 log = logging.getLogger("emporio.agente")
@@ -472,6 +472,9 @@ def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
     elif p.get("oferta_condicoes"):
         estado.aguardando = "condicoes"  # termina em "quer ver as condições dele?": o sim mostra o preço
     # uma pergunta por resposta: se o texto já termina em pergunta, o convite de retomar espera o próximo turno
+    # só se retoma assunto nomeado que ainda espera dado do cliente; oferta já respondida ou sem nome não volta
+    estado.pendentes = [x for x in estado.pendentes
+                        if x["objetivo"] in respostas.ROTULOS_ASSUNTO and x.get("aguardando") in (AGUARDA_DADO | {"relato"})]
     if estado.pendentes and not texto.rstrip().endswith("?"):
         assunto = estado.pendentes[-1]["objetivo"]
         estado.aguardando = "retomar"

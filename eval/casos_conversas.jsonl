@@ -66,3 +66,4 @@
 {"id":"c66","cat":"qa2","turnos":["se o pedido nunca chegar, vcs devolvem o dinheiro?"],"contem":["não tenho essa informação"],"nao_contem":["arrependimento"],"chamado":false}
 {"id":"c67","cat":"qa2","turnos":["tem desconto no pix em produto na promoção?"],"contem":["promocional"],"nao_contem":["Formas de pagamento"],"chamado":false}
 {"id":"c68","cat":"qa2","turnos":["oi, por que cancelaram meu pedido 17?","Telefone termina em 8765","vou receber meu dinheiro de volta quando?"],"contem":["cancelado","dias úteis"],"nao_contem":["arrependimento"],"chamado":false}
+{"id":"c69","cat":"qa2","turnos":["Quanto fica o Tagima Memphis no pix?","onde fica a loja? tem estacionamento?"],"contem":["Rua 14"],"nao_contem":["retomar","assunto anterior"],"chamado":false}

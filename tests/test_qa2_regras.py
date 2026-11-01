@@ -182,3 +182,23 @@ def test_excluir_dados_responde_a_secao_de_privacidade(fala):
 def test_telefone_termina_em_identifica_o_pedido():
     t = textos("oi, por que cancelaram meu pedido 17?", "Telefone termina em 8765")
     assert "Agora preciso dos 4 últimos" not in t[1] and "pedido 17" in t[1].lower()
+
+
+# 8. convite de retomar --------------------------------------------------------------------------------
+
+def test_convite_de_retomar_nunca_diz_o_assunto_anterior():
+    ags = Agente()
+    for fala in ("Entre o Taylor 214ce e o Martin D-28E, qual você levaria pro palco?", "qual a captação de cada um?",
+                 "tem desconto pra músico profissional? nota fiscal no CNPJ da minha banda?", "onde fica a loja?",
+                 "qual o whatsapp?", "quero devolver um violão", "qual o horário?", "e o cnpj?"):
+        assert "o assunto anterior" not in ags.responder("r1", fala, "eval").texto
+
+
+def test_nao_convida_a_retomar_assunto_que_ja_foi_respondido():
+    t = textos("Quanto fica o Tagima Memphis no pix?", "onde fica a loja? tem estacionamento?")
+    assert "retomar" not in t[1]
+
+
+def test_convida_a_retomar_o_assunto_nomeado_que_ainda_espera_dado():
+    t = textos("quero devolver um violão", "qual o horário de vocês?")
+    assert "a devolução" in t[1] and "Quer retomar?" in t[1]

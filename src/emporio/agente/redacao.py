@@ -95,7 +95,7 @@ class Redator:
             self.telemetria.append(reg)
             return bloco
         reg.update(texto_bruto=r.conteudo, tokens_prompt=r.tokens_prompt, tokens_resposta=r.tokens_resposta,
-                   latencia_ms=r.latencia_ms)
+                   latencia_ms=r.latencia_ms, num_ctx=getattr(r, "num_ctx", None))
         try:
             dados = json.loads(r.conteudo)
             abertura = (dados.get("abertura") or "").strip()

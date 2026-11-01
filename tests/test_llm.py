@@ -70,6 +70,24 @@ def test_cliente_envia_temperatura_zero_semente_42_e_raciocinio_desligado(servid
     assert (r.conteudo, r.tokens_prompt, r.tokens_resposta) == ('{"x": 1}', 7, 3) and r.latencia_ms >= 0
 
 
+def test_num_ctx_fixo_em_8192_por_padrao_e_configuravel_por_env(servidor, monkeypatch):
+    monkeypatch.delenv("EMPORIO_NUM_CTX", raising=False)
+    r = llm.conversar("falso:1b", [{"role": "user", "content": "oi"}])
+    assert servidor.corpos[-1]["options"]["num_ctx"] == 8192 and r.num_ctx == 8192
+    monkeypatch.setenv("EMPORIO_NUM_CTX", "4096")
+    llm.conversar("falso:1b", [{"role": "user", "content": "oi"}])
+    assert servidor.corpos[-1]["options"]["num_ctx"] == 4096
+    monkeypatch.setenv("EMPORIO_NUM_CTX", "lixo")
+    assert llm.num_ctx() == 8192
+
+
+def test_trace_registra_num_ctx():
+    cliente = ClienteFalso(proposta(ferramenta="consultar_politica", temas=["horario"]), proposta(resposta="horario"))
+    agente_com(cliente).responder("c1", "qual o horário de vocês?", "eval")
+    (t,) = trace_do_turno()
+    assert all("num_ctx" in x for x in t["telemetria_modelo"])
+
+
 def test_cliente_usa_ollama_host_e_lista_modelos(servidor):
     assert llm.modelos_instalados() == ["falso:1b"]
     llm.conferir_modelo("falso:1b")

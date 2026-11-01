@@ -1,7 +1,7 @@
 """Cliente do Ollama só com a stdlib. Temperatura 0, semente 42, raciocínio desligado.
 
 Ambiente: OLLAMA_HOST (padrão http://localhost:11434), EMPORIO_MODELO (modelo padrão),
-EMPORIO_LLM_TIMEOUT (segundos, padrão 120).
+EMPORIO_LLM_TIMEOUT (segundos, padrão 120), EMPORIO_NUM_CTX (contexto, padrão 8192).
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any
 
 SEMENTE = 42
+NUM_CTX_PADRAO = 8192  # sem isto o Ollama usa o contexto máximo do modelo e estoura a memória
 
 
 class ErroModelo(Exception):
@@ -31,6 +32,7 @@ class RespostaLlm:
     tokens_prompt: int
     tokens_resposta: int
     latencia_ms: int
+    num_ctx: int = 0
 
 
 def host() -> str:
@@ -39,6 +41,13 @@ def host() -> str:
 
 def modelo_padrao() -> str | None:
     return os.environ.get("EMPORIO_MODELO") or None
+
+
+def num_ctx() -> int:
+    try:
+        return max(512, int(os.environ.get("EMPORIO_NUM_CTX", NUM_CTX_PADRAO)))
+    except ValueError:
+        return NUM_CTX_PADRAO
 
 
 def timeout_s() -> float:
@@ -84,7 +93,7 @@ def conversar(modelo: str, mensagens: list[dict[str, str]], formato: dict[str, A
               limite: float | None = None, maximo_tokens: int = 400) -> RespostaLlm:
     corpo: dict[str, Any] = {
         "model": modelo, "messages": mensagens, "stream": False, "think": False,
-        "options": {"temperature": 0, "seed": SEMENTE, "num_predict": maximo_tokens},
+        "options": {"temperature": 0, "seed": SEMENTE, "num_predict": maximo_tokens, "num_ctx": num_ctx()},
     }
     if formato is not None:
         corpo["format"] = formato
@@ -94,7 +103,7 @@ def conversar(modelo: str, mensagens: list[dict[str, str]], formato: dict[str, A
         conteudo = bruto["message"]["content"]
     except (KeyError, TypeError) as erro:
         raise ErroModelo("resposta sem message.content") from erro
-    return RespostaLlm(conteudo=conteudo, tokens_prompt=int(bruto.get("prompt_eval_count") or 0),
+    return RespostaLlm(conteudo=conteudo, num_ctx=corpo["options"]["num_ctx"], tokens_prompt=int(bruto.get("prompt_eval_count") or 0),
                        tokens_resposta=int(bruto.get("eval_count") or 0),
                        latencia_ms=int((time.perf_counter() - inicio) * 1000))
 

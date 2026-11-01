@@ -208,7 +208,7 @@ class LlmDecisor:
             except llm.ErroModelo as erro:
                 return self._cair("erro_modelo", reg, estado, mensagem, str(erro))
             reg.update(proposta_bruta=r.conteudo, tokens_prompt=r.tokens_prompt, tokens_resposta=r.tokens_resposta,
-                       latencia_ms=r.latencia_ms)
+                       latencia_ms=r.latencia_ms, num_ctx=getattr(r, "num_ctx", None))
             try:
                 acao = self._montar(estado, mensagem, json.loads(r.conteudo))
             except (PropostaInvalida, ValueError, ValidationError, KeyError, TypeError) as erro:

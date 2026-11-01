@@ -444,6 +444,19 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Correções de causa para o novo congelamento (etapa 19)
+
+Aprovado pelo Rodrigo em 01/11/2026 com o novo prazo (terça, 03/11). O holdout original segue registrado; a versão final é medida pelo holdout 2, que nenhum implementador lê. Corrigir causas gerais, nunca frases de um caso.
+
+1. Forma do reembolso: perguntas sobre como, onde ou em que forma o dinheiro volta (cartão, PIX, estorno, "cai como") respondem pela regra 4.1: na mesma forma de pagamento original, em até 10 dias úteis, junto da condição de elegibilidade.
+2. Modelo com número no nome: um token como "2X", "3X", "D-8", "SK-10" é parte do nome quando vem junto de marca, categoria ou outra palavra do nome de um produto do catálogo; só vira parcela quando acompanha verbo ou termo de pagamento ou vem sozinho depois de um produto em foco. Sinônimos de categoria nos nomes (baixo e bass, violão e guitar quando aplicável) entram na busca. Produto nomeado responde pelo próprio cadastro, inclusive descontinuado, esgotado e em breve, antes de qualquer busca por categoria.
+3. Pedido explícito de atendente: continua registrando o chamado com protocolo e acrescenta o prazo de retorno de 24 horas úteis e os canais (WhatsApp e telefone com o horário de atendimento). Aprovado ajustar os três testes que fixam a resposta só com o protocolo, mantendo a verificação de que há um único chamado.
+4. Carrinho pelo chat: a Lia não altera o carrinho; "tira um", "remove", "quanto ficou o carrinho" respondem com o link do carrinho e explicam que ali dá para alterar e ver o total.
+5. Abreviações e referências: "tele" e "strato" como Telecaster e Stratocaster; "diferença de preço entre os dois" depois de uma comparação responde a diferença calculada pelo código.
+6. Horário escrito pela Lia no formato do site ("das 9h às 18h"). Os gabaritos de desenvolvimento que exigem "09:00" (d29, d59, d61, c23) mudam para o formato novo, declarado em `eval/CORRECOES.md` como mudança de formato, sem mudar o fato.
+7. Validador de redação: descarta saudação solta ("Ola", "Olá", "Oi") e frase sem verbo, e qualquer palavra sem acento quando a forma correta tem acento numa lista curta de palavras comuns.
+8. Nenhuma regressão: dev, variações e conversas em 100%, zero fatos críticos e zero chamados indevidos, sem ler holdout, holdout 2 nem frescos.
+
 ## Navegação sem duplicidade (etapa 18)
 
 Pedido do Rodrigo em 01/11/2026, depois do holdout. Só templates e CSS do site; agente, ferramentas e regras não mudam. O README declara que a navegação mudou depois de e0f35d6.

@@ -22,10 +22,11 @@ from ..ferramentas.produtos import buscar_produtos, ver_produto
 from . import respostas, trace
 from .concisao import deduplicar_frases, registrar_entregas, respostas_anteriores
 from .redacao import Redator
+from .reserva import EXECUTA, Reserva
 from .decisor import Decisor
 from .estado import ORIGENS, Acao, Estado, Passo, Resposta, carregar_estado, para_json, salvar_estado
 from .fatos import fatos_do_resultado
-from .percepcao import perceber
+from .percepcao import aplicar_rotulo, perceber
 from .regras import REGRA_POR_INTENCAO, RegrasDecisor
 
 log = logging.getLogger("emporio.agente")
@@ -46,10 +47,12 @@ class Agente:
     (opcional). concisao: liga a supressão de avisos repetidos, saudação única e frases repetidas."""
 
     def __init__(self, decisor: Decisor | None = None, redator: Redator | None = None,
-                 concisao: bool = False) -> None:
+                 concisao: bool = False, reserva: Reserva | None = None) -> None:
         self.decisor: Decisor = decisor or RegrasDecisor()
         self.redator = redator
         self.concisao = concisao
+        # o modelo só escolhe a intenção quando as regras não acham; só vale com o decisor de regras
+        self.reserva = reserva if isinstance(self.decisor, RegrasDecisor) else None
 
     def responder(self, conversa_id: str, mensagem: str, origem: str) -> Resposta:
         if origem not in ORIGENS:
@@ -59,12 +62,16 @@ class Agente:
         antes = estado.resumo_curto()
         estado.concisao = self.concisao
         perceber(estado, mensagem)
+        mensagem_limpa = limpar_pii(mensagem, estado, mensagem)
+        if self.reserva is not None and estado.intencao == "desconhecido":
+            rotulo = self.reserva.escolher(mensagem_limpa)
+            if rotulo in EXECUTA:  # o código valida: só rótulo da lista fechada vira intenção
+                aplicar_rotulo(estado, rotulo)
         if estado.objetivo and estado.objetivo != "pedir_atendente":
             estado.ultimo_assunto = estado.objetivo
         completar_datas(estado)
         contagens: Counter[str] = Counter()
         telemetria: list[dict[str, Any]] = []
-        mensagem_limpa = limpar_pii(mensagem, estado, mensagem)
 
         acoes: list[dict[str, Any]] = []
         passos_trace: list[dict[str, Any]] = []
@@ -155,7 +162,7 @@ class Agente:
             motivo_saida = motivo_saida if motivo_saida != "ok" else "sem_resposta"
 
         contagens.update(registrar_entregas(estado, texto, fatos))
-        for fonte in (self.decisor, self.redator):
+        for fonte in (self.decisor, self.redator, self.reserva):
             if fonte is not None and hasattr(fonte, "drenar"):
                 t, c = fonte.drenar()
                 telemetria += [limpar_pii(x, estado, mensagem) for x in t]

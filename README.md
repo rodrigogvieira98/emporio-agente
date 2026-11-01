@@ -72,7 +72,7 @@ Cinco conversas reais em [`exemplos/`](exemplos), geradas pelo próprio agente c
 - O manual tem ambiguidades (parcela mínima, frete de exatamente R$ 500, prazo da troca por preferência, 30 x 90 dias). A Lia mostra as duas leituras e encaminha para a equipe em vez de decidir.
 - Sem compra real nem pagamento.
 - O frete do checkout por CEP é simulado: não há tabela de CEP, peso nem dimensões, então o site só reconhece Campo Grande pela faixa 79000-000 a 79129-999 (declarada no código, não vem do manual) e pelo CEP da loja no manual; qualquer outro CEP válido fica com "Frete calculado pela equipe".
-- Resposta com o modelo em CPU leva dezenas de segundos na primeira chamada; sem GPU, a redação pode ser desligada (`EMPORIO_REDACAO=0`).
+- Resposta com o modelo em CPU leva dezenas de segundos na primeira chamada; sem GPU, a redação pode ser desligada (`EMPORIO_REDACAO=0`). Com modelo e decisor de regras, o modelo também serve de reserva de intenção quando as regras não entendem a mensagem (lista fechada, sem chamado nem consulta de pedido); `EMPORIO_RESERVA=0` desliga.
 - PWA testado só em Chromium emulando celular.
 
 ## Uso de assistentes de código

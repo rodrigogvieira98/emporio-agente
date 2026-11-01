@@ -514,6 +514,24 @@ def perceber(estado: Estado, mensagem: str) -> None:
     _aplicar_slots(estado)
 
 
+def aplicar_rotulo(estado: Estado, rotulo: str) -> None:
+    """Intenção escolhida pela reserva (já validada contra a lista fechada): segue como se as regras a tivessem achado."""
+    executa = "fora_escopo" if rotulo == "assunto_geral" else rotulo
+    s = estado.slots
+    if rotulo == "assunto_geral":
+        s["assunto_geral"] = True
+    if estado.objetivo and estado.aguardando is not None:
+        _trocar_assunto(estado, executa)
+    else:
+        estado.objetivo = executa
+        estado.aguardando = None
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in MANTER}
+        estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
+    estado.intencao = executa
+    s["nova"] = executa
+    _aplicar_slots(estado)
+
+
 def _escolha_numerada(estado: Estado) -> None:
     """Resposta '2' a uma lista de modelos escolhe a opção correspondente."""
     opcoes = estado.coletados.get("opcoes")

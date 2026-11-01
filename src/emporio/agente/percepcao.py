@@ -19,7 +19,7 @@ from .estado import Estado
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
 MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_busca", "ofertas_recusadas",
-          "recomendado")
+          "recomendado", "cidade_cliente")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
@@ -53,7 +53,17 @@ def _reais(texto: str, mil: str | None = None) -> int | None:
 
 LIMITE_DISTINTIVO = 4  # marca que aparece em até 4 produtos identifica o item
 NAO_E_CIDADE = {"compra", "pedido", "valor", "mim", "ele", "ela", "um", "uma", "o", "a", "os", "as", "meu", "minha",
-                "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes"}
+                "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes",
+                # pergunta de prazo, preço ou condição nunca é nome de cidade
+                "quantos", "quantas", "quanto", "quantidade", "que", "qual", "quais", "dias", "dia", "tempo", "prazo", "cada",
+                "pix", "boleto", "cartao", "frete", "preco", "parcela", "parcelas", "dois", "duas", "tres", "hoje", "amanha"}
+PALAVRAS_QUE_NAO_SAO_CIDADE = NAO_E_CIDADE | {"chega", "chegar", "demora", "demorar", "fica", "custa", "sai", "dela", "dele"}
+
+
+def _cidade_plausivel(candidata: str) -> bool:
+    """Nome de cidade tem poucas palavras e nenhuma de pergunta, prazo ou preço."""
+    palavras = candidata.split()
+    return 0 < len(palavras) <= 4 and not any(p in PALAVRAS_QUE_NAO_SAO_CIDADE for p in palavras)
 PARA_NA_CIDADE = {"com", "um", "uma", "pedido", "valor", "no", "e", "ou", "r", "se", "que", "por", "quanto"}
 
 
@@ -280,7 +290,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     else:
         for m in RE_CIDADE.finditer(norm):
             cand = _cortar_cidade(m.group(1))
-            if cand and cand.split()[0] not in NAO_E_CIDADE:
+            if cand and cand.split()[0] not in NAO_E_CIDADE and _cidade_plausivel(cand):
                 slots["cidade"] = cand
                 break
     m_cep = RE_CEP.search(mensagem.lower())
@@ -294,7 +304,10 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         if m_uf:
             slots["uf"] = m_uf.group(1).upper()
     if estado.aguardando == "cidade" and "cidade" not in slots:
-        slots["cidade"] = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
+        resposta = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
+        # a resposta à pergunta da cidade é só o nome; outra pergunta ("e o preço dela no pix?") não vira cidade
+        if _cidade_plausivel(resposta) and not any(p.search(norm) for n, p in v.PADROES_INTENCAO if n != "saudacao"):
+            slots["cidade"] = resposta
     if estado.aguardando == "valor_pedido" and "valor" not in slots:
         m = re.search(r"\b(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\b", norm)
         if m:
@@ -479,6 +492,8 @@ def perceber(estado: Estado, mensagem: str) -> None:
             and (s["palavras"] <= 5 or mais_desconto or s.get("demonstrativo")) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
         s["produto_id"] = ultimo
+    if nova is None and s.get("pergunta_prazo") and estado.ultimo_assunto == "frete":
+        nova = "frete"  # "e quanto tempo demora?" depois de uma pergunta de frete
     if nova is None and v.PROXIMO_PASSO.search(norm):
         assunto = estado.objetivo or estado.ultimo_assunto
         if assunto in POSVENDA | {"garantia"}:

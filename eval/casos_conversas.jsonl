@@ -42,3 +42,4 @@
 {"id":"c42","cat":"qa_lia","turnos":["minha guitarra deu defeito","comprei faz 50 dias"],"contem":["30 dias","fabricante"],"nao_contem":["Não encontrei essa informação"]}
 {"id":"c43","cat":"qa_lia","turnos":["o entregador ta aqui e a caixa do violao ta toda amassada"],"contem":["recusar o recebimento"],"nao_contem":["Encontrei"]}
 {"id":"c44","cat":"qa_lia","turnos":["pedido 17 telefone final 8765","pq foi cancelado?"],"contem":["cancelado pelo cliente antes do processamento"],"nao_contem":["Não entendi"]}
+{"id":"c45","cat":"qa_lia","turnos":["quanto custa o ukulele Shelby SU-21S?","moro em campo grande, quanto e o frete?"],"contem":["taxa fixa de R$ 35,00"],"nao_contem":["valor aproximado do pedido"],"chamado":false}

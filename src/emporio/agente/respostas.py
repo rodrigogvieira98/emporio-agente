@@ -350,7 +350,23 @@ def frete_outra_cidade(e: Estado, p: dict) -> str:
     if mods:
         itens = [_modalidade_com_prazo(m) for m in mods]
         txt += " Os envios são por " + _lista(itens) + "."
+    if p.get("produto"):  # produto conhecido: só falta o CEP para a estimativa
+        return txt + f" Para uma estimativa (simulação) do {p['produto']}, me diga o CEP de entrega."
     return txt + DICA_ESTIMATIVA
+
+
+def frete_produto(e: Estado, p: dict) -> str:
+    """Frete na cidade da loja pelo preço do produto em foco (a ferramenta decide grátis ou taxa)."""
+    d = _dados(e, "calcular_condicoes")
+    f = d.get("frete") or {}
+    cidade = str(p.get("cidade", "")).title()
+    prazo = f.get("prazo_dias_uteis")
+    prazo_txt = f" Prazo de {prazo['min']} a {prazo['max']} dias úteis." if prazo else ""
+    if f.get("situacao") == "gratis":
+        return f"Em {cidade}, o frete do {d['produto_nome']} é grátis.{prazo_txt}"
+    if f.get("situacao") == "taxa":
+        return f"Em {cidade}, o frete do {d['produto_nome']} é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
+    return frete_outra_cidade(e, {"cidade": p.get("cidade", "")})
 
 
 def fora_escopo(e: Estado, p: dict) -> str:
@@ -1187,7 +1203,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado)
+        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto)
 }
 
 

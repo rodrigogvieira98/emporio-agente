@@ -74,6 +74,8 @@ class Agente:
         if estado.objetivo and estado.objetivo != "pedir_atendente":
             estado.ultimo_assunto = estado.objetivo
         completar_datas(estado)
+        if estado.slots.get("cidade"):
+            estado.coletados["cidade_cliente"] = estado.slots["cidade"]  # a cidade dita antes vale nos turnos seguintes
         if estado.slots.get("compra") and estado.intencao in INTENCOES_DE_COMPRA:
             estado.coletados["compra"] = True  # vale também depois da escolha numerada entre modelos parecidos
         contagens: Counter[str] = Counter()
@@ -395,7 +397,7 @@ def oferecer_humano(estado: Estado, texto: str) -> str:
 
 # Respostas que informam e encerram o assunto: ali o manual (7.2, passo 5) manda confirmar se o cliente precisa de
 # mais alguma coisa. Nunca em recusa, oferta, pergunta, encerramento do cliente ou cliente irritado.
-COM_FECHAMENTO = {"contato", "pagamento", "frete_calculado", "frete_prazo", "frete_estimado",
+COM_FECHAMENTO = {"contato", "pagamento", "frete_calculado", "frete_produto", "frete_prazo", "frete_estimado",
                   "frete_cidade_base", "frete_outra_cidade", "frete_modalidade", "frete_grande_porte", "garantia_info",
                   "reembolso_prazo", "previsao_entrega", "status_pedido", "status_pedido_demo", "devolucao_frete",
                   "devolucao_loja_fisica", "rain_check", "rastreio_como", "privacidade", "empresa_dados",

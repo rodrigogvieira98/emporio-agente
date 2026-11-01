@@ -136,7 +136,7 @@ SECUNDARIAS = ("horario", "endereco", "contato")
 # Palavras que indicam pergunta geral sobre pagamento (não é "e em 12x" de um produto)
 PAGAMENTO_GERAL = re.compile(r"\b(quais|formas|aceita\w*|aceitam|como|posso|voces|vcs|quantas|ate quanto|parcelam|trabalham)\b")
 
-PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|dias uteis|chega em)\b")
+PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|quantos dias|dias uteis|chega em)\b")
 
 # Pedido de produto sem dizer qual: a Lia lista as categorias que têm o que vender.
 PEDIDO_GENERICO = (r"\b(me ajuda\w* (a|na|com a) escolh\w+|ajuda\w* (a|na) escolh\w+|"

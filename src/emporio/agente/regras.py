@@ -443,14 +443,48 @@ class RegrasDecisor:
             return responder("frete_cotacao_individual", produto=produto["nome"])
         return responder("frete_estimado", produto=produto["nome"])
 
-    def _grande_porte(self, estado: Estado) -> str | None:
+    def _frete_do_produto(self, estado: Estado, cidade: str) -> Acao | None:
+        """Cidade e produto conhecidos (citado ou em foco): o frete sai do preço do produto, sem pedir o valor do pedido.
+        Devolve None quando não há produto, e o fluxo antigo (cidade e valor do pedido) segue."""
+        s = estado.slots
+        if not (s.get("referencia") or s.get("produto_id") or estado.coletados.get("ultimo_produto")):
+            return None
+        acao, produto = self._produto(estado)
+        if acao:
+            # produto que não se resolve ("bateria acústica"): segue o fluxo da cidade, que cobre grande porte
+            return acao if acao.tipo == "ferramenta" else None
+        from ..politicas import manual
+
+        base = str(manual.valor("frete.cidade_base"))  # sem consulta extra: o laço tem no máximo 3 passos
+        estado.coletados["cidade"] = cidade
+        uf = s.get("uf") or estado.coletados.get("uf")
+        if normalizar(cidade) != normalizar(base):
+            r = resultado_de(estado, "consultar_politica", temas=["frete"])
+            if r is None:
+                return ferramenta("consultar_politica", temas=["frete"])
+            if r.estado != "ok":
+                return self._erro(estado, r)
+            grande = self._grande_porte(estado, f"{produto['nome']} {produto['categoria']}")
+            if grande:
+                return responder("frete_grande_porte", cidade=cidade, item=grande)
+            estado.coletados["referencia"] = produto["id"]  # o CEP que vier agora usa este produto
+            return perguntar("frete_outra_cidade", "cep", cidade=cidade, uf=uf, produto=produto["nome"])
+        args = {"produto_id": produto["id"], "forma": "boleto", "cidade": cidade, **({"uf": uf} if uf else {})}
+        c = resultado_de(estado, "calcular_condicoes", **args)
+        if c is None:
+            return ferramenta("calcular_condicoes", **args)
+        if c.estado != "ok":
+            return self._erro(estado, c)
+        return responder("frete_produto", cidade=cidade)
+
+    def _grande_porte(self, estado: Estado, extra: str = "") -> str | None:
         """Item de grande porte (5.2) citado pelo cliente, comparando as palavras da lista do manual com a mensagem."""
         from ..texto import radical, tokens
 
         r = resultado_de(estado, "consultar_politica", temas=["frete"])
         if r is None or r.estado != "ok":
             return None
-        msg = {radical(t) for t in tokens(estado.slots.get("texto_limpo", ""))}
+        msg = {radical(t) for t in tokens(estado.slots.get("texto_limpo", "") + " " + extra)}
         for item in _condicao(r, "frete.grande_porte_cotacao_individual") or []:
             chaves = {radical(t) for t in tokens(item)}
             if chaves and chaves <= msg:
@@ -465,8 +499,12 @@ class RegrasDecisor:
         if cep:
             estado.coletados["cep"] = cep
             return self._frete_por_cep(estado, cep)
-        cidade = s.get("cidade") or estado.coletados.get("cidade")
+        cidade = s.get("cidade") or estado.coletados.get("cidade") or estado.coletados.get("cidade_cliente")
         valor = s.get("valor") or estado.coletados.get("valor_pedido")
+        if cidade and not valor:
+            acao = self._frete_do_produto(estado, cidade)
+            if acao:
+                return acao
         if not cidade and (s.get("referencia") or s.get("produto_id")):  # produto sem destino: pede o CEP
             estado.coletados["referencia"] = s.get("produto_id") or s["referencia"]
             return perguntar("frete_pedir_cep", "cep")
@@ -605,7 +643,7 @@ class RegrasDecisor:
         if ref is None and (s.get("compra") or estado.coletados.get("compra")) and not s.get("desconhecidas"):
             ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
         # seguimento ("tá caro", "tem outro parecido?"): o produto em foco vale mesmo com palavras que o catálogo não conhece
-        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar", "extremo_lista")
+        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar", "extremo_lista", "frete")
         if ref is None and (seguimento or not s.get("desconhecidas")) and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}

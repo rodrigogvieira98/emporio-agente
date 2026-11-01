@@ -199,6 +199,46 @@ def test_pedido_cancelado_com_pagamento_responde_sobre_reembolso(sql):
     assert "10 dias úteis" in t[1] and "cancelado" in t[1] and "Ainda não consegui entender" not in t[1]
 
 
+# 7. frete com produto conhecido -------------------------------------------------------------------
+
+def test_frete_campo_grande_com_produto_barato_e_taxa_fixa():
+    t = textos("quanto custa o ukulele Shelby SU-21S?", "moro em campo grande, quanto e o frete?")
+    assert "taxa fixa de R$ 35,00" in t[1] and "valor aproximado do pedido" not in t[1]
+
+
+def test_frete_campo_grande_com_produto_caro_e_gratis():
+    t = textos("quanto custa o Martin D-28?", "e o frete pra campo grande?")
+    assert "grátis" in t[1] and "valor aproximado do pedido" not in t[1]
+
+
+def test_produto_e_cidade_na_mesma_frase_nao_pedem_o_valor():
+    t = textos("moro em campo grande, quanto e o frete do ukulele Shelby SU-21S?", "e em quantos dias chega?")
+    assert "taxa fixa de R$ 35,00" in t[0] and "Shelby SU-21S" in t[0]
+    assert "Quantos Dias" not in t[1] and "1 a 3 dias úteis" in t[1]
+
+
+def test_extrator_de_cidade_nao_aceita_pergunta_de_prazo():
+    t = textos("quanto custa o Yamaha C40?", "e em quantos dias chega?")
+    assert "Quantos" not in t[1]
+
+
+def test_outra_cidade_com_produto_pede_o_cep_e_depois_estima():
+    t = textos("quanto custa o Yamaha C40?", "e o frete para Dourados?", "79800-000")
+    assert "cotação" in t[1] and "CEP" in t[1] and "Yamaha C40" in t[1]
+    assert "Qual produto" not in t[2] and "qual é o produto" not in t[2]
+
+
+def test_cidade_informada_antes_fica_no_estado():
+    t = textos("moro em campo grande", "quanto custa o Martin D-28?", "e o frete?")
+    assert "grátis" in t[2]
+
+
+def test_grande_porte_diz_cotacao_individual():
+    t = textos("quanto custa a bateria Pearl?", "e o frete para Cuiabá?")
+    assert "individual" in t[1] or "cotação" in t[1]
+    assert "Qual produto" not in t[1]
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

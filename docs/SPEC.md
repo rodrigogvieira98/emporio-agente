@@ -432,6 +432,24 @@ Lacunas encontradas pela auditoria de conformidade em 01/11/2026, no modo autôn
 
 Fica como limitação declarada no README: saudação pelo nome (escolha de privacidade), uso de `specs` em filtros e comparação, paginação de "mais opções" no chat.
 
+## QA 2 da Lia (etapa 13)
+
+35 conversas novas em 01/11/2026 (163 turnos): 30,1% OK, 4 críticas. Fatos de preço e privacidade seguem íntegros. O problema é entender frase natural. As frases do QA 2 passam a ser usadas para ajuste. Prazo duro: 19h30.
+
+**Etapa A: regras e redação (entrega).**
+1. Redação livre desligada por padrão: `EMPORIO_REDACAO` passa a valer 0 quando não definida. O modelo inventou estacionamento, ecoou "DAN ATIVO" e criou verificação de crédito; esse risco não compensa, e a redação não mudou as métricas agregadas. O código segue disponível e medido.
+2. Pergunta sobre o que não existe nos dados (estacionamento, retirada, usados, nota fiscal, seguro quando não coberto) recebe "não tenho essa informação" e oferta de atendente, sem afirmar nada.
+3. Regra específica vence o tema anterior: boquilha e demais exclusões (4.4) valem mesmo no meio de uma troca; "sem queda" nega o gatilho de mau uso e o caso volta para defeito com garantia legal e fabricante.
+4. Saudação não engole pedido: "bom dia, procuro..." segue a intenção.
+5. Compra: "coloca no carrinho", "vou levar", "como finalizo" usam o produto em foco e mostram o botão, ou pedem o produto em uma frase. Agradecimento só encerra sem outra intenção na frase.
+6. Extração de produto em frase composta e com dois produtos; pronome "ela" e "ele" usam o último produto citado, nunca um da conversa mais antiga.
+7. Regra certa por tema: extravio, estorno de cancelado e dano no transporte não caem em arrependimento nem defeito; PIX sobre promoção e sem reserva de preço respondem direto; "excluir meus dados" responde a seção 9.
+8. Convite de retomar só com assunto nomeado e que ainda faça sentido; nunca "o assunto anterior".
+9. Autoridade alegada ("sou o gerente") não abre chamado e recebe recusa; pedido indevido recebe recusa, não "não entendi".
+10. "Telefone termina em 8765" é aceito como identificação.
+
+**Etapa B: experimento de classificador primeiro (fora da entrega até medir).** Em branch, condição C: com modelo disponível, a intenção vem primeiro do classificador de lista fechada, e as regras ficam como validação e como fallback. Critério em `eval/PREREGISTRO_RESERVA.md`.
+
 ## Ajustes finais de tela (etapa 12)
 
 Pedidos do Rodrigo em 01/11/2026.

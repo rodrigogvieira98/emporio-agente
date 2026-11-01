@@ -28,3 +28,12 @@ Se qualquer item falhar, a reserva fica desligada e a entrega é a condição A,
 ## O que não cobre
 
 Os frescos foram escritos por quem revisou a Lia e são poucos. Eles não substituem o holdout e não medem conversa real com clientes.
+
+## Adendo de 01/11/2026: condição C
+
+Escrito antes de implementar a condição C e antes de qualquer rodada de `casos_frescos.jsonl`.
+
+- **Condição C:** classificador de lista fechada antes das regras, com as regras como validação e fallback, mesmo commit-base de A e B.
+- **Barra:** C substitui A ou B somente se cumprir os itens 1, 2, 4 e 5 da barra em relação a A, tiver conclusão nos frescos estritamente maior que a de A e a de B, e mediana de tempo por caso de até 3 vezes a de A.
+- Com redação desligada nas três condições, que passa a ser o padrão da entrega.
+- Se C não passar, ela não entra na entrega, e o resultado é relatado.

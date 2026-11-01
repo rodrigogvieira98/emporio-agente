@@ -81,6 +81,22 @@ Complemento aprovado pelo Rodrigo em 31/10/2026, aplicado na etapa 5, quando o m
 - Antes de exibir, o código remove frase repetida ou quase igual dentro do turno e em relação às respostas anteriores, sem nunca remover bloco factual necessário à resposta atual.
 - A avaliação mede tamanho da resposta em caracteres e taxa de repetição, com contagens, contra o controle por regras. A taxa conta fatos e avisos reapresentados sem pedido sobre o total de fatos e avisos exibidos.
 
+## Site mínimo e Docker (etapas 6 e 7)
+
+Detalhamento do plano v3 aprovado pelo Rodrigo ("pode seguir com o site e o docker", 01/11/2026). Escopo do núcleo apenas. Compra de demonstração, sentimento, streaming, interrupção e tela do atendente são incrementos e ficam fora desta etapa.
+
+- Stack: FastAPI, Jinja2 e HTMX (versão fixa, servida localmente em `static/`, sem CDN), uvicorn. Sem framework JS e sem build.
+- Páginas: início com busca, catálogo por categoria e faixa de preço, página do produto, políticas, rastreio de pedido e o chat da Lia em painel fixo em todas as páginas.
+- Toda informação do site vem das mesmas ferramentas do agente (`buscar_produtos`, `ver_produto`, `calcular_condicoes`, `consultar_pedido`, `consultar_politica`, `listar_promocoes`). Nenhuma consulta SQL nas rotas, nenhum preço ou regra calculado no template.
+- Situação de venda e promoção exibidas como a ferramenta devolve. Produto descontinuado ou esgotado aparece marcado, sem botão de compra.
+- Rastreio usa `consultar_pedido` com número e final do telefone, com o mesmo `negado` unificado e o mesmo limite de tentativas, contado por sessão do navegador.
+- Chat: `POST /chat` com `conversa_id` da sessão (cookie assinado, sem PII) chama `Agente.responder(..., origem="real")` e devolve o fragmento HTML. Texto do agente é escapado; quebras de linha viram `<br>`.
+- Agente montado por `criar_agente` uma vez por processo. Padrão: `EMPORIO_DECISOR=regras` e modelo local só na redação. Ollama ausente ou com falha: o agente responde só com os blocos das regras e o trace registra a falha.
+- `GET /saude` responde estado do banco e do modelo.
+- Banco criado na subida se não existir, com `python -m emporio.dados.carga`.
+- Docker Compose: serviço `app` (python:3.12-slim, usuário sem root, porta 8000) e serviço `ollama` com volume do modelo. Um serviço de uma vez baixa o modelo padrão. Sem GPU a stack sobe e responde; com GPU, configuração opcional documentada.
+- Testes: rotas com `TestClient` (catálogo, produto descontinuado sem compra, rastreio ok e negado, chat devolve protocolo em pedido de atendente, chat sem Ollama responde). Um teste Playwright de ponta a ponta no chat e no rastreio, marcado para rodar à parte.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

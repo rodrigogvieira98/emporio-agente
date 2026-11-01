@@ -134,6 +134,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     saida["produtos_total"] = goods
     total = goods
 
+    cep_invalido = False  # o erro do CEP já está na lista; a linha do frete não pode pedir o CEP de novo
     if cidade:
         frete = _frete(loc, cidade, itens, goods, base_frete)
         if frete is None:
@@ -144,8 +145,10 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
                 total += frete["taxa"]
                 saida["total_com_frete_definido"] = True
     elif loc.estado == "inexistente":
+        cep_invalido = True
         pend.append("CEP não encontrado. Confira os números ou use o link para descobrir o seu CEP.")
     elif cep:
+        cep_invalido = True
         pend.append("O CEP precisa ter 8 números. Confira e tente de novo.")
     else:
         saida["falta_cep"] = True  # não é erro: o resumo diz "Informe o CEP" e o botão fica desligado
@@ -153,6 +156,8 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     rotulos = rotulos_frete(saida["frete"]["situacao"] if saida["frete"] else None,
                             saida["frete"]["taxa"] if saida["frete"] else None)
     saida["frete_linha"], saida["total_rotulo"] = rotulos["linha"], rotulos["total"]
+    if cep_invalido:
+        saida["frete_linha"] = "Frete: a calcular"
 
     if forma == "credito":
         rc = calcular_condicoes(valor=total, forma="credito", parcelas=n)

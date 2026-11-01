@@ -36,6 +36,7 @@ from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from ..ferramentas.promocoes import listar_promocoes
+from ..texto import radical, tokens
 from ..politicas.manual import carregar_manual, fato
 from . import apresentacao, carrinho, compra, conteudo, contato, entradas, fotos, home, navegacao
 from .limite import LimiteRastreio
@@ -333,13 +334,23 @@ def criar_app(agente: Any = None) -> FastAPI:
             return pagina_contato(request, valores, {"geral": "Não conseguimos registrar agora. Tente de novo em instantes."}, 502)
         return RedirectResponse("/fale-conosco?enviado=" + assinador_contato.dumps(protocolo), status_code=303)
 
+    def _categoria_canonica(texto: str) -> str:
+        """Slug da Lia ou digitação livre ('ukulele', 'VIOLAO') vira o nome da categoria; sem par, fica como veio."""
+        consulta = {radical(t) for t in tokens(texto)}
+        if not consulta:
+            return texto
+        achadas = [n for n in navegacao.listar_categorias() if consulta <= {radical(t) for t in tokens(n)}]
+        exata = [n for n in achadas if consulta == {radical(t) for t in tokens(n)}]
+        escolha = exata or achadas
+        return escolha[0] if len(escolha) == 1 else texto
+
     @app.get("/catalogo", response_class=HTMLResponse)
     def catalogo(request: Request, categoria: str = "", termo: str = "", preco_min: str = "",
                  preco_max: str = "", todos: str = "", pagina_: str = Query("1", alias="pagina")):
         numero_pagina = entradas.inteiro(pagina_)
         if not numero_pagina:
             return pagina_de_erro(request, 422)
-        filtros = {"categoria": categoria.strip(), "termo": termo.strip(), "preco_min": preco_min.strip(),
+        filtros = {"categoria": _categoria_canonica(categoria.strip()), "termo": termo.strip(), "preco_min": preco_min.strip(),
                    "preco_max": preco_max.strip(), "todos": bool(todos)}
         erro = None
         itens: list[dict[str, Any]] = []

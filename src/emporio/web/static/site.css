@@ -325,7 +325,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .chat-id { display: grid; flex: 1; line-height: 1.2; }
 .chat-id strong { font: 700 1.125rem var(--titulo); }
 .chat-id small { opacity: .92; }
-.chat-fechar { border-color: var(--creme-claro); min-height: 44px; }
+.chat-fechar { color: var(--creme-claro); border-color: var(--creme-claro); min-height: 44px; }
 .chat-fechar:hover { background: var(--creme-claro); color: var(--palco); }
 .chat-log { height: 17rem; overflow-y: auto; padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); }
 .msg { margin: 0; padding: var(--s2) var(--s3); border-radius: var(--raio); max-width: 90%; overflow-wrap: anywhere; font-size: .9375rem; }
@@ -342,6 +342,9 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .chat-corpo { display: block; }
 @media (max-width: 767px) {
   .lia-botao span { font-size: .9375rem; }
+  /* só o retrato: o botão não cobre rótulos nem links no rodapé da página; o nome acessível continua no texto */
+  .lia-botao { padding: var(--s1); }
+  .lia-botao span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   html.chat-tela-cheia, html.chat-tela-cheia body { overflow: hidden; }
   html.chat-tela-cheia .lia-flutuante { inset: 0; right: 0; bottom: auto; top: var(--topo-visivel, 0px); height: var(--altura-visivel, 100dvh); align-items: stretch; z-index: 80; }
   html.chat-tela-cheia .chat { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; display: flex; flex-direction: column; box-shadow: none; }
@@ -400,6 +403,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .resumo-total { margin: var(--s3) 0 0; font-variant-numeric: tabular-nums; }
 .resumo-total > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding-block: var(--s2); border-bottom: 1px dashed var(--cinza); }
 .resumo-total dt { color: var(--cinza-texto); }
+.resumo-sub, .resumo-qtd, .resumo-total .resumo-final dd { white-space: nowrap; }  /* "R$" e o número não se separam */
 .resumo-total dd { margin: 0; text-align: right; font-weight: 600; }
 .nota-politica { margin-top: var(--s3); color: var(--cinza-texto); }
 .resumo-total .resumo-frete dd { display: none; }

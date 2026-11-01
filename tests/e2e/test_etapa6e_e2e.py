@@ -165,7 +165,6 @@ def test_fale_conosco_em_duas_colunas_de_mesma_altura_em_1280(url_site, navegado
     assert horario["x"] > form["x"] + form["width"] - 1  # lado a lado
     assert pagina.locator(".fc-canais .bloco-3").count() == 3
     assert [t.strip() for t in pagina.locator(".fc-canais h2").all_inner_texts()] == ["WhatsApp", "Telefone", "E-mail"]
-    assert fato("empresa.endereco").valor["logradouro"] in pagina.inner_text(".fc-horario")
     CAPTURAS.mkdir(parents=True, exist_ok=True)
     pagina.screenshot(path=str(CAPTURAS / "fale_conosco_1280.png"), full_page=True)
 

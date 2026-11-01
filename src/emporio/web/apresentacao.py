@@ -73,7 +73,8 @@ def blocos_politica(texto: str | None) -> Markup:
                 tabela.append([str(escape(c.strip())) for c in linhas[i].split("|")])
                 i += 1
             cabeca, corpo = tabela[0], tabela[1:]
-            saida.append('<div class="tabela-rolavel"><table class="tabela-politica"><thead><tr>'
+            rotulo = "Tabela: " + ", ".join(cabeca)
+            saida.append(f'<div class="tabela-rolavel" tabindex="0" role="region" aria-label="{rotulo}"><table class="tabela-politica"><thead><tr>'
                          + "".join(f'<th scope="col">{c}</th>' for c in cabeca) + "</tr></thead><tbody>"
                          + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in linha) + "</tr>" for linha in corpo)
                          + "</tbody></table></div>")

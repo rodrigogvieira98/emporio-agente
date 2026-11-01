@@ -12,7 +12,7 @@
 {% else %}
 <form class="checkout" action="/checkout" method="post"
       hx-get="/checkout" hx-trigger="change, input from:#cep delay:350ms" hx-target="#checkout-dinamico" hx-swap="outerHTML"
-      hx-sync="this:replace" hx-replace-url="true">
+      hx-sync="this:replace" hx-replace-url="true" hx-params="not total_visto">
   <div class="checkout-campos">
     <label for="forma">Forma de pagamento
       <select id="forma" name="forma">

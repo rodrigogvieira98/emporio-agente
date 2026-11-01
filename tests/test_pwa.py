@@ -36,7 +36,7 @@ def test_manifest_valido_e_com_tipo_correto(cliente):
     assert m["name"] == fato("empresa.nome_fantasia").valor and m["short_name"] in m["name"]
     assert m["start_url"] == "/" and m["scope"] == "/" and m["display"] == "standalone" and m["lang"] == "pt-BR"
     cores = apresentacao.cores()
-    assert m["theme_color"] == cores["tinta"] and m["background_color"] == cores["papel"]  # dos tokens do CSS
+    assert m["theme_color"] == cores["palco"] and m["background_color"] == cores["creme"]  # dos tokens do CSS
 
 
 def test_manifest_tem_icones_192_512_e_maskable_que_existem(cliente):

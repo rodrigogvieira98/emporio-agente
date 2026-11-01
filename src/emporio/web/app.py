@@ -200,7 +200,7 @@ def criar_app(agente: Any = None) -> FastAPI:
             "name": info["nome"], "short_name": info["nome"].split(" ", 1)[0],
             "description": "Catálogo, condições e a assistente Lia, com os dados da loja.",
             "lang": "pt-BR", "dir": "ltr", "start_url": "/", "scope": "/", "id": "/", "display": "standalone",
-            "background_color": c.get("papel"), "theme_color": c.get("tinta"), "categories": ["shopping", "music"],
+            "background_color": c.get("creme"), "theme_color": c.get("palco"), "categories": ["shopping", "music"],
             "icons": [
                 {"src": "/static/icones/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
                 {"src": "/static/icones/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},

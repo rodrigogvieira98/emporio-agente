@@ -210,13 +210,12 @@ def contraste(a: str, b: str) -> float:
     return (la + 0.05) / (lb + 0.05)
 
 
-PARES_TEXTO = [  # (texto, fundo)
-    ("tinta", "papel"), ("tinta", "papel-claro"), ("jacaranda", "papel"), ("jacaranda", "papel-claro"),
-    ("cinza-texto", "papel"), ("cinza-texto", "papel-claro"), ("papel", "tinta"), ("papel", "jacaranda"),
-    ("pantanal", "papel"), ("pantanal", "papel-claro"), ("alerta", "papel"), ("alerta", "papel-claro"),
-    ("tinta", "ipe"),
-    ("papel-claro", "pantanal"), ("papel-claro", "pantanal-escuro"), ("pantanal", "verde-claro"),
-    ("pantanal-escuro", "verde-claro"), ("cinza-texto", "verde-claro"), ("tinta", "verde-claro"), ("papel", "tinta"),
+PARES_TEXTO = [  # (texto, fundo): tokens da identidade Palco e madeira
+    ("tinta", "creme"), ("tinta", "creme-claro"), ("tinta", "creme-escuro"), ("madeira", "creme"), ("madeira", "creme-claro"),
+    ("cinza-texto", "creme"), ("cinza-texto", "creme-claro"), ("cinza-texto", "creme-escuro"), ("alerta", "creme"), ("alerta", "creme-claro"),
+    ("creme-claro", "palco"), ("creme-claro", "palco-claro"), ("creme-escuro", "palco"), ("ipe", "palco"), ("ipe", "palco-claro"),
+    ("palco", "ipe"), ("palco", "ipe-escuro"), ("mata", "creme"), ("mata", "creme-claro"), ("mata", "mata-claro"),
+    ("tinta", "mata-claro"), ("tinta", "ipe"), ("creme", "palco"), ("creme-claro", "madeira"),
 ]
 
 

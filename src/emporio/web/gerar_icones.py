@@ -35,7 +35,7 @@ def gerar() -> list[Path]:
     from playwright.sync_api import sync_playwright
 
     c = apresentacao.cores()
-    fundo, marca = c["jacaranda"], c["papel"]
+    fundo, marca = c["madeira"], c["creme"]
     SAIDA.mkdir(parents=True, exist_ok=True)
     gerados: list[Path] = []
     with sync_playwright() as p:

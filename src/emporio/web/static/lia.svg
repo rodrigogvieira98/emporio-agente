@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Retrato ilustrado da Lia">
-  <circle cx="32" cy="32" r="32" fill="#2F4A3A"/>
+  <circle cx="32" cy="32" r="32" fill="#1B1410"/>
   <path d="M12 64c1-12 9-19 20-19s19 7 20 19z" fill="#F4EEE3"/>
   <path d="M27 42h10v6c0 3-2 5-5 5s-5-2-5-5z" fill="#C98F68"/>
   <path d="M17 30c0-11 6-18 15-18s15 7 15 18v10c0 3-2 4-4 3l-2-9H23l-2 9c-2 1-4 0-4-3z" fill="#3A2417"/>
@@ -8,6 +8,6 @@
   <circle cx="27.500" cy="31.500" r="1.300" fill="#1F1A17"/>
   <circle cx="36.500" cy="31.500" r="1.300" fill="#1F1A17"/>
   <path d="M28 37.500c2.500 2 5.500 2 8 0" fill="none" stroke="#8A4B3A" stroke-width="1.500" stroke-linecap="round"/>
-  <path d="M15 33a3 3 0 0 1 3-3v8a3 3 0 0 1-3-3zm34 0a3 3 0 0 0-3-3v8a3 3 0 0 0 3-3z" fill="#E3A72F"/>
-  <path d="M46 38c0 6-4 9-9 9" fill="none" stroke="#E3A72F" stroke-width="1.500" stroke-linecap="round"/>
+  <path d="M15 33a3 3 0 0 1 3-3v8a3 3 0 0 1-3-3zm34 0a3 3 0 0 0-3-3v8a3 3 0 0 0 3-3z" fill="#F5B81C"/>
+  <path d="M46 38c0 6-4 9-9 9" fill="none" stroke="#F5B81C" stroke-width="1.500" stroke-linecap="round"/>
 </svg>

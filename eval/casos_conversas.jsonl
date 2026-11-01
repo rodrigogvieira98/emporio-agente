@@ -43,3 +43,5 @@
 {"id":"c43","cat":"qa_lia","turnos":["o entregador ta aqui e a caixa do violao ta toda amassada"],"contem":["recusar o recebimento"],"nao_contem":["Encontrei"]}
 {"id":"c44","cat":"qa_lia","turnos":["pedido 17 telefone final 8765","pq foi cancelado?"],"contem":["cancelado pelo cliente antes do processamento"],"nao_contem":["Não entendi"]}
 {"id":"c45","cat":"qa_lia","turnos":["quanto custa o ukulele Shelby SU-21S?","moro em campo grande, quanto e o frete?"],"contem":["taxa fixa de R$ 35,00"],"nao_contem":["valor aproximado do pedido"],"chamado":false}
+{"id":"c46","cat":"qa_lia","turnos":["quanto custa o Yamaha F310?","coloca no carrinho"],"contem":["Adicionar ao carrinho"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c47","cat":"qa_lia","turnos":["quero um violao","tenho 500 reais, qual voce indica?"],"contem":["Minha sugestão"],"nao_contem":["Qual tipo de instrumento","R$ 549,00"],"chamado":false}

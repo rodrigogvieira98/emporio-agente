@@ -175,6 +175,7 @@ vende vendem vendo vender existe existem trabalha trabalham confirma confirmar c
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
 pro faz ha so semana semanas dia dias mes meses ano anos
+coloca coloque colocar poe ponha joga bota manda mande pego pegar fechou
 outro outra outros outras nossa nossa entao tambem ele ela dele dela deles delas dois duas ambos ambas cada mas ne hmm
 ah poxa puxa caramba putz gostei legal otimo show beleza pois certo entendi tipo assim uns volta voltando ok
 agora ainda talvez ja eu nos gente tambem outra vez fico ficar fica ficaria dar da dou
@@ -255,7 +256,10 @@ DEBITO_BANDEIRA = re.compile(r"\bbandeiras?\b")
 COMPRA = re.compile(
     r"\b((quero|queria|vou|gostaria de|posso|pretendo|decidi|bora|vamos|preciso) (comprar|levar|fechar)|"
     r"comprar (o|a|esse|essa|ele|ela|este|esta)|adicion\w+ (ao|no|o) carrinho|fechar (a )?compra|quero levar|"
-    r"vou levar|levo (o|a|esse|essa|ele|ela))\b")
+    r"vou levar|levo (o|a|esse|essa|ele|ela)|"
+    r"(quero|queria|vou querer|pego|vou pegar|fico com) (esse|essa|este|esta|ele|ela|o mesmo|a mesma)|"
+    r"(quero|queria|vamos|bora|pode|posso|vou) fechar|fechar (o pedido|a venda)|"
+    r"(coloc\w+|poe|ponha|pon\w+|adicion\w+|joga|bota|mand\w+) (ele |ela |esse |essa |isso )?(no|ao|pro|para o) carrinho)\b")
 # Nível e orçamento ditos em palavras: qualificam a busca sem perguntar de novo.
 NIVEL_INICIANTE = re.compile(r"\b(iniciantes?|principiantes?|comecando|comecar|aprender|aprendendo|estudantes?|"
                              r"primeiro (violao|instrumento|teclado|baixo|ukulele|bateria|guitarra))\b")

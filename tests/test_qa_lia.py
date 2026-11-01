@@ -239,6 +239,66 @@ def test_grande_porte_diz_cotacao_individual():
     assert "Qual produto" not in t[1]
 
 
+# 8. compra com produto em foco ---------------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", ["quero esse", "quero fechar", "coloca no carrinho", "beleza, quero fechar", "vou levar"])
+def test_compra_com_produto_em_foco_mostra_o_botao(msg):
+    r = conversar("quanto custa o Yamaha F310?", msg)[1]
+    assert any(x["tipo"] == "carrinho" for x in r.links), r.texto
+    assert "Não entendi" not in r.texto and "eu não adiciono nada por você" in r.texto
+
+
+def test_resposta_de_compra_nao_recebe_texto_livre_do_modelo():
+    from emporio.agente.redacao import Redator
+
+    from emporio.agente.llm import RespostaLlm
+
+    class Modelo:
+        chamadas = 0
+
+        def conversar(self, modelo, mensagens, formato=None, limite=None, maximo_tokens=400):
+            Modelo.chamadas += 1
+            return RespostaLlm(conteudo='{"abertura": null, "fechamento": null}', tokens_prompt=1, tokens_resposta=1,
+                               latencia_ms=1)
+
+    agente = Agente(redator=Redator("m", cliente=Modelo()))
+    conversar("quanto custa o Yamaha F310?", agente=agente)
+    antes = Modelo.chamadas
+    r = conversar("quero esse", conversa="qa", agente=agente)[0]
+    assert Modelo.chamadas == antes and any(x["tipo"] == "carrinho" for x in r.links)
+
+
+# 9. orçamento ----------------------------------------------------------------------------------------
+
+def _precos(texto):
+    import re
+    return [int(a.replace(".", "")) for a in re.findall(r"R\$ (\d{1,3}(?:\.\d{3})*),\d\d", texto)]
+
+
+def test_teto_dito_depois_da_busca_refina_a_lista():
+    t = textos("quero um violao pro meu filho de 10 anos", "até 600 reais")
+    assert "Qual produto" not in t[1] and "Crafter" not in t[1]
+    assert _precos(t[1]) and max(_precos(t[1])) <= 600
+
+
+def test_recomendacao_respeita_o_teto_informado():
+    t = textos("quero um violao", "tenho 500 reais, qual voce indica?", "qual vc recomenda?")
+    for texto in t[1:]:
+        assert _precos(texto) and max(_precos(texto)) <= 500, texto
+        assert "Qual tipo de instrumento" not in texto
+
+
+def test_sem_produto_dentro_do_teto_nao_sugere_produto_acima():
+    (t,) = textos("guitarra até 1000 reais")
+    assert not _precos(t) or max(_precos(t)) <= 1000
+    assert "Minha sugestão" not in t
+
+
+def test_numero_sem_unidade_nao_vira_teto():
+    t = textos("quero um violao", "tenho 2 filhos")
+    assert not _precos(t[1]) or max(_precos(t[1])) > 100
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

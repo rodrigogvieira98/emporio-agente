@@ -34,6 +34,10 @@ UFS = ("ac", "al", "ap", "am", "ba", "ce", "df", "es", "go", "ma", "mt", "ms", "
 
 _PRECO = r"(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(?:\s*(mil))?(?:\s*reais|\s*real)?"
 RE_MAX = re.compile(r"\b(?:ate|no maximo|maximo|abaixo de|menos de|por ate)\s*" + _PRECO)
+# "tenho 500 reais", "meu orçamento é 800": teto dito sem "até"; exige unidade para não confundir "tenho 2 filhos"
+RE_TETO_IMPLICITO = re.compile(
+    r"\b(?:so tenho|tenho|disponho de|orcamento (?:de|e|eh|seria|maximo de)|verba de|posso gastar|uns|cerca de|em torno de)\s*"
+    r"(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(?:\s*(mil))?(?:\s*reais|\s*real)?")
 RE_MIN = re.compile(r"\b(?:a partir de|acima de|mais de|no minimo|minimo)\s*" + _PRECO)
 RE_VALOR = re.compile(r"(?:r\$\s*(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?))|(?:\b(\d{1,3}(?:\.\d{3})+|\d+)\s*(?:reais|real)\b)")
 RE_PARCELAS = re.compile(r"\b(\d{1,2})\s*x\b|\bem (\d{1,2}) (?:vezes|parcelas)\b|\b(\d{1,2}) (?:vezes|parcelas)\b")
@@ -162,6 +166,7 @@ def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     s = RE_NUMERO_NAO_PRODUTO.sub(" ", s)
     s = RE_MAX.sub(" ", s)
     s = RE_MIN.sub(" ", s)
+    s = RE_TETO_IMPLICITO.sub(lambda m: " " if re.search(r"\breais?\b|r\$|mil", m.group(0)) else m.group(0), s)
     s = RE_VALOR.sub(" ", s)
     s = RE_PARCELAS.sub(lambda m: m.group(0) if _nome_de_produto(s, m, voc) else " ", s)
     s = v.DATA.sub(" ", s)
@@ -174,6 +179,10 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots: dict[str, Any] = {"palavras": len(norm.split())}
     slots.update(_numeros_de_pedido(norm, estado))
     m = RE_MAX.search(norm)
+    if not m:
+        t = RE_TETO_IMPLICITO.search(norm)
+        # sem a unidade, "tenho 2 filhos" não é teto de preço
+        m = t if t and (t.group(2) or re.search(r"\breais?\b|r\$", t.group(0))) else None
     if m:
         slots["preco_max"] = _reais(m.group(1), m.group(2))
     m = RE_MIN.search(norm)
@@ -498,6 +507,18 @@ def perceber(estado: Estado, mensagem: str) -> None:
         assunto = estado.objetivo or estado.ultimo_assunto
         if assunto in POSVENDA | {"garantia"}:
             nova = assunto  # "o que eu faço?" depois de uma orientação: o assunto de pós-venda continua
+    # busca em andamento: "até 600 reais" refina a lista; "qual você recomenda?" usa a categoria e o teto já ditos
+    ub = (estado.coletados.get("ultima_busca") or {}).get("args") or {}
+    so_faixa = ("preco_max" in s or "preco_min" in s) and "referencia" not in s and "categoria" not in s
+    pede_indicacao = bool(re.search(r"\b(recomend\w*|indic\w*|sugere\w*|sugest\w*|melhor opcao|qual (voce )?(escolheria|levaria))\b", norm))
+    if (ub.get("categoria") and "referencia" not in s and "categoria" not in s
+            and nova in (None, "preco_produto", "busca_produto", "disponibilidade", "confirmacao_solta")
+            and (so_faixa or (pede_indicacao and nova in (None, "busca_produto")))):
+        s["categoria"] = ub["categoria"]
+        for k in ("preco_min", "preco_max"):
+            if k not in s and ub.get(k) is not None:
+                s[k] = ub[k]
+        nova = "busca_produto"
     if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
         nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco
         s["produto_id"] = ultimo
@@ -547,7 +568,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
         return
     if ag == "parcelamento":  # "quer ver as parcelas?": o sim mostra, o não encerra, outra coisa segue o fluxo normal
         estado.aguardando = None
-        resposta_curta = nova in (None, "confirmacao_solta")  # outra intenção ("quero um atendente") não é o sim
+        resposta_curta = nova in (None, "confirmacao_solta") and not s["compra"]  # "quero esse" é compra, não o sim
         if resposta_curta and s["afirmativo"] and not s["negativo"] and estado.coletados.get("ultimo_produto"):
             estado.objetivo = estado.intencao = "parcelamento_produto"
             return
@@ -560,7 +581,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
     if ag == "condicoes":  # "quer ver as condições dele?": o sim mostra o preço da opção que a Lia destacou
         estado.aguardando = None
         alvo = estado.coletados.get("recomendado")
-        resposta_curta = nova in (None, "confirmacao_solta")
+        resposta_curta = nova in (None, "confirmacao_solta") and not s["compra"]
         if resposta_curta and alvo and s["afirmativo"] and not s["negativo"]:
             estado.objetivo = estado.intencao = "preco_produto"
             s["produto_id"] = alvo

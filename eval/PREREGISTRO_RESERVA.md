@@ -41,3 +41,7 @@ Escrito antes de implementar a condição C e antes de qualquer rodada de `casos
 ## Adendo de 01/11/2026, 19h15: redação ligada na entrega
 
 Escrito antes de qualquer rodada de `casos_frescos.jsonl` e do holdout. Por decisão do Rodrigo, a entrega usa redação ligada (`EMPORIO_REDACAO=1`). As condições A e B passam a rodar com redação ligada, que é a configuração entregue, e A também sem redação, como controle. A barra não muda. Relatar também a telemetria `redacao_tentada`, `redacao_exibida` e `redacao_descartada` com denominador.
+
+## Adendo de 01/11/2026, 19h20: escolha do modelo de redação
+
+Escrito antes das rodadas. Candidatos com licença que permite a entrega pública e cabem em CPU comum: `qwen2.5:3b` (atual) e `qwen3:4b` (Apache 2.0). Mesmo commit, `EMPORIO_REDACAO=1`, `EMPORIO_DECISOR=regras`, conjuntos dev e conversas, validador reforçado. Ordem de decisão: (1) zero aumento de fatos críticos errados e de chamados indevidos contra o controle sem redação, eliminatório; (2) maior taxa de redação exibida sobre tentada; (3) menor mediana de tempo por caso; (4) empate fica com o menor modelo. `llama3.1:8b` e `qwen3:8b` ficam fora: mais de 4 GB e já mediram pior como decisores.

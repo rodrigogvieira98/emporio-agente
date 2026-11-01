@@ -986,7 +986,8 @@ def _sentenca(texto: str) -> str:
 
 def garantia_excluida(e: Estado, p: dict) -> str:
     itens = _condicoes(e).get("garantia.nao_cobre") or []
-    achados = [x for x in itens if re.search(r"queda|mau uso", normalizar(x))]
+    padrao = r"desgaste" if p.get("desgaste") and not p.get("mau_uso") else r"queda|mau uso"
+    achados = [x for x in itens if re.search(padrao, normalizar(x))]
     if not achados:
         return sem_dado(e, p)
     return (f"Pelas regras da loja, a garantia não cobre: {_sentenca(achados[0])}. Por isso esse caso não entra em troca por "
@@ -1107,6 +1108,20 @@ def frete_grande_porte(e: Estado, p: dict) -> str:
             "individual: a nossa equipe faz o cálculo, e eu não informo valor por aqui.")
 
 
+def parecidos(e: Estado, p: dict) -> str:
+    """Outros modelos da mesma categoria do produto em foco, em faixa de preço próxima (ou mais baratos)."""
+    d = _dados(e, "ver_produto")
+    r = e.ultimo("buscar_produtos")
+    itens = [i for i in (r.dados["itens"] if r is not None and r.estado == "ok" else []) if i["id"] != d["id"]][:3]
+    faixa = "mais barato que" if p.get("mais_barato") else "de faixa de preço próxima ao"
+    if not itens:
+        return (f"Não encontrei outro modelo de {d['categoria']} disponível {faixa} {d['nome']}. "
+                "Quer que eu mostre as opções da categoria?")
+    linhas = [f"- {i['nome']}: {formatar(i['preco_centavos'])}" for i in itens]
+    return (f"Modelos de {d['categoria']} {faixa} {d['nome']}, preço de tabela:\n" + "\n".join(linhas)
+            + "\nQuer ver as condições de algum deles?")
+
+
 TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
     f.__name__: f for f in (
         saudacao, horario, endereco, contato, pagamento, frete_info, pedir_valor_pedido, frete_calculado,
@@ -1122,7 +1137,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte)
+        frete_grande_porte, parecidos)
 }
 
 

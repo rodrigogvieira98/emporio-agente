@@ -43,7 +43,11 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"falar com (alguem|uma pessoa|um humano|gente)|passa (pra|para) (alguem|um))\b")),
     ("reclamacao", re.compile(
         r"\b(reclam\w*|insatisf\w*|pessim\w*|horrivel|absurdo|inadmissivel|descaso|decepcion\w*|"
-        r"indignad\w*|revoltad\w*|mau atendimento|atendimento ruim)\b")),
+        r"indignad\w*|revoltad\w*|mau atendimento|atendimento ruim|"
+        # queixa de atendimento: o conteúdo é a queixa, não um assunto de produto
+        r"(vendedor|atendente|funcionari[oa]|gerente|atendimento)\b.{0,40}\b(grosso|grossa|grosseir\w+|rude|mal educad\w+|"
+        r"debochou|ignorou|maltrat\w+|desrespeit\w+|ofendeu|despreparad\w+)|"
+        r"\b(grosseria|grosseiro|grosseira|desrespeito|maltratad[oa]|mal atendid[oa])\b)\b")),
     # quanto tempo para o dinheiro voltar: informação do manual, antes de abrir fluxo de devolução
     ("reembolso_prazo", re.compile(
         r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
@@ -61,8 +65,11 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\b(quando (chega|vai chegar|chegara|chegam|entrega|entregam|vou receber|recebo|sai|saiu)|"
         r"(qual|e a) (a )?previsao( de entrega| de chegada)?|ja (saiu|foi enviado|foi despachado)|chega (quando|que dia|hoje|amanha))\b")),
     ("status_pedido", re.compile(r"\b(pedido|rastre\w*|encomenda|onde esta (meu|minha)|status)\b")),
+    # produto parecido com o que está em foco: a mesma categoria, sem acessório
+    ("parecido", re.compile(r"\b(parecid\w+|similar\w*|semelhante\w*|alternativ\w+|outro (modelo|igual)|algo assim)\b")),
     ("fora_escopo", re.compile(
-        r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
+        r"\b((?<!\d )(?<!\d)cordas?(?! orquestrais?)(?!\s+(?:\w+\s+)?(?:arrebent|rebent|estour|romp|partiu|soltou|enferruj|"
+        r"oxid|gast|desgast))|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
         r"afinador\w*|suporte|estante|correia|caixas? de som|fone\w*|microfone\w*)\b")),
     ("promocao", re.compile(
         r"\b(promocao|promocoes|desconto\w*|black friday|oferta\w*|liquidacao|queima de estoque|"
@@ -71,7 +78,9 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("objecao_preco", re.compile(
         r"(?<!mais )\b(ta |esta |achei |muito |bem |meio |super |um pouco )+(caro|salgado)\b|\bcaro demais\b|"
         r"\bsem condicoes de pagar\b|\bnao cabe no (meu )?(bolso|orcamento)\b|"
-        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b")),
+        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b|"
+        r"\b(precinho|fazer um preco|melhorar (o )?preco|baixar (o )?preco|abaixar (o )?preco|negociar|negociacao|"
+        r"fazer (uma )?oferta|abatimento)\b")),
     ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa)\b")),
     ("pagamento", re.compile(
         r"\b(pagamento\w*|pagar|pix|boleto|cartao|credito|debito|parcel\w*|financia\w*)\b")),
@@ -79,6 +88,10 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("horario", re.compile(r"\b(horario\w*|abre|abrem|fecha|fecham|funcionamento|aberto|aberta|que horas)\b")),
     ("endereco", re.compile(r"\b(endereco|onde fica|onde ficam|localiza\w*|como chegar)\b")),
     ("contato", re.compile(r"\b(telefone|whatsapp|zap|e-?mail|contato|ligar)\b")),
+    # característica técnica do instrumento: o catálogo não traz ficha técnica; última antes da saudação
+    ("caracteristica", re.compile(
+        r"\b(captac\w+|captador\w*|cutaway|ficha tecnica|especificac\w+|diferenca entre|timbre|slap|"
+        r"qual (e )?(o )?melhor (pra|para))\b")),
     ("saudacao", re.compile(r"\b(oi|ola|bom dia|boa tarde|boa noite|e ai|opa|tudo bem|eai)\b")),
 ]
 
@@ -155,6 +168,9 @@ vende vendem vendo vender existe existem trabalha trabalham confirma confirmar c
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
 pro faz ha so semana semanas dia dias mes meses ano anos
+outro outra outros outras nossa nossa entao tambem ele ela dele dela deles delas dois duas ambos ambas cada mas ne hmm
+ah poxa puxa caramba putz gostei legal otimo show beleza pois certo entendi tipo assim uns volta voltando ok
+agora ainda talvez ja eu nos gente tambem outra vez fico ficar fica ficaria dar da dou
 ta caro salgado super pouco muito achei meio demais pensar analisar avaliar depois talvez calma volto vejo decido
 """.split())
 
@@ -206,7 +222,10 @@ MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|um
 AVARIA = re.compile(
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
     r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*")
-DIAS_DESDE_COMPRA = re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
+DESGASTE = re.compile(
+    r"\b(cordas?|palhetas?|trastes?|feltros?)\b.{0,25}\b(arrebent\w*|rebent\w*|estour\w*|romp\w*|partiu|gast\w*|desgast\w*|"
+    r"enferruj\w*)|\b(arrebent\w*|rebent\w*|estour\w*|romp\w*)\b.{0,20}\b(cordas?|palhetas?)\b")
+DIAS_DESDE_COMPRA =re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
 EMPRESA_CNPJ = re.compile(r"\b(cnpj)\b")
 EMPRESA_RAZAO = re.compile(r"\b(razao social)\b")
 EMPRESA_FUNDACAO = re.compile(r"\b(desde quando|fundad\w+|fundacao|quantos anos|ha quanto tempo|quando (a loja )?(foi )?criad\w+)\b")

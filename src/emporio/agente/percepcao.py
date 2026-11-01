@@ -247,6 +247,8 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
     slots["mau_uso"] = bool(v.MAU_USO.search(norm))
     slots["avaria"] = bool(v.AVARIA.search(norm))
+    slots["desgaste"] = bool(v.DESGASTE.search(norm))
+    slots["mais_barato"] = bool(v.EXTREMO_MIN.search(norm))
     dias = v.DIAS_DESDE_COMPRA.search(norm)
     if dias:  # "há 40 dias", "faz 2 meses": só o tempo desde a compra, para comparar com o prazo do manual
         unidade = {"d": 1, "s": 7, "m": 30}[dias.group(2)[0]]
@@ -319,6 +321,9 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         sobra = [n for n in achadas if n != intencao]
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale
             achadas = sobra
+    if slots.get("desgaste") and not any(n in ("devolucao", "troca_preferencia") for n in achadas):
+        # corda arrebentada: desgaste natural (8.3), não acessório nem defeito
+        achadas = ["garantia", *[n for n in achadas if n not in ("fora_escopo", "garantia", "defeito")]]
     if slots.get("modalidade") and "frete" not in achadas and not any(
             n in ("devolucao", "defeito", "troca_preferencia", "status_pedido") for n in achadas):
         achadas = ["frete", *achadas]  # "qual o prazo do PAC?": pergunta de envio, mesmo sem a palavra "frete"

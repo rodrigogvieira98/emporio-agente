@@ -198,12 +198,15 @@ class RegrasDecisor:
 
     def _exclusao_garantia(self, estado: Estado) -> Acao | None:
         """Queda e mau uso (8.3) têm resposta própria, nunca a regra de troca por defeito ou preferência."""
-        if estado.objetivo not in ("defeito", "garantia") or not estado.slots.get("mau_uso"):
+        s = estado.slots
+        if estado.objetivo not in ("defeito", "garantia") or not (s.get("mau_uso") or s.get("desgaste")):
             return None
         r = resultado_de(estado, "consultar_politica", temas=["garantia"])
         if r is None:
             return ferramenta("consultar_politica", temas=["garantia"])
-        return responder("garantia_excluida") if r.estado == "ok" else self._erro(estado, r)
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("garantia_excluida", desgaste=bool(s.get("desgaste")), mau_uso=bool(s.get("mau_uso")))
 
     def _avaria(self, estado: Estado) -> Acao | None:
         """Avaria no recebimento (5.2): recusar o recebimento e falar com a loja, sem a regra de defeito."""
@@ -574,7 +577,9 @@ class RegrasDecisor:
             return perguntar("escolha_produto_curta", "escolha_produto"), None
         if ref is None and (s.get("compra") or estado.coletados.get("compra")) and not s.get("desconhecidas"):
             ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
-        if ref is None and not s.get("desconhecidas") and not s.get("tem_modelo"):
+        # seguimento ("tá caro", "tem outro parecido?"): o produto em foco vale mesmo com palavras que o catálogo não conhece
+        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar")
+        if ref is None and (seguimento or not s.get("desconhecidas")) and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}
             ref = estado.coletados.get("ultimo_produto") or (busca.get("ids") or [None])[0]
@@ -628,6 +633,26 @@ class RegrasDecisor:
             return perguntar("produto_indisponivel", "retentar_parecidas")
         estado.coletados.pop("parecidas", None)
         return responder("produto_indisponivel")
+
+    def _i_parecido(self, estado: Estado) -> Acao:
+        """"Tem outro parecido?": modelos da mesma categoria do produto em foco, em faixa próxima ou mais baratos."""
+        acao, produto = self._produto(estado)
+        if acao:
+            return acao
+        preco = produto["preco_centavos"]
+        mais_barato = bool(estado.slots.get("mais_barato"))
+        args = {"categoria": produto["categoria"], "preco_min": int(preco * 0.6),
+                "preco_max": preco - 1 if mais_barato else int(preco * 1.4), "limite": 4}
+        r = busca_exata(estado, args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        if r.estado == "falha":
+            return self._erro(estado, r)
+        return responder("parecidos", mais_barato=mais_barato)
+
+    def _i_caracteristica(self, estado: Estado) -> Acao:
+        """Característica técnica (captação, timbre, comparativo de som): o catálogo não traz ficha técnica."""
+        return propor("sem_dado", "sem_dado", "Cliente perguntou uma caracteristica tecnica que o catalogo nao traz.")
 
     def _i_promocao(self, estado: Estado) -> Acao:
         args = {"termo": estado.slots["termo_promocao"]} if estado.slots.get("termo_promocao") else {}

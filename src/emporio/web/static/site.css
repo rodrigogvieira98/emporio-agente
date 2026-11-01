@@ -121,17 +121,18 @@ button:disabled { opacity: .55; cursor: wait; }
 /* abertura: palco com a fotografia de ponta a ponta do bloco */
 .abertura { background: var(--palco); color: var(--creme-claro); border-bottom: 3px solid var(--ipe); overflow: hidden; }
 .abertura-grade { display: grid; gap: 0; align-items: stretch; max-width: none; padding-inline: 0; }
-.abertura-texto { padding: var(--s10) max(var(--lateral), env(safe-area-inset-left)) var(--s8) max(var(--lateral), env(safe-area-inset-right)); align-self: center; }
-.abertura h1 { font-size: 2.75rem; line-height: 1.05; letter-spacing: -.02em; max-width: 12ch; margin-bottom: var(--s4); color: var(--creme-claro); }
-.abertura-linha { max-width: 30rem; color: var(--creme-escuro); font-size: 1.125rem; }
-.abertura-acoes { margin: var(--s6) 0 0; }
-.abertura-foto { margin: 0; overflow: hidden; aspect-ratio: 4 / 3; background: var(--palco-claro); }
+.abertura-texto { padding: var(--s6) max(var(--lateral), env(safe-area-inset-left)) var(--s6) max(var(--lateral), env(safe-area-inset-right)); align-self: center; }
+.abertura h1 { font-size: 2rem; line-height: 1.08; letter-spacing: -.02em; max-width: 16ch; margin-bottom: var(--s4); color: var(--creme-claro); }
+.abertura-linha { max-width: 30rem; color: var(--creme-escuro); font-size: 1rem; }
+.abertura-acoes { margin: var(--s4) 0 0; }
+.abertura-foto { margin: 0; overflow: hidden; height: min(260px, 75vw); background: var(--palco-claro); }
 .abertura-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
 @media (min-width: 768px) {
   .abertura-grade { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-  .abertura-texto { padding-block: var(--s16); padding-left: max(var(--lateral), calc((100vw - 76rem) / 2 + var(--lateral))); padding-right: var(--s8); }
-  .abertura h1 { font-size: 4.25rem; }
-  .abertura-foto { aspect-ratio: auto; min-height: 30rem; }
+  .abertura-texto { padding-block: var(--s6); padding-left: max(var(--lateral), calc((100vw - 76rem) / 2 + var(--lateral))); padding-right: var(--s8); }
+  .abertura h1 { font-size: 2.75rem; }
+  .abertura-grade { max-height: 21rem; }
+  .abertura-foto { height: 21rem; }
 }
 
 /* seções */
@@ -206,7 +207,7 @@ button:disabled { opacity: .55; cursor: wait; }
 
 /* perguntas frequentes */
 .faq { display: grid; gap: 0; border-top: 1px solid var(--cinza); max-width: 50rem; }
-#ajuda .faq { max-width: none; }
+#ajuda .faq, .faq-pagina .faq { max-width: none; }  /* mesma largura da seção da home e da faixa de contato */
 .faq-item { border-bottom: 1px solid var(--cinza); }
 .faq-item summary { cursor: pointer; font-weight: 600; padding: var(--s4) var(--s8) var(--s4) 0; list-style: none; position: relative; min-height: 44px; }
 .faq-item summary::-webkit-details-marker { display: none; }
@@ -476,7 +477,8 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .tabela-politica td:first-child { font-weight: 700; }
 .lista-politica { margin: 0 0 var(--s4); padding-left: var(--s6); display: grid; gap: var(--s2); }
 .produto-arte { position: relative; }
-.legenda-ilustrativa { position: absolute; left: var(--s3); bottom: var(--s3); padding: 2px var(--s2); border-radius: 3px; background: var(--palco); color: var(--creme-claro); font-size: .75rem; font-weight: 600; }
+.legenda-ilustrativa { position: absolute; left: var(--s3); bottom: var(--s3); padding: 2px var(--s2); border-radius: 3px; background: var(--palco); color: var(--creme-claro); font-size: .75rem; font-weight: 600;  text-decoration: none; }
+.legenda-ilustrativa:hover, .legenda-ilustrativa:focus-visible { text-decoration: underline; }
 .item-subtotal { margin: var(--s2) 0 0; color: var(--cinza-texto); }
 .item-subtotal strong { color: var(--tinta); font: 700 1.125rem var(--titulo); font-variant-numeric: tabular-nums; }
 .carrinho-total { margin: 0 0 var(--s2); padding-top: var(--s4); font-size: 1.125rem; border-top: 3px solid var(--palco); }

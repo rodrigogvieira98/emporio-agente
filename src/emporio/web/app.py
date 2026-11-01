@@ -400,7 +400,7 @@ def criar_app(agente: Any = None) -> FastAPI:
         r = ver_produto(referencia=produto_id)
         if r.estado == "vazio":
             return pagina(request, "mensagem.html", 404, titulo="Produto não encontrado",
-                          texto="Não achamos esse produto. Veja o catálogo ou pergunte para a Lia.")
+                          texto="Não achamos esse produto. Veja o catálogo ou pergunte à Lia.")
         if r.estado != "ok":
             return pagina(request, "mensagem.html", 502, titulo="Produto indisponível no momento", texto=MSG_FALHA)
         item = home.com_foto(apresentacao.preparar_item(r.dados, _promocoes()), r.dados["categoria"])
@@ -414,7 +414,7 @@ def criar_app(agente: Any = None) -> FastAPI:
         temas = conteudo.politicas()
         if not temas:
             return pagina(request, "mensagem.html", 502, titulo="Políticas indisponíveis no momento", texto=MSG_FALHA)
-        return pagina(request, "politicas.html", temas=temas, titulo_pagina="Políticas da loja",
+        return pagina(request, "politicas.html", temas=temas, titulo_pagina="Políticas da Loja",
                       descricao="Pagamento, frete e entrega, trocas e devoluções, promoções e garantia.")
 
     # ---- compra de demonstração (incremento 1) ----------------------------------------------------
@@ -523,10 +523,10 @@ def criar_app(agente: Any = None) -> FastAPI:
         espera = limite.segundos_para_liberar(sessao_, pedido, ip)
         if espera is not None:  # bloqueado: nada é consultado, nem com o dado certo, e a mensagem não revela o pedido
             minutos = -(-espera // 60)
-            libera = (config.agora() + timedelta(seconds=espera)).strftime("%H:%M")
+            libera = apresentacao.hora_br((config.agora() + timedelta(seconds=espera)).strftime("%H:%M"))
             return pagina(request, "rastreio.html", 429, resultado=None, pedido="", aviso=None,
                           bloqueio=f"Por segurança, a consulta fica bloqueada depois de várias tentativas sem sucesso. "
-                                   f"Ela será liberada de novo às {libera} (em cerca de {minutos} min).")
+                                   f"Ela será liberada de novo às {libera} (em cerca de {minutos} minutos).")
         negado = lambda: limite.registrar_falha(sessao_, pedido, ip)  # noqa: E731
         if pedido.upper().startswith(PREFIXO_PEDIDO):  # pedido feito no site: identificado pela sessão, sem telefone
             achado = achar_numero(pedido)

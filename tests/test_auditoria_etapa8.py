@@ -370,7 +370,8 @@ def test_horario_em_forma_unica_e_com_um_so_rotulo(cliente):
         assert "09:00" not in texto(h).replace("abre amanhã às 09:00", "").replace("abre hoje às 09:00", ""), caminho
     assert "Seg. a sex., das 9h às 18h" in cliente.get("/").text
     assert "Sáb., das 9h às 13h" in cliente.get("/").text
-    assert "Horário de atendimento" in cliente.get("/").text
+    home = cliente.get("/").text
+    assert "Horário de atendimento" not in home[home.index('<footer class="rodape">'):home.index("</footer>")]  # fora do rodapé
 
 
 def test_site_fala_em_nos_e_nunca_em_eu():

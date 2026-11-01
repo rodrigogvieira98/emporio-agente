@@ -257,12 +257,17 @@ Aprovada pelo Rodrigo em 01/11/2026. Prevalece sobre as seções anteriores do s
 
 **Checkout recalcula sozinho.** O manual define PIX com 5% sobre o preço de tabela, sem somar com promoção; débito e boleto à vista; crédito até 12x sem juros. Hoje o total só muda ao clicar em "Atualizar valores". Trocar forma, parcelas ou CEP passa a atualizar resumo, total, `total_visto`, pendências e o estado de "Registrar pedido" sem clique extra, com HTMX e sem recarregar a página, preservando o foco no campo. Sem JavaScript, o botão de atualizar continua funcionando (`noscript`). Respostas fora de ordem não podem sobrescrever a escolha mais recente. O campo de parcelas só aparece com crédito. A conferência de `total_visto` no servidor continua.
 
-**Frete por CEP (simulado).** O campo "Cidade da entrega" vira "CEP de entrega". O CEP vale com 8 dígitos, com ou sem hífen. Os dados não têm tabela de CEP, peso nem dimensões, então o CEP só indica se a entrega é em Campo Grande:
-- faixa 79000-000 a 79129-999, ou o CEP da loja no manual (79202-333, fora da faixa): cidade base do manual, com a regra atual de frete;
-- outro CEP válido: `cotacao_necessaria`, com "Frete calculado pela equipe";
-- CEP vazio ou inválido: pendência que impede finalizar, com mensagem clara.
+**Localizador de CEP em todo o país.** Decisão do Rodrigo em 01/11/2026: o site atende o Brasil inteiro, o que substitui a ideia de usar só a faixa de Campo Grande. O campo "Cidade da entrega" vira "CEP de entrega", com 8 dígitos, com ou sem hífen. Ao informar o CEP, o site mostra o endereço localizado (logradouro quando houver, bairro, cidade/UF) e recalcula o frete. Ao lado do campo há o link "Não sei meu CEP", para a busca dos Correios (https://buscacepinter.correios.com.br/app/endereco/index.php), em nova aba.
 
-Sem serviço externo. `calcular_condicoes` não muda; quem traduz CEP em cidade é o site. O pedido grava só a cidade derivada, sem o CEP. O aviso do checkout passa a dizer que não se deve informar cartão nem CPF e que o CEP serve só para calcular o frete. A faixa não vem do manual e é declarada no README.
+A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/json/`), com a biblioteca padrão, limite de 3 segundos e memória em processo. O navegador não fala com terceiros, e nenhuma dependência nova é criada. Resultados:
+- Campo Grande com UF MS: cidade base do manual, com a regra atual de frete. A UF é obrigatória, porque existe Campo Grande/RN;
+- outra cidade: `cotacao_necessaria`, com "Frete calculado pela equipe", passando `Cidade/UF` a `calcular_condicoes`. Os dados não têm peso nem dimensões, então o site não inventa valor;
+- CEP inexistente (`{"erro": "true"}`): pendência "CEP não encontrado", impede finalizar;
+- CEP vazio ou com formato inválido: pendência com mensagem clara, impede finalizar, sem consulta externa;
+- serviço fora do ar, lento ou com resposta inválida: nunca derruba o checkout. Faixa 79000-000 a 79129-999 vale como Campo Grande/MS; fora dela, "Não localizamos o endereço agora" com frete calculado pela equipe, sem bloquear a compra. A falha fica registrada em log;
+- CEP da loja no manual (79202-333): não existe no ViaCEP e é tratado como Campo Grande/MS, sem consulta.
+
+`calcular_condicoes` não muda; quem traduz CEP em cidade é o site. O pedido grava só a cidade derivada (`Recife/PE`), sem o CEP. O aviso do checkout passa a dizer que não se deve informar cartão nem CPF e que o CEP serve só para localizar a entrega e calcular o frete. A página de Privacidade passa a dizer que o CEP é consultado pelo servidor no ViaCEP, que não fica guardado e que o site continua sem carregar scripts de terceiros; a frase "não pede endereço" é ajustada. O README declara o serviço, a contingência e que o frete fora de Campo Grande depende da equipe. `EMPORIO_CEP_EXTERNO=0` desliga a consulta e usa só a contingência. Testes nunca acessam a rede.
 
 **Endereço só no rodapé.** Referência observada: Teclacenter, KaBuM! e Thomann concentram contato e endereço no rodapé e em área própria de atendimento. O endereço sai do corpo da home e da página Fale Conosco. A página offline mantém o endereço, porque não tem rodapé.
 

@@ -367,6 +367,15 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 - Sem convite para retomar quando o assunto anterior não recebeu nenhum dado do cliente, como pedir o pedido e mudar de assunto logo em seguida.
 - Depois de informar preço de um produto, a resposta oferece um próximo passo curto, com pergunta de sim ou não sobre parcelamento. "Sim" mostra as parcelas do produto em foco.
 
+**Lia direciona e leva ao carrinho.** Pedido do Rodrigo. Hoje "quero comprar o Yamaha C40" só informa o preço.
+
+- `Resposta` ganha uma lista `links`, gerada só por código a partir do resultado das ferramentas, com lista fechada de rotas internas. O modelo nunca escreve nem escolhe link. O texto da resposta não muda por causa disso, e o terminal mostra o endereço como texto. Máximo de 2 por resposta.
+- Destinos: produto, `/produto/{id}`; lista de produtos, `/catalogo` com a categoria; pedido, `/rastreio`; política, `/politicas`; dúvida geral, `/perguntas-frequentes`; contato, `/fale-conosco`.
+- Compra: com intenção de comprar e produto identificado e disponível, a Lia informa o preço e mostra o botão "Adicionar ao carrinho", que faz POST na rota existente e leva a `/carrinho` com o produto selecionado. A Lia não coloca nada no carrinho sozinha e nunca diz que adicionou antes do clique.
+- Sem produto: pergunta qual, ou lista a categoria. Com modelos parecidos, a escolha numerada continua a compra. Produto indisponível, ou com promoção em conferência: sem botão de carrinho, só o link do produto.
+- O botão "Quero comprar com a Lia" da página do produto segue o mesmo fluxo, preenchendo o campo sem enviar.
+- A conversa salva no navegador mantém os links funcionando depois de mudar de página.
+
 **Auditoria: corrigir.**
 1. POST sem cookie válido não emite cookie novo, e as ações POST conferem `Origin`.
 2. Falhas de rastreio contam por pedido e por IP, com janela de tempo, no site e na Lia.

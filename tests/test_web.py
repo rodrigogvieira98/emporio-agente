@@ -50,11 +50,13 @@ def test_inicio_tem_categorias_busca_chat_e_dados_da_loja(cliente):
 
 
 def test_rodape_mostra_um_telefone_e_um_email_dos_dados_da_empresa_com_orientacao(cliente):
-    html = cliente.get("/").text
-    assert str(fato("contato.telefone_capa").valor) in html  # 6c/6d: contatos de uma fonte só, sem grafia alternativa
-    assert str(fato("contato.email_capa").valor) in html
-    assert str(fato("contato.email_dados_empresa").valor) not in html  # a grafia com acento não aparece
-    assert "O manual" not in html  # nenhuma nota citando o manual ao cliente
+    home = cliente.get("/").text
+    contato = cliente.get("/fale-conosco").text
+    assert str(fato("contato.telefone_capa").valor) in home  # telefone na faixa; e-mail só em /fale-conosco (decisão final)
+    assert str(fato("contato.telefone_capa").valor) in contato and str(fato("contato.email_capa").valor) in contato
+    for html in (home, contato):  # 6c/6d: contatos de uma fonte só, sem grafia alternativa
+        assert str(fato("contato.email_dados_empresa").valor) not in html  # a grafia com acento não aparece
+        assert "O manual" not in html  # nenhuma nota citando o manual ao cliente
 
 
 def test_catalogo_filtra_por_categoria_e_faixa_de_preco(cliente):

@@ -1,8 +1,8 @@
 """Fale Conosco: canais, validação do formulário, gravação e envio opcional por SMTP.
 
-Os valores de contato vêm do manual por `fato()`. Um canal só vira link quando a variável de ambiente
-correspondente traz o endereço verificado (EMPORIO_WHATSAPP_URL, EMPORIO_TELEFONE_LINK, EMPORIO_EMAIL_LINK);
-sem ela, o valor aparece como texto com ícone. Mensagem só sai por e-mail com EMPORIO_SMTP_HOST configurado.
+Os valores de contato vêm do manual por `fato()`. Cada canal tem link padrão derivado desses
+valores (wa.me, tel:, mailto:), sem depender do ambiente; EMPORIO_WHATSAPP_URL, EMPORIO_TELEFONE_LINK e
+EMPORIO_EMAIL_LINK o substituem. Mensagem só sai por e-mail com EMPORIO_SMTP_HOST configurado.
 """
 from __future__ import annotations
 
@@ -31,6 +31,16 @@ def _valor(chave: str) -> str:
     return str(f.valor) if f else ""
 
 
+def _padrao(chave: str, valor: str) -> str | None:
+    """Link padrão do canal, derivado do valor do manual (DDI do Brasil + dígitos)."""
+    if chave == "escrever":
+        return f"mailto:{valor}" if "@" in valor else None
+    d = re.sub(r"\D", "", valor)
+    if not d:
+        return None
+    return f"https://wa.me/55{d}" if chave == "conversar" else f"tel:+55{d}"
+
+
 def canais() -> list[dict[str, Any]]:
     """Conversar, Ligar e Escrever: texto do manual e, se verificado, o link vindo do ambiente."""
     definicao = (
@@ -43,7 +53,7 @@ def canais() -> list[dict[str, Any]]:
         valor = _valor(fato_chave)
         if not valor:
             continue
-        link = (os.environ.get(variavel) or "").strip() or None
+        link = (os.environ.get(variavel) or "").strip() or _padrao(chave, valor)
         saida.append({"chave": chave, "rotulo": rotulo, "icone": icone, "valor": valor, "link": link})
     return saida
 
@@ -114,8 +124,10 @@ def gravar(campos: dict[str, str]) -> str:
 
 
 def faixa() -> dict[str, Any]:
-    """Telefone e horário em uma linha para a faixa "Fale conosco"; tudo vem do manual."""
+    """Telefone, horário e endereço resumido para a faixa "Fale conosco"; tudo vem do manual."""
     from .apresentacao import loja
-    link = (os.environ.get("EMPORIO_TELEFONE_LINK") or "").strip() or None
+    c = {x["chave"]: x for x in canais()}
     abertos = [h.replace(": ", " ") for h in loja()["horario"] if "fechado" not in h.lower()]
-    return {"telefone": _valor("contato.telefone_capa"), "link": link, "horario": " · ".join(abertos)}
+    return {"telefone": _valor("contato.telefone_capa"), "link": (c.get("ligar") or {}).get("link"),
+            "whatsapp": (c.get("conversar") or {}).get("link"), "horario": " · ".join(abertos),
+            "endereco": loja()["endereco_resumido"]}

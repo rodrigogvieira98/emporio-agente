@@ -119,12 +119,11 @@ def test_cep_invalido_deixa_o_registro_desabilitado(url_site, navegador):
 # ---- faixa Fale conosco ---------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("largura", [390, 1280])
-def test_cabecalho_sem_fale_conosco_e_rodape_com_o_link(url_site, navegador, largura):
+def test_cabecalho_e_rodape_sem_fale_conosco(url_site, navegador, largura):
     pagina = pagina_de(navegador, largura)
     pagina.goto(url_site + "/")
     assert pagina.locator("header.topo a:has-text('Fale conosco')").count() == 0
-    pagina.locator("footer a:has-text('Fale conosco')").click()
-    pagina.wait_for_url("**/fale-conosco")
+    assert pagina.locator("footer a:has-text('Fale conosco')").count() == 0
 
 
 def test_faixa_botoes_chegam_ao_destino_e_sem_rolagem_em_390(url_site, navegador):

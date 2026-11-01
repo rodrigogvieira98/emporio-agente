@@ -19,8 +19,10 @@
     <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#{{ c.icone }}"/></svg>
     <div class="bloco-texto">
       <h2 class="bloco-titulo">{{ rotulos.get(c.chave, c.rotulo) }}</h2>
-      {% if c.link %}<a class="bloco-fone{% if c.chave == 'escrever' %} bloco-email{% endif %}" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>{{ c.valor }}</a>
-      {% else %}<p class="bloco-fone{% if c.chave == 'escrever' %} bloco-email{% endif %}">{{ c.valor }}</p>{% endif %}
+      {% if c.chave == 'escrever' %}<p class="bloco-fone bloco-email">{{ c.valor }}</p>
+      {% if c.link %}<a class="enviar-email" href="{{ c.link }}">Enviar e-mail</a>{% endif %}
+      {% elif c.link %}<a class="bloco-fone" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>{{ c.valor }}</a>
+      {% else %}<p class="bloco-fone">{{ c.valor }}</p>{% endif %}
     </div>
   </div>
   {% endfor %}

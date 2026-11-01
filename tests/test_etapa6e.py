@@ -256,13 +256,17 @@ def test_rodape_sem_telefone_email_whatsapp_nem_endereco(cliente, caminho):
         assert str(fato(chave).valor) not in rodape
     assert fato("empresa.endereco").valor["logradouro"] not in rodape
     assert "Todos os canais" not in rodape and "Atendimento" not in rodape
-    assert 'href="/fale-conosco">Fale conosco</a>' in rodape  # na coluna Informações
+    assert "/fale-conosco" not in rodape and "Fale conosco" not in rodape  # decisão final: sem link no rodapé
 
 
 @pytest.mark.parametrize("caminho", ["/", "/catalogo", "/produto/90", "/perguntas-frequentes", "/privacidade", "/rastreio",
                                      "/carrinho", "/creditos"])
-def test_endereco_ausente_fora_de_fale_conosco(cliente, caminho):
-    assert fato("empresa.endereco").valor["logradouro"] not in cliente.get(caminho).text
+def test_endereco_completo_ausente_fora_de_fale_conosco(cliente, caminho):
+    # a faixa traz só o resumido (rua, número, cidade/UF); o CEP e o bairro ficam em /fale-conosco
+    e = fato("empresa.endereco").valor
+    html = cliente.get(caminho).text
+    assert e["cep"] not in html and e["bairro"] not in html
+    assert (e["logradouro"] in html) == ('faixa-contato' in html)
 
 
 def test_endereco_aparece_uma_vez_em_fale_conosco(cliente):

@@ -137,12 +137,15 @@ def test_lia_flutuante_comeca_fechada_com_sugestoes(cliente):
     assert "Lia &middot; conversar" in html
 
 
-def test_visite_a_loja_tem_endereco_e_horario_sem_mapa_externo(cliente):
+def test_faixa_tem_endereco_resumido_e_fale_conosco_tem_endereco_completo_e_horario_sem_mapa_externo(cliente):
     html = cliente.get("/").text
-    visite = html[html.index('id="visite"'):html.index("</section>", html.index('id="visite"'))]
-    assert fato("empresa.endereco").valor["logradouro"] in visite
-    assert "<table" in visite and "<iframe" not in html
-    assert 'href="/fale-conosco"' in visite
+    faixa = html[html.index('class="contorno faixa-contato"'):html.index("<footer")]
+    e = fato("empresa.endereco").valor
+    assert f"{e['logradouro']}, {e['numero']}, {e['cidade']}/{e['uf']}" in faixa and e["cep"] not in html
+    assert 'href="/fale-conosco"' in faixa and "<iframe" not in html
+    pagina = cliente.get("/fale-conosco").text
+    assert e["logradouro"] in pagina and e["cep"] in pagina
+    assert "<table" in pagina and "<iframe" not in pagina
 
 
 def test_pagina_sem_recurso_externo_sem_travessao_e_sem_emoji(cliente):

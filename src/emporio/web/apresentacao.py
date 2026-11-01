@@ -98,7 +98,7 @@ def contatos() -> list[dict[str, str]]:
 
 def loja() -> dict[str, Any]:
     """Nome, endereço, contato e horário, todos do manual."""
-    info: dict[str, Any] = {"nome": "", "endereco": "", "endereco_curto": "", "contatos": [], "horario": []}
+    info: dict[str, Any] = {"nome": "", "endereco": "", "endereco_curto": "", "endereco_resumido": "", "contatos": [], "horario": []}
     f = fato("empresa.nome_fantasia")
     if f:
         info["nome"] = f.valor
@@ -107,6 +107,7 @@ def loja() -> dict[str, Any]:
         e = f.valor
         info["endereco"] = (f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}, "
                             f"CEP {e['cep']}")
+        info["endereco_resumido"] = f"{e['logradouro']}, {e['numero']}, {e['cidade']}/{e['uf']}"
         info["endereco_curto"] = f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}"
     todos = {c["valor"]: c for c in contatos()}
     # um telefone e um e-mail dos dados da empresa; as demais variantes ficam no registro de ambiguidades

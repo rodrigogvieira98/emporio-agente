@@ -117,16 +117,23 @@ def test_canais_sao_texto_com_icone_sem_variaveis_e_link_com_elas(cliente, monke
     html = cliente.get("/fale-conosco").text
     for chave in ("contato.whatsapp_secao_7", "contato.telefone_capa", "contato.email_capa"):
         assert str(fato(chave).valor) in html
-    assert "wa.me" not in html and "tel:" not in html and "mailto:" not in html  # números do manual são fictícios
-    assert html.count("/static/icones.svg#") >= 4
-    for rotulo in ("Conversar", "Ligar", "Escrever", "Deixar uma mensagem"):
-        assert rotulo in html
+    d = lambda ch: re.sub(r"\D", "", str(fato(ch).valor))  # noqa: E731
+    assert f'href="https://wa.me/55{d("contato.whatsapp_secao_7")}"' in html  # link padrão derivado do manual
+    assert f'href="tel:+55{d("contato.telefone_capa")}"' in html
+    assert html.count("mailto:") == 1 and "Enviar e-mail" in html
+    for icone in ("whatsapp", "telefone", "email"):  # um ícone por canal (o rodapé já não repete contatos)
+        assert f"/static/icones.svg#{icone}" in html
+    for velho in ("Conversar", "Ligar", "Escrever", "Deixar uma mensagem"):
+        assert velho not in html  # rótulos antigos saíram na página refeita
+    for rotulo in ("WhatsApp", "Telefone", "E-mail"):
+        assert f">{rotulo}</h2>" in html
     monkeypatch.setenv("EMPORIO_WHATSAPP_URL", "https://wa.me/5567999990000")
     monkeypatch.setenv("EMPORIO_TELEFONE_LINK", "tel:+556733334444")
     monkeypatch.setenv("EMPORIO_EMAIL_LINK", "mailto:loja@example.com")
     html = cliente.get("/fale-conosco").text
     for link in ("https://wa.me/5567999990000", "tel:+556733334444", "mailto:loja@example.com"):
         assert f'href="{link}"' in html
+    assert "mailto:contato@" not in html and f"wa.me/55{d('contato.whatsapp_secao_7')}" not in html  # variável substitui o padrão
 
 
 def _mensagens() -> list[sqlite3.Row]:
@@ -203,7 +210,7 @@ def test_faq_tem_8_a_12_perguntas_em_details_com_valores_do_manual(cliente):
 
 def test_home_traz_4_perguntas_com_link_para_todas(cliente):
     html = cliente.get("/").text
-    bloco = html[html.index('id="ajuda"'):html.index('id="visite"')]
+    bloco = html[html.index('id="ajuda"'):html.index('class="contorno faixa-contato"')]  # a faixa substituiu "Visite a loja"
     assert bloco.count('<details class="faq-item">') == 4 and 'href="/perguntas-frequentes"' in bloco
 
 
@@ -368,7 +375,7 @@ def test_produto_tem_trilha_de_navegacao(cliente):
 
 def test_home_na_ordem_da_composicao_loja_acolhedora(cliente):
     html = cliente.get("/").text
-    ordem = [html.index(m) for m in ('class="abertura"', 'id="categorias"', 'id="destaques"', 'id="mais"', 'id="ajuda"', 'id="visite"')]
+    ordem = [html.index(m) for m in ('class="abertura"', 'id="categorias"', 'id="destaques"', 'id="mais"', 'id="ajuda"', 'class="contorno faixa-contato"')]
     assert ordem == sorted(ordem)
     assert "Seu próximo som começa aqui." in html and "Explorar instrumentos" in html
     assert "setInterval" not in (WEB / "static" / "vitrine.js").read_text(encoding="utf-8")  # sem avanço automático

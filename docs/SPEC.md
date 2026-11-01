@@ -444,6 +444,20 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Etapas do pedido no padrão de mercado (etapa 21)
+
+Pedido do Rodrigo em 01/11/2026. Substitui a linha do tempo da etapa 15. Etapas: Pedido recebido, Pagamento confirmado, Em separação, Enviado, Entregue; Cancelado como desvio.
+
+- Pedidos do site (PED-), conforme a forma escolhida no checkout, sem pagamento real:
+  - PIX: pagamento confirmado na hora; o pedido já aparece em "Em separação".
+  - Cartão de débito: confirmado na hora; "Em separação".
+  - Cartão de crédito: "Pagamento em análise" logo após o pedido e "Pagamento confirmado" depois da aprovação simulada em até 5 minutos; depois "Em separação".
+  - Boleto: "Aguardando pagamento", com a compensação em até 3 dias úteis do manual; não avança sozinho, porque não há pagamento.
+  - O site não simula envio nem entrega de pedido do site.
+- Pedidos dos dados (CSV): `pending` é Pedido recebido aguardando pagamento; `confirmed` é Pagamento confirmado e Em separação; `shipped` é Enviado, com código de rastreio; `delivered` é Entregue; `cancelled` mostra Cancelado com a observação.
+- Datas mostradas só quando existem nos dados (data do pedido, previsão); o horário do pedido do site vem da gravação.
+- Uma função única em `src/emporio/ferramentas/` calcula as etapas, usada pelo rastreio do site, pela confirmação do pedido e pela Lia ao consultar pedido, para os três dizerem o mesmo.
+
 ## Banner com cinco instrumentos (etapa 20)
 
 Pedido do Rodrigo em 01/11/2026. A foto única da abertura vira uma sequência de cinco fotos de instrumentos (violão, guitarra, baixo, teclado e bateria, ou ukulele), com transição automática suave a cada 6 segundos.

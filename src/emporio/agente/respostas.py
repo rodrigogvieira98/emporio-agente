@@ -201,7 +201,7 @@ def frete_info(e: Estado, p: dict) -> str:
         return sem_dado(e, p)
     prazo = c.get("frete.prazo_dias_uteis", {})
     base = c.get("frete.cidade_base", "a cidade da loja")
-    txt = (f"Para {base}: frete grátis em pedidos acima de {formatar(c['frete.gratis_acima_centavos'])}; abaixo "
+    txt = (f"Para {base}: frete grátis em pedidos a partir de {formatar(c['frete.gratis_acima_centavos'])}; abaixo "
            f"disso, taxa fixa de {formatar(c['frete.taxa_abaixo_centavos'])}.")
     if prazo:
         txt += f" Prazo de {prazo['min']} a {prazo['max']} dias úteis."
@@ -241,9 +241,6 @@ def frete_calculado(e: Estado, p: dict) -> str:
         return f"Para {cidade}, com esse valor o frete é grátis.{prazo_txt}"
     if sit == "taxa":
         return f"Para {cidade}, o frete é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
-    if sit == "requer_confirmacao":
-        return (f"Esse valor é exatamente o limite do frete grátis, e para esse caso a nossa equipe precisa "
-                f"confirmar.{prazo_txt} Quer que eu registre a dúvida para eles? {CONFIRMA}")
     mods = _condicoes(e).get("frete.outras_cidades_modalidades")
     extra = f" Os envios são por {_lista([m['nome'] for m in mods])}." if mods else ""
     return (f"Para {cidade} o frete depende de cotação: ele é calculado pelo CEP, peso e dimensões do produto, "

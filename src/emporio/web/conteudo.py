@@ -65,9 +65,8 @@ def _pix() -> str:
 
 def _frete() -> str:
     cidade = _v("frete.cidade_base", "")
-    return (f"Em {cidade}: frete grátis acima de {_brl('frete.gratis_acima_centavos')} e taxa de "
-            f"{_brl('frete.taxa_abaixo_centavos')} abaixo disso. Para pedido de exatamente "
-            f"{_brl('frete.gratis_acima_centavos')}, o frete é um ponto em aberto. {CONFIRMAR} "
+    return (f"Em {cidade}: frete grátis a partir de {_brl('frete.gratis_acima_centavos')} e taxa de "
+            f"{_brl('frete.taxa_abaixo_centavos')} abaixo disso. "
             "Para outras cidades, o frete é calculado pelo CEP de destino, peso e dimensões, "
             "e instrumentos de grande porte podem ter cotação individual.")
 

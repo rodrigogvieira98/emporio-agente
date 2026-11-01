@@ -40,12 +40,11 @@ def _frete(cidade: str, base: int, fontes: list[Fonte]) -> dict[str, Any]:
         return {"situacao": "cotacao_necessaria", "taxa_centavos": None}
     limite = manual.valor("frete.gratis_acima_centavos")
     prazo = manual.valor("frete.prazo_dias_uteis")
-    if base > limite:
+    # decisão da loja (01/11/2026) para a ambiguidade frete_exatamente_500: o limite é inclusivo
+    if base >= limite:
         return {"situacao": "gratis", "taxa_centavos": 0, "prazo_dias_uteis": prazo}
-    if base < limite:
-        return {"situacao": "taxa", "taxa_centavos": manual.valor("frete.taxa_abaixo_centavos"),
-                "prazo_dias_uteis": prazo}
-    return {"situacao": "requer_confirmacao", "taxa_centavos": None, "prazo_dias_uteis": prazo}
+    return {"situacao": "taxa", "taxa_centavos": manual.valor("frete.taxa_abaixo_centavos"),
+            "prazo_dias_uteis": prazo}
 
 
 @ferramenta(EntradaCondicoes)

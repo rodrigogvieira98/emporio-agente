@@ -256,9 +256,6 @@ class RegrasDecisor:
                 return ferramenta("calcular_condicoes", valor=valor, forma="boleto", cidade=cidade, valor_pedido=valor)
             if r.estado != "ok":
                 return self._erro(estado, r)
-            if r.dados["frete"]["situacao"] == "requer_confirmacao":
-                return propor("frete_calculado", "duvida_politica",
-                              "Cliente perguntou frete de pedido exatamente no valor limite do manual.")
             return responder("frete_calculado")
         if cidade and s.get("pergunta_prazo"):
             r = resultado_de(estado, "consultar_politica", temas=["frete"])

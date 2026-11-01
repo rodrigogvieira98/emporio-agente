@@ -107,7 +107,7 @@ def test_parcela_com_requer_confirmacao_aparece_marcada_e_nao_finaliza(cliente, 
     assert cliente.post("/checkout", data=ok).status_code == 303
 
 
-def test_frete_de_exatamente_o_limite_fica_a_confirmar(cliente, sql, tmp_path, monkeypatch):
+def test_frete_de_exatamente_o_limite_e_gratis_e_finalizavel(cliente, sql, tmp_path, monkeypatch):
     # nenhum item do catálogo soma exatamente o limite do manual; o limite é movido no YAML para o preço de um item
     base = final_unit(UKULELE_SOPRANO, "debito")
     origem = (RAIZ / "src" / "emporio" / "politicas" / "manual_v2_1.yaml").read_text(encoding="utf-8")
@@ -116,18 +116,18 @@ def test_frete_de_exatamente_o_limite_fica_a_confirmar(cliente, sql, tmp_path, m
     copia = tmp_path / "manual_limite.yaml"
     copia.write_text(origem.replace(alvo, f"chave: frete.gratis_acima_centavos, valor: {base}", 1), encoding="utf-8")
     monkeypatch.setenv("EMPORIO_MANUAL", str(copia))
-    assert calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["situacao"] == "requer_confirmacao"
+    assert calcular_condicoes(valor=base, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]["situacao"] == "gratis"
     comprar(cliente, UKULELE_SOPRANO)
     params = {"forma": "debito", "cep": CEP_CAMPO_GRANDE}
     html = cliente.get("/checkout", params=params).text
-    assert "Frete a confirmar com a equipe" in html and "disabled" in html
+    assert "Frete a confirmar com a equipe" not in html and "Frete grátis" in html
     r = cliente.post("/checkout", data={**params, "parcelas": "1", "total_visto": str(base)})
-    assert r.status_code == 422 and contar(sql, "pedidos_demo") == 0
+    assert r.status_code == 303 and contar(sql, "pedidos_demo") == 1
 
 
-def test_o_limite_exato_do_manual_na_ferramenta_e_requer_confirmacao():
+def test_o_limite_exato_do_manual_na_ferramenta_e_gratis():
     frete = calcular_condicoes(valor=50000, forma="debito", cidade=CAMPO_GRANDE).dados["frete"]
-    assert frete["situacao"] == "requer_confirmacao" and frete["taxa_centavos"] is None
+    assert frete["situacao"] == "gratis" and frete["taxa_centavos"] == 0
 
 
 def test_outra_cidade_mostra_frete_calculado_pela_equipe(cliente):

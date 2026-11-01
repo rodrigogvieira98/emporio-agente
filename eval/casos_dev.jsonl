@@ -35,7 +35,7 @@
 {"id":"d35","cat":"politica","turnos":["qual o telefone da loja?"],"contem":["3341-4444"],"chamado":false}
 {"id":"d36","cat":"cruzado","turnos":["quanto custa o Crafter HT-100 no pix?"],"ferramentas":["calcular_condicoes"],"contem":["2.399,00","18%","1.967,18"],"nao_contem":["1.868"],"chamado":false}
 {"id":"d37","cat":"cruzado","turnos":["Me arrependi da minha compra, posso devolver meu pedido?"],"nao_contem":["pode devolver","aprovad"],"chamado":false}
-{"id":"d38","cat":"cruzado","turnos":["qual o frete pra compra de R$ 500 em Campo Grande?"],"ferramentas":["calcular_condicoes"],"nao_contem":["é grátis","sai grátis","35,00"],"chamado":false}
+{"id":"d38","cat":"cruzado","turnos":["qual o frete pra compra de R$ 500 em Campo Grande?"],"ferramentas":["calcular_condicoes"],"contem":["grátis"],"nao_contem":["35,00","confirm"],"chamado":false}
 {"id":"d39","cat":"cruzado","turnos":["qual o frete pra compra de R$ 600 em Campo Grande?"],"ferramentas":["calcular_condicoes"],"contem":["grátis"],"chamado":false}
 {"id":"d40","cat":"cruzado","turnos":["qual o frete pra compra de R$ 300 em Campo Grande?"],"ferramentas":["calcular_condicoes"],"contem":["35,00"],"chamado":false}
 {"id":"d41","cat":"cruzado","turnos":["frete de 800 reais pra Dourados?"],"nao_contem":["grátis","35,00"],"chamado":false}

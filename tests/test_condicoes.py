@@ -49,13 +49,15 @@ def test_arredondamento_meio_para_cima_ao_centavo():
     assert calcular_condicoes(valor=10, forma="pix").dados["final_centavos"].__class__ is int
 
 
-def test_frete_campo_grande_gratis_taxa_e_exatamente_500():
+def test_frete_campo_grande_gratis_a_partir_de_500_e_taxa_abaixo():
     gratis = calcular_condicoes(valor=50001, forma="boleto", cidade="Campo Grande").dados["frete"]
     assert gratis["situacao"] == "gratis" and gratis["taxa_centavos"] == 0
     taxa = calcular_condicoes(valor=49999, forma="boleto", cidade="campo grande").dados["frete"]
     assert taxa["situacao"] == "taxa" and taxa["taxa_centavos"] == 3500
     exato = calcular_condicoes(valor=50000, forma="boleto", cidade="Campo Grande").dados["frete"]
-    assert exato["situacao"] == "requer_confirmacao"
+    assert exato["situacao"] == "gratis" and exato["taxa_centavos"] == 0  # decisão do Rodrigo: R$ 500,00 inclusive
+    centavo = calcular_condicoes(valor=49999, forma="boleto", cidade="Campo Grande").dados["frete"]
+    assert centavo["situacao"] == "taxa" and centavo["taxa_centavos"] == 3500
 
 
 def test_frete_outra_cidade_pede_cotacao_e_valor_pedido_manda_na_base():

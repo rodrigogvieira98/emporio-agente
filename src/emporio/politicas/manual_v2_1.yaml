@@ -470,7 +470,7 @@ ambiguidades:
     descricao: O manual fala em acima e abaixo de R$ 500,00 e não diz o que vale para um pedido de exatamente R$ 500,00.
     secoes: ["5.1"]
     temas: [frete]
-    tratamento: requer_confirmacao_da_equipe
+    tratamento: decisao_da_loja_gratis_a_partir_do_limite
   - id: regiao_metropolitana_sem_lista
     descricao: O manual não lista as cidades da região metropolitana de Campo Grande.
     secoes: ["5.1", "5.2"]

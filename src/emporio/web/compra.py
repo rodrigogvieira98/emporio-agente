@@ -26,7 +26,6 @@ FORMA_NEUTRA = "debito"
 ROTULO_FRETE = {
     "gratis": "Frete grátis",
     "taxa": "Frete",
-    "requer_confirmacao": "Frete a confirmar com a equipe",
     "cotacao_necessaria": "Frete calculado pela equipe",
 }
 
@@ -136,9 +135,6 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
             if frete["taxa_centavos"] is not None:
                 total += frete["taxa_centavos"]
                 saida["total_com_frete_definido"] = True
-            if frete["situacao"] == "requer_confirmacao":
-                pend.append("O frete deste valor precisa ser confirmado com a equipe, então não dá para finalizar "
-                            "como confirmado. Mude a forma de pagamento ou a quantidade, ou fale com a Lia.")
     elif loc.estado == "inexistente":
         pend.append("CEP não encontrado. Confira os números ou use o link para descobrir o seu CEP.")
     elif cep:

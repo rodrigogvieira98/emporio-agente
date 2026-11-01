@@ -20,16 +20,17 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:image" content="{{ imagem or '/static/icones/icon-512.png' }}">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/static/icones/apple-touch-icon-180.png">
+<link rel="apple-touch-icon" href="{{ estatico('/static/icones/apple-touch-icon-180.png') }}">
 <link rel="preload" href="/static/fontes/ZillaSlab-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/static/marca.svg" type="image/svg+xml">
-<link rel="icon" href="/static/icones/icon-192.png" type="image/png" sizes="192x192">
-<link rel="stylesheet" href="/static/site.css">
-<script src="/static/htmx-2.0.4.min.js" defer></script>
-<script src="/static/sobreposicoes.js" defer></script>
-<script src="/static/chat.js" defer></script>
-<script src="/static/vitrine.js" defer></script>
-<script src="/static/pwa.js" defer></script>
+<link rel="icon" href="{{ estatico('/static/marca.svg') }}" type="image/svg+xml">
+<link rel="icon" href="{{ estatico('/static/icones/icon-192.png') }}" type="image/png" sizes="192x192">
+<link rel="stylesheet" href="{{ estatico('/static/site.css') }}">
+<script src="{{ estatico('/static/htmx-2.0.4.min.js') }}" defer></script>
+<script src="{{ estatico('/static/sobreposicoes.js') }}" defer></script>
+<script src="{{ estatico('/static/chat.js') }}" defer></script>
+<script src="{{ estatico('/static/vitrine.js') }}" defer></script>
+<script src="{{ estatico('/static/pwa.js') }}" defer></script>
+<script src="{{ estatico('/static/formularios.js') }}" defer></script>
 </head>
 <body{% block corpo_attr %}{% endblock %}>
 {% set L = loja() %}{% set S = situacao_loja() %}
@@ -117,7 +118,7 @@
 <div id="lia" class="lia-flutuante" data-sobreposicao data-lia>
   <section id="chat" class="chat" aria-label="Chat com a Lia" data-painel hidden>
     <header class="chat-topo">
-      <img class="lia-retrato" src="/static/lia-96.webp" srcset="/static/lia-96.webp 96w, /static/lia-192.webp 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
+      <img class="lia-retrato" src="{{ estatico('/static/lia-96.webp') }}" srcset="{{ estatico('/static/lia-96.webp') }} 96w, {{ estatico('/static/lia-192.webp') }} 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
       <div class="chat-id"><strong>Lia</strong><small>assistente virtual do {{ L.nome }}</small></div>
     </header>
     <div id="chat-corpo" class="chat-corpo">
@@ -140,7 +141,7 @@
     </div>
   </section>
   <button id="chat-alternar" class="lia-botao" type="button" aria-expanded="false" aria-controls="chat" data-gatilho>
-    <img class="lia-retrato" src="/static/lia-96.webp" srcset="/static/lia-96.webp 96w, /static/lia-192.webp 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
+    <img class="lia-retrato" src="{{ estatico('/static/lia-96.webp') }}" srcset="{{ estatico('/static/lia-96.webp') }} 96w, {{ estatico('/static/lia-192.webp') }} 192w" sizes="44px" width="44" height="44" alt="" decoding="async">
     <span>Lia &middot; conversar</span>
   </button>
 </div>

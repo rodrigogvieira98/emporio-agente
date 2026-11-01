@@ -102,3 +102,31 @@ def test_compra_sem_produto_pede_o_produto_em_uma_frase(fala):
 def test_agradecimento_com_outro_pedido_nao_encerra():
     t = textos("Quanto fica o Tagima Memphis no pix?", "valeu, e o horário de vocês?")
     assert "horário de funcionamento" in t[1].lower() and "foi um prazer" not in t[1].lower()
+
+
+# 6. extração de produto em frase composta, dois produtos e pronome --------------------------------
+
+def test_produto_em_frase_composta_com_promocao_citada():
+    t = textos("poxa, e a Telecaster que tava na queima de estoque?")
+    assert "Telecaster" in t[0] and "não encontrei esse produto" not in t[0].lower()
+
+
+def test_produto_com_comparacao_de_preco_de_outra_loja():
+    (t,) = textos("achei 500 reais mais barato em outra loja na telecaster, cobre o preço?")
+    assert "Telecaster" in t
+
+
+def test_dois_produtos_com_ou_mostram_os_dois():
+    (t,) = textos("stratocaster ou telecaster? to em duvida")
+    assert "Stratocaster" in t and "Telecaster" in t and "R$" in t
+
+
+def test_dois_produtos_com_entre():
+    (t,) = textos("Entre o Taylor 214ce e o Martin D-28E, qual você levaria pro palco?")
+    assert "Taylor 214ce" in t and "Martin D-28E" in t
+
+
+def test_ela_usa_o_ultimo_produto_citado_nunca_o_mais_antigo():
+    t = textos("Vi que o Martin D-28 tava com 15% de desconto na páscoa, ainda vale?",
+               "poxa, e a Telecaster que tava na queima de estoque?", "tá bom, então me fala só quanto fica ela no pix")
+    assert "Telecaster" in t[2] and "Martin" not in t[2]

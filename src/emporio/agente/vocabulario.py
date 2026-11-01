@@ -289,6 +289,8 @@ PALAVRAS_COMPARACAO = {"diferenca", "diferencas", "entre", "comparar", "comparac
                        "pior", "slap", "quero"}
 COMPARACAO = re.compile(r"\b(diferenca entre|diferencas entre|comparar|comparacao|compara\w*|versus|vs|"
                         r"qual (?:e )?(?:o )?melhor entre|qual (?:a |o )?diferenca)\b")
+# "Taylor 214ce ou Martin D-28E", "entre o X e o Y": só vale como comparação se as duas pontas forem produtos
+ENTRE_OU = re.compile(r"\bentre\b|\bou\b")
 SEPARADOR_COMPARACAO = re.compile(r"\s+(?:e|vs|versus|ou|x|contra|com)\s+(?:o |a |os |as )?|,\s*")
 # Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
 CAMPANHA_CITADA = re.compile(

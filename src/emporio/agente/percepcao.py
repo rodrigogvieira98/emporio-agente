@@ -259,7 +259,8 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         # (nome próprio); o resto ("tá", "né", "disseram") é conversa. Só vale se identifica por modelo.
         capitalizadas = {normalizar(w) for w in re.findall(r"[A-ZÀ-Ý][\wÀ-ÿ-]*", mensagem)[1:]}
         nucleo = [t for t in conteudo if t in voc.df or re.search(r"\d", t) or t in capitalizadas]
-        modelo = any(re.search(r"\d", t) for t in nucleo) or sum(t in voc.df for t in nucleo) >= 2
+        modelo = (any(re.search(r"\d", t) for t in nucleo) or sum(t in voc.df for t in nucleo) >= 2
+                  or any(t in voc.df and voc.df[t] <= LIMITE_DISTINTIVO for t in nucleo))  # "Telecaster que tava..."
         if modelo:
             slots["referencia"] = " ".join(nucleo)
     palavras_da_msg = set(tokens(norm))
@@ -275,7 +276,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     if slots["ingles"]:
         slots["tema_ingles"] = next((tema for p, tema in v.TEMAS_INGLES if p.search(norm)), None)
         slots["agradecimento_ingles"] = bool(v.AGRADECIMENTO_INGLES.search(norm))
-    if v.COMPARACAO.search(norm):
+    if v.COMPARACAO.search(norm) or v.ENTRE_OU.search(norm):
         slots["comparar_refs"] = _refs_de_comparacao(norm, voc)
     camp = v.CAMPANHA_CITADA.search(norm)
     if camp:

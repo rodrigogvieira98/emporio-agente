@@ -98,7 +98,7 @@ def test_faixa_aberta_agora(cliente):  # a fixture global fixa sábado, 10h
     html = cliente.get("/").text
     assert "Aberta agora" in html and "Fechada" not in html.split("</header>")[0]
     sabado = next(r for r in fato("horario.funcionamento").valor if 5 in r["dias"])
-    assert f"hoje até {sabado['fecha']}" in html
+    assert f"hoje até {apresentacao.hora_br(sabado['fecha'])}" in html
 
 
 def test_faixa_fechada_mostra_quando_abre(cliente, monkeypatch):
@@ -106,7 +106,7 @@ def test_faixa_fechada_mostra_quando_abre(cliente, monkeypatch):
     topo = cliente.get("/").text.split("</header>")[0]
     assert "Fechada" in topo and "Aberta agora" not in topo
     segunda = next(r for r in fato("horario.funcionamento").valor if 0 in r["dias"])
-    assert f"abre segunda-feira às {segunda['abre']}" in topo
+    assert f"abre segunda-feira às {apresentacao.hora_br(segunda['abre'])}" in topo
 
 
 def test_faixa_fechada_no_domingo(cliente, monkeypatch):

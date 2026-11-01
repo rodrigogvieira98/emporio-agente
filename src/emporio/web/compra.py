@@ -124,7 +124,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
         elif l["bloqueio"] == "promocao_em_conferencia":
             pend.append("Há um item com promoção em conferência. A equipe precisa confirmar o valor.")
         elif l["bloqueio"] == "falha":
-            pend.append("Não consegui consultar um dos itens agora. Tente de novo em instantes.")
+            pend.append("Não conseguimos consultar um dos itens agora. Tente de novo em instantes.")
     if pend:
         saida["pendencias"] = pend
         return saida
@@ -137,7 +137,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     if cidade:
         frete = _frete(loc, cidade, itens, goods, base_frete)
         if frete is None:
-            pend.append("Não consegui calcular o frete agora. Tente de novo em instantes.")
+            pend.append("Não conseguimos calcular o frete agora. Tente de novo em instantes.")
         else:
             saida["frete"] = frete
             if frete["taxa"] is not None:
@@ -157,7 +157,7 @@ def calcular(sessao: str, forma: str = "pix", parcelas: int | str = 1, cep: str 
     if forma == "credito":
         rc = calcular_condicoes(valor=total, forma="credito", parcelas=n)
         if rc.estado != "ok":
-            pend.append("Não consegui calcular o parcelamento agora. Tente de novo em instantes.")
+            pend.append("Não conseguimos calcular o parcelamento agora. Tente de novo em instantes.")
         else:
             saida["parcela"] = rc.dados["parcela_centavos"]
             saida["permitido"] = rc.dados["permitido"]

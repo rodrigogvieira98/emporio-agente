@@ -25,7 +25,7 @@ def test_home_tem_dois_carrosseis_com_rotulos_proprios(home):
     assert home.count("data-carrossel") == 2
     d, m = secao(home, "destaques"), secao(home, "mais")
     assert 'aria-label="Produtos em destaque"' in d and 'aria-roledescription="carrossel"' in d
-    assert 'aria-roledescription="carrossel"' in m and 'aria-label="Instrumentos para começar"' in m
+    assert 'aria-roledescription="carrossel"' in m and 'aria-label="Menores preços por categoria"' in m
     assert 'aria-label="Produtos em destaque"' not in m
     for trecho in ('aria-label="Instrumento anterior"', 'aria-label="Próximo instrumento"', "data-anuncio", 'aria-live="polite"'):
         assert trecho in m

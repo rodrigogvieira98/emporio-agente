@@ -120,7 +120,7 @@ def test_rastreio_negado_e_unificado(cliente):
 def test_rastreio_limite_de_tentativas_vale_por_sessao(cliente):
     for _ in range(3):
         cliente.post("/rastreio", data={"pedido": "8", "final_telefone": "0000"})
-    assert cliente.post("/rastreio", data={"pedido": "8", "final_telefone": "7821"}).status_code == 403
+    assert cliente.post("/rastreio", data={"pedido": "8", "final_telefone": "7821"}).status_code == 429  # bloqueio com mensagem própria
     outro = TestClient(cliente.app)  # outro navegador, outra sessão
     assert outro.post("/rastreio", data={"pedido": "8", "final_telefone": "7821"}).status_code == 200
 

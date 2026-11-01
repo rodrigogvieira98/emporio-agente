@@ -19,9 +19,9 @@
     <h2 id="t-offline-loja">Enquanto isso, a loja está aqui</h2>
     <p class="visite-rua">{{ L.endereco }}</p>
     <table class="horario">
-      <caption class="so-leitor">Horário de funcionamento</caption>
+      <caption class="so-leitor">Horário de atendimento</caption>
       <tbody>
-      {% for h in L.horario %}{% set par = h.split(': ', 1) %}
+      {% for par in L.horario_linhas %}
         <tr><th scope="row">{{ par[0] }}</th><td>{{ par[1] }}</td></tr>
       {% endfor %}
       </tbody>

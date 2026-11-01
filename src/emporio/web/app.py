@@ -10,19 +10,24 @@ import hashlib
 import json
 import logging
 import os
+import re
 import secrets
 import threading
 import uuid
 from pathlib import Path
+from datetime import timedelta
 from typing import Any
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Form, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, URLSafeSerializer
+from starlette.exceptions import HTTPException as ErroHTTP
 
-from .. import dinheiro
+from .. import config
 from ..agente import llm
 from ..agente.fabrica import criar_agente
 from ..ferramentas.condicoes import calcular_condicoes
@@ -32,7 +37,8 @@ from ..ferramentas.politica import consultar_politica
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from ..ferramentas.promocoes import listar_promocoes
 from ..politicas.manual import carregar_manual, fato
-from . import apresentacao, carrinho, compra, conteudo, contato, fotos, home, navegacao
+from . import apresentacao, carrinho, compra, conteudo, contato, entradas, fotos, home, navegacao
+from .limite import LimiteRastreio
 
 POR_PAGINA = 12  # produtos por página do catálogo; o limite de 5 itens é do chat, não do site
 
@@ -67,7 +73,16 @@ def versao_sw() -> str:
 SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline", "/favicon.ico")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja
-MSG_FALHA = "Não consegui consultar isso agora. Tente de novo em instantes."
+MSG_FALHA = "Não conseguimos consultar isso agora. Tente de novo em instantes."
+ERROS_PAGINA = {
+    403: ("Pedido não aceito", "Por segurança, só aceitamos formulários enviados pelas páginas desta loja. "
+                               "Volte ao início e tente de novo."),
+    404: ("Página não encontrada", "Não achamos o endereço que você abriu. Veja o catálogo ou volte ao início."),
+    405: ("Método não permitido", "Esta página não aceita essa ação. Volte ao início e tente de novo."),
+    422: ("Não entendemos esse pedido", "Algum dado veio em formato que não aceitamos. Volte à página anterior, confira o que foi preenchido e tente de novo."),
+    500: ("Algo deu errado", "Tivemos um problema do nosso lado, e ele já ficou registrado. Tente de novo em instantes ou volte ao início."),
+}
+ERRO_PADRAO = ("Não foi possível concluir", "Não conseguimos atender esse pedido agora. Volte ao início e tente de novo.")
 
 
 def _promocoes() -> dict[int, dict[str, Any]]:
@@ -115,7 +130,9 @@ def _linhas_carrinho(sessao: str) -> list[dict[str, Any]]:
             linhas.append({"p": None, "produto_id": i["produto_id"], "quantidade": i["quantidade"]})
             continue
         item = home.com_foto(apresentacao.preparar_item(r.dados, promos), r.dados["categoria"])
-        linhas.append({"p": item, "produto_id": i["produto_id"], "quantidade": i["quantidade"]})
+        unitario = item["final"] if item["final"] is not None else item["original"]
+        linhas.append({"p": item, "produto_id": i["produto_id"], "quantidade": i["quantidade"],
+                       "subtotal": unitario * i["quantidade"] if item["pode_comprar"] else None})
     return linhas
 
 
@@ -133,6 +150,8 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     app = FastAPI(title="Lia", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.agente = agente  # criado na primeira conversa, uma vez por processo
+    app.state.limite_rastreio = LimiteRastreio()
+    assinador_contato = URLSafeSerializer(segredo, salt="emporio-contato")
     app.mount("/static", StaticFiles(directory=AQUI / "static"), name="static")
     modelos = Jinja2Templates(directory=AQUI / "templates")
     modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias,
@@ -142,7 +161,8 @@ def criar_app(agente: Any = None) -> FastAPI:
                                prefixo_pedido=PREFIXO_PEDIDO,
                                rotulo_forma=apresentacao.ROTULO_FORMA, parcelas_max=compra.parcelas_max)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
-                               pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras)
+                               pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras,
+                               politica=apresentacao.blocos_politica, hora=apresentacao.hora_br)
 
     def obter_agente() -> Any:
         with trava_criacao:
@@ -152,6 +172,30 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     def pagina(request: Request, nome: str, status: int = 200, **contexto: Any) -> HTMLResponse:
         return modelos.TemplateResponse(request, nome, contexto, status_code=status)
+
+    def pagina_de_erro(request: Request, status: int) -> HTMLResponse:
+        titulo, texto = ERROS_PAGINA.get(status, ERRO_PADRAO)
+        return pagina(request, "mensagem.html", status, titulo=titulo, texto=texto, titulo_pagina=titulo)
+
+    @app.exception_handler(ErroHTTP)
+    async def erro_http(request: Request, exc: ErroHTTP):
+        return pagina_de_erro(request, exc.status_code)
+
+    @app.exception_handler(RequestValidationError)
+    async def erro_validacao(request: Request, exc: RequestValidationError):
+        return pagina_de_erro(request, 422)
+
+    @app.exception_handler(Exception)
+    async def erro_interno(request: Request, exc: Exception):
+        log.error("erro interno em %s %s", request.method, request.url.path, exc_info=exc)
+        return pagina_de_erro(request, 500)
+
+    def origem_valida(request: Request) -> bool:
+        """Formulário vindo de outra origem é recusado. Sem cabeçalho Origin (cliente que não é navegador) passa."""
+        origem = request.headers.get("origin")
+        if origem is None:
+            return True
+        return origem != "null" and urlsplit(origem).netloc == request.headers.get("host", "")
 
     @app.middleware("http")
     async def sessao(request: Request, call_next):
@@ -169,8 +213,10 @@ def criar_app(agente: Any = None) -> FastAPI:
         if novo:
             conversa = "web-" + uuid.uuid4().hex
         request.state.conversa_id = conversa
+        if request.method not in ("GET", "HEAD", "OPTIONS") and not origem_valida(request):
+            return pagina_de_erro(request, 403)
         resposta = await call_next(request)
-        if novo:
+        if novo:  # POST de outra origem já foi recusado acima, sem tocar no cookie do visitante
             resposta.set_cookie(COOKIE, assinador.dumps(conversa), httponly=True, samesite="lax", secure=seguro,
                                 max_age=60 * 60 * 24 * 30)
         return resposta
@@ -230,8 +276,8 @@ def criar_app(agente: Any = None) -> FastAPI:
         return pagina(request, "inicio.html", destaques=destaques, grade=home.grade({d["id"] for d in destaques}),
                       categorias_home=home.categorias(), faq=conteudo.perguntas(somente_principais=True),
                       abertura=fotos.foto_de_abertura(),
-                      descricao="Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço, condição de "
-                                "pagamento e entrega à vista.")
+                      descricao="Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço claro e as condições "
+                                "de pagamento de cada produto.")
 
     @app.get("/favicon.ico")
     def favicon() -> RedirectResponse:
@@ -261,7 +307,15 @@ def criar_app(agente: Any = None) -> FastAPI:
                       descricao="Converse, ligue, escreva ou deixe uma mensagem para a loja.")
 
     @app.get("/fale-conosco", response_class=HTMLResponse)
-    def fale_conosco(request: Request):
+    def fale_conosco(request: Request, enviado: str = ""):
+        if enviado:  # confirmação depois do redirecionamento; o protocolo vem assinado, nunca da URL pura
+            try:
+                protocolo = assinador_contato.loads(enviado)
+            except BadSignature:
+                protocolo = None
+            if isinstance(protocolo, str):
+                return pagina(request, "fale_conosco.html", titulo_pagina="Fale conosco", valores={}, erros={},
+                              protocolo=protocolo, limites=contato.LIMITES, descricao="")
         return pagina_contato(request)
 
     @app.post("/fale-conosco", response_class=HTMLResponse)
@@ -269,8 +323,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                             contato_retorno: str = Form(""), site: str = Form("")):
         valores = {"assunto": assunto, "mensagem": mensagem, "contato": contato_retorno}
         if site.strip():  # campo isca: pessoa não vê nem preenche; descarta sem gravar e sem dar pista
-            return pagina(request, "fale_conosco.html", titulo_pagina="Fale conosco", valores={}, erros={},
-                          protocolo="", limites=contato.LIMITES, descricao="")
+            return RedirectResponse("/fale-conosco?enviado=" + assinador_contato.dumps(""), status_code=303)
         erros = contato.validar(valores)
         if erros:
             return pagina_contato(request, valores, erros, 422)
@@ -278,28 +331,30 @@ def criar_app(agente: Any = None) -> FastAPI:
             protocolo = contato.gravar(valores)
         except Exception:  # noqa: BLE001 - o formulário não pode derrubar o site, e o texto do cliente é mantido
             return pagina_contato(request, valores, {"geral": "Não conseguimos registrar agora. Tente de novo em instantes."}, 502)
-        return pagina(request, "fale_conosco.html", titulo_pagina="Fale conosco", valores={}, erros={},
-                      protocolo=protocolo, limites=contato.LIMITES, descricao="")
+        return RedirectResponse("/fale-conosco?enviado=" + assinador_contato.dumps(protocolo), status_code=303)
 
     @app.get("/catalogo", response_class=HTMLResponse)
     def catalogo(request: Request, categoria: str = "", termo: str = "", preco_min: str = "",
-                 preco_max: str = "", todos: str = "", pagina_: int = Query(1, alias="pagina", ge=1)):
+                 preco_max: str = "", todos: str = "", pagina_: str = Query("1", alias="pagina")):
+        numero_pagina = entradas.inteiro(pagina_)
+        if not numero_pagina:
+            return pagina_de_erro(request, 422)
         filtros = {"categoria": categoria.strip(), "termo": termo.strip(), "preco_min": preco_min.strip(),
                    "preco_max": preco_max.strip(), "todos": bool(todos)}
         erro = None
         itens: list[dict[str, Any]] = []
         total = 0
         paginas = 1
-        try:
-            minimo = dinheiro.para_centavos(filtros["preco_min"].replace(",", ".")) if filtros["preco_min"] else None
-            maximo = dinheiro.para_centavos(filtros["preco_max"].replace(",", ".")) if filtros["preco_max"] else None
-        except Exception:  # noqa: BLE001 - texto que não é número
-            minimo = maximo = None
-            erro = "Use apenas números nos campos de preço."
+        busca_vazia = False
+        minimo, erro_min = entradas.preco_em_centavos(filtros["preco_min"])
+        maximo, erro_max = entradas.preco_em_centavos(filtros["preco_max"])
+        erro = erro_min or erro_max
+        if erro is None and filtros["termo"] and not any(c.isalnum() for c in filtros["termo"]):
+            erro = "Digite pelo menos uma letra ou um número para buscar."
         if erro is None:
             r = buscar_produtos(categoria=filtros["categoria"] or None, termo=filtros["termo"] or None,
                                 preco_min=minimo, preco_max=maximo, incluir_indisponiveis=filtros["todos"],
-                                limite=POR_PAGINA, deslocamento=(pagina_ - 1) * POR_PAGINA, para_site=True)
+                                limite=POR_PAGINA, deslocamento=(numero_pagina - 1) * POR_PAGINA, para_site=True)
             if r.estado == "ok":
                 promos = _promocoes()
                 itens = [home.com_categoria(apresentacao.preparar_item(i, promos)) for i in r.dados["itens"]]
@@ -308,8 +363,10 @@ def criar_app(agente: Any = None) -> FastAPI:
                 if not itens:  # página além do fim: volta à última, sem página vazia
                     return RedirectResponse(str(request.url.include_query_params(pagina=paginas)), status_code=303)
             elif r.estado == "vazio":
-                erro = ("Não temos essa categoria no catálogo." if r.motivo == "categoria_inexistente"
-                        else "Nenhum produto encontrado com esses filtros.")
+                if r.motivo == "categoria_inexistente":
+                    erro = "Não temos essa categoria no catálogo."
+                else:
+                    busca_vazia = True
             elif r.motivo == "faixa_incoerente":
                 erro = "A faixa de preço está incoerente: o mínimo passa do máximo."
             else:
@@ -319,11 +376,16 @@ def criar_app(agente: Any = None) -> FastAPI:
                                       ("todos", "1" if filtros["todos"] else "")) if v}
         titulo = filtros["categoria"] or ("Resultados da busca" if filtros["termo"] else "Catálogo")
         return pagina(request, "catalogo.html", itens=itens, total=total, erro=erro, filtros=filtros,
-                      pagina_atual=pagina_, paginas=paginas, por_pagina=POR_PAGINA, consulta=consulta,
+                      pagina_atual=numero_pagina, paginas=paginas, busca_vazia=busca_vazia,
+                      nomes_categorias=[c["nome"] for c in home.categorias()], por_pagina=POR_PAGINA, consulta=consulta,
                       titulo_pagina=titulo, descricao="Instrumentos musicais com preço e condição de pagamento.")
 
     @app.get("/produto/{produto_id}", response_class=HTMLResponse)
-    def produto(request: Request, produto_id: int):
+    def produto(request: Request, produto_id: str):
+        numero = entradas.inteiro(produto_id)
+        if numero is None:
+            return pagina_de_erro(request, 404)
+        produto_id = numero
         r = ver_produto(referencia=produto_id)
         if r.estado == "vazio":
             return pagina(request, "mensagem.html", 404, titulo="Produto não encontrado",
@@ -347,15 +409,33 @@ def criar_app(agente: Any = None) -> FastAPI:
     # ---- compra de demonstração (incremento 1) ----------------------------------------------------
 
     def pagina_carrinho(request: Request, aviso: str | None = None, status: int = 200) -> HTMLResponse:
-        return pagina(request, "carrinho.html", status, linhas=_linhas_carrinho(request.state.conversa_id),
-                      aviso=aviso, max_por_item=carrinho.MAX_POR_ITEM)
+        linhas = _linhas_carrinho(request.state.conversa_id)
+        return pagina(request, "carrinho.html", status, linhas=linhas, aviso=aviso, max_por_item=carrinho.MAX_POR_ITEM,
+                      total_produtos=sum(l["subtotal"] for l in linhas if l.get("subtotal") is not None),
+                      titulo_pagina="Carrinho")
 
     @app.get("/carrinho", response_class=HTMLResponse)
     def ver_carrinho(request: Request):
         return pagina_carrinho(request)
 
+    def dados_do_carrinho(request: Request, produto_id: str, quantidade: str | None = None):
+        """Produto e quantidade já validados; None e a resposta de erro quando algum não é um inteiro seguro."""
+        produto = entradas.inteiro(produto_id)
+        if produto is None:
+            return None, None, pagina_carrinho(request, "Não entendemos qual produto você quer.", 422)
+        if quantidade is None:
+            return produto, None, None
+        n = entradas.inteiro(quantidade)
+        if n is None:
+            return produto, None, pagina_carrinho(
+                request, f"A quantidade por item vai de {carrinho.MIN_POR_ITEM} a {carrinho.MAX_POR_ITEM}.", 422)
+        return produto, n, None
+
     @app.post("/carrinho/adicionar")
-    def carrinho_adicionar(request: Request, produto_id: int = Form(...), quantidade: int = Form(1)):
+    def carrinho_adicionar(request: Request, produto_id: str = Form(""), quantidade: str = Form("1")):
+        produto_id, quantidade, erro = dados_do_carrinho(request, produto_id, quantidade)
+        if erro is not None:
+            return erro
         try:
             carrinho.adicionar(request.state.conversa_id, produto_id, quantidade)
         except carrinho.RecusaCarrinho as recusa:
@@ -363,7 +443,10 @@ def criar_app(agente: Any = None) -> FastAPI:
         return RedirectResponse("/carrinho", status_code=303)
 
     @app.post("/carrinho/alterar")
-    def carrinho_alterar(request: Request, produto_id: int = Form(...), quantidade: int = Form(...)):
+    def carrinho_alterar(request: Request, produto_id: str = Form(""), quantidade: str = Form("")):
+        produto_id, quantidade, erro = dados_do_carrinho(request, produto_id, quantidade)
+        if erro is not None:
+            return erro
         try:
             carrinho.definir_quantidade(request.state.conversa_id, produto_id, quantidade)
         except carrinho.RecusaCarrinho as recusa:
@@ -371,7 +454,10 @@ def criar_app(agente: Any = None) -> FastAPI:
         return RedirectResponse("/carrinho", status_code=303)
 
     @app.post("/carrinho/remover")
-    def carrinho_remover(request: Request, produto_id: int = Form(...)):
+    def carrinho_remover(request: Request, produto_id: str = Form("")):
+        produto_id, _, erro = dados_do_carrinho(request, produto_id)
+        if erro is not None:
+            return erro
         carrinho.remover(request.state.conversa_id, produto_id)
         return RedirectResponse("/carrinho", status_code=303)
 
@@ -420,24 +506,39 @@ def criar_app(agente: Any = None) -> FastAPI:
     @app.post("/rastreio", response_class=HTMLResponse)
     def rastreio(request: Request, pedido: str = Form(""), final_telefone: str = Form("")):
         pedido, final_telefone = pedido.strip(), final_telefone.strip()
+        limite = app.state.limite_rastreio
+        ip = request.client.host if request.client else "?"
+        sessao_ = request.state.conversa_id
+        espera = limite.segundos_para_liberar(sessao_, pedido, ip)
+        if espera is not None:  # bloqueado: nada é consultado, nem com o dado certo, e a mensagem não revela o pedido
+            minutos = -(-espera // 60)
+            libera = (config.agora() + timedelta(seconds=espera)).strftime("%H:%M")
+            return pagina(request, "rastreio.html", 429, resultado=None, pedido="", aviso=None,
+                          bloqueio=f"Por segurança, a consulta fica bloqueada depois de várias tentativas sem sucesso. "
+                                   f"Ela será liberada de novo às {libera} (em cerca de {minutos} min).")
+        negado = lambda: limite.registrar_falha(sessao_, pedido, ip)  # noqa: E731
         if pedido.upper().startswith(PREFIXO_PEDIDO):  # pedido feito no site: identificado pela sessão, sem telefone
             achado = achar_numero(pedido)
             r = (consultar_pedido_demo(numero=achado, conversa_id=request.state.conversa_id) if achado else None)
             if r is not None and r.estado == "ok":
                 return pagina(request, "rastreio.html", resultado=None, demo=r.dados, pedido=pedido, aviso=None)
             if r is None or r.estado == "negado":
+                negado()
                 aviso = "Não foi possível validar esse pedido com os dados informados. Confira e tente de novo."
                 return pagina(request, "rastreio.html", 403, resultado=None, pedido=pedido, aviso=aviso)
             return pagina(request, "rastreio.html", 502, resultado=None, pedido=pedido, aviso=MSG_FALHA)
-        if not pedido.isdigit() or len(final_telefone) != 4 or not final_telefone.isdigit():
+        numero = entradas.numero_de_pedido(pedido)
+        if numero is None or not re.fullmatch(r"[0-9]{4}", final_telefone):
             return pagina(request, "rastreio.html", 422, resultado=None, pedido=pedido,
                           aviso="Informe o número do pedido e os 4 últimos dígitos do telefone cadastrado.")
-        r = consultar_pedido(pedido_id=int(pedido), final_telefone=final_telefone,
-                             conversa_id=request.state.conversa_id)
+        # a ferramenta limita por conversa sem prazo; a cada janela a conversa recomeça, e o prazo é do limite do site
+        r = consultar_pedido(pedido_id=int(numero), final_telefone=final_telefone,
+                             conversa_id=f"{sessao_}:{limite.janela_atual()}")
         if r.estado == "ok":
             return pagina(request, "rastreio.html", resultado=r.dados, pedido=pedido, aviso=None,
                           status_pedido=apresentacao.ROTULO_STATUS_PEDIDO)
         if r.estado == "negado":
+            negado()
             aviso = "Não foi possível validar esse pedido com os dados informados. Confira e tente de novo."
             return pagina(request, "rastreio.html", 403, resultado=None, pedido=pedido, aviso=aviso)
         return pagina(request, "rastreio.html", 502, resultado=None, pedido=pedido, aviso=MSG_FALHA)

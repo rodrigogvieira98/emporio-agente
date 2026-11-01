@@ -16,7 +16,7 @@ from ..agente import expediente
 from ..politicas.manual import fato
 from ..texto import tokens
 
-NOMES_DIA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+NOMES_DIA = ["Seg.", "Ter.", "Qua.", "Qui.", "Sex.", "Sáb.", "Dom."]
 
 ROTULO_SITUACAO = {
     "disponivel": "Disponível",
@@ -58,20 +58,57 @@ def forma_pagamento(codigo: str | None) -> str:
     return codigo
 
 
+def blocos_politica(texto: str | None) -> Markup:
+    """Texto de política do manual em HTML: linhas com " | " viram tabela, "• " vira lista, o resto vira parágrafo.
+
+    Só muda a apresentação; o texto do manual não é alterado nem reescrito.
+    """
+    linhas = [l.strip() for l in (texto or "").splitlines() if l.strip()]
+    saida: list[str] = []
+    i = 0
+    while i < len(linhas):
+        if " | " in linhas[i]:
+            tabela = []
+            while i < len(linhas) and " | " in linhas[i]:
+                tabela.append([str(escape(c.strip())) for c in linhas[i].split("|")])
+                i += 1
+            cabeca, corpo = tabela[0], tabela[1:]
+            saida.append('<div class="tabela-rolavel"><table class="tabela-politica"><thead><tr>'
+                         + "".join(f'<th scope="col">{c}</th>' for c in cabeca) + "</tr></thead><tbody>"
+                         + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in linha) + "</tr>" for linha in corpo)
+                         + "</tbody></table></div>")
+        elif linhas[i].startswith("• "):
+            itens = []
+            while i < len(linhas) and linhas[i].startswith("• "):
+                itens.append(str(escape(linhas[i][2:].strip())))
+                i += 1
+            saida.append('<ul class="lista-politica">' + "".join(f"<li>{t}</li>" for t in itens) + "</ul>")
+        else:
+            saida.append(f'<p class="texto-politica">{escape(linhas[i])}</p>')
+            i += 1
+    return Markup("\n".join(saida))
+
+
 def quebras(texto: str | None) -> Markup:
     """Escapa o texto e troca quebras de linha por <br>."""
     return Markup(str(escape(texto or "")).replace("\r\n", "\n").replace("\n", "<br>\n"))
 
 
-def _faixas_horario(regras: list[dict[str, Any]]) -> list[str]:
+def hora_br(hora: str | None) -> str:
+    """Hora cheia vira "9h"; com minutos, "9h30"."""
+    if not hora or not re.fullmatch(r"\d{1,2}:\d{2}", hora):
+        return hora or ""
+    h, m = hora.split(":")
+    return f"{int(h)}h" + ("" if m == "00" else m)
+
+
+def _faixas_horario(regras: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    """(dias, horas) de cada regra: ("Seg. a sex.", "das 9h às 18h") ou ("Dom.", "fechado")."""
     linhas = []
     for r in regras:
         dias = sorted(r["dias"])
-        nome = NOMES_DIA[dias[0]] if len(dias) == 1 else f"{NOMES_DIA[dias[0]]} a {NOMES_DIA[dias[-1]]}"
-        if r.get("fechado"):
-            linhas.append(f"{nome}: fechado")
-        else:
-            linhas.append(f"{nome}: {r['abre']} às {r['fecha']}")
+        nome = NOMES_DIA[dias[0]] if len(dias) == 1 else f"{NOMES_DIA[dias[0]]} a {NOMES_DIA[dias[-1]].lower()}"
+        linhas.append((nome, "fechado" if r.get("fechado") else f"das {hora_br(r['abre'])} às {hora_br(r['fecha'])}"))
     return linhas
 
 
@@ -98,7 +135,8 @@ def contatos() -> list[dict[str, str]]:
 
 def loja() -> dict[str, Any]:
     """Nome, endereço, contato e horário, todos do manual."""
-    info: dict[str, Any] = {"nome": "", "endereco": "", "endereco_curto": "", "endereco_resumido": "", "contatos": [], "horario": []}
+    info: dict[str, Any] = {"nome": "", "endereco": "", "endereco_curto": "", "endereco_resumido": "", "contatos": [], "horario": [],
+                            "horario_linhas": []}
     f = fato("empresa.nome_fantasia")
     if f:
         info["nome"] = f.valor
@@ -117,7 +155,8 @@ def loja() -> dict[str, Any]:
     info["contato_nota"] = "O manual traz outros canais; se não conseguir contato, fale com a Lia."
     f = fato("horario.funcionamento")
     if f and isinstance(f.valor, list):
-        info["horario"] = _faixas_horario(f.valor)
+        info["horario_linhas"] = _faixas_horario(f.valor)
+        info["horario"] = [f"{dias}, {horas}" for dias, horas in info["horario_linhas"]]
     return info
 
 

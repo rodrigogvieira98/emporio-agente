@@ -270,7 +270,7 @@ def test_endereco_completo_no_rodape_uma_vez_nas_paginas_com_rodape(cliente, cam
 def test_endereco_aparece_uma_vez_em_fale_conosco_e_no_rodape(cliente):
     html = cliente.get("/fale-conosco").text
     assert html.count(fato("empresa.endereco").valor["logradouro"]) == 1 and "Horário de atendimento" in html
-    assert fato("empresa.endereco").valor["logradouro"] in _rodape(html) and "Horário de funcionamento" in _rodape(html)
+    assert fato("empresa.endereco").valor["logradouro"] in _rodape(html) and "Horário de atendimento" in _rodape(html)
 
 
 def test_endereco_continua_na_pagina_offline(cliente):
@@ -300,7 +300,8 @@ def test_pagina_fale_conosco_tem_3_canais_e_duas_colunas(cliente):
 
 def test_envio_do_formulario_mostra_protocolo(cliente):
     r = cliente.post("/fale-conosco", data={"assunto": "Dúvida", "mensagem": "Quero saber mais sobre o prazo.",
-                                            "contato_retorno": "cliente@example.com", "site": ""})
+                                            "contato_retorno": "cliente@example.com", "site": ""},
+                     follow_redirects=True)  # o envio agora redireciona para a confirmação
     assert r.status_code == 200 and 'class="protocolo"' in r.text
 
 

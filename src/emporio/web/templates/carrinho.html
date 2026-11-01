@@ -17,6 +17,7 @@
     <div class="item-dados">
       <h2 class="item-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h2>
       {% include "_preco.html" %}
+      {% if l.subtotal is not none %}<p class="item-subtotal">{{ l.quantidade }} {{ 'unidade' if l.quantidade == 1 else 'unidades' }}. Subtotal: <strong>{{ l.subtotal | brl }}</strong></p>{% endif %}
       {% if not p.pode_comprar %}<p class="aviso">Este produto não está mais disponível. Tire do carrinho para continuar.</p>{% endif %}
     </div>
     <div class="item-acoes">
@@ -35,7 +36,7 @@
       </form>
     </div>
     {% else %}
-    <div class="item-dados"><p class="aviso">Não consegui consultar este item agora.</p></div>
+    <div class="item-dados"><p class="aviso">Não conseguimos consultar este item agora.</p></div>
     <div class="item-acoes">
       <form action="/carrinho/remover" method="post">
         <input type="hidden" name="produto_id" value="{{ l.produto_id }}">
@@ -46,8 +47,9 @@
   </li>
 {% endfor %}
 </ul>
-<p class="nota-valores">O total depende da forma de pagamento e do CEP, e é calculado no próximo passo.</p>
-<p class="acoes-compra"><a class="botao" href="/catalogo">Continuar comprando</a> <a class="botao botao-cheio" href="/checkout">Ir para o checkout</a></p>
+<p class="carrinho-total">Total dos produtos: <strong>{{ total_produtos | brl }}</strong></p>
+<p class="nota-valores">O desconto do PIX, quando houver, e o frete dependem da forma de pagamento e do CEP, e são calculados na finalização do pedido.</p>
+<p class="acoes-compra"><a class="botao" href="/catalogo">Continuar comprando</a> <a class="botao botao-cheio" href="/checkout">Finalizar pedido</a></p>
 {% endif %}
 </div>
 {% endblock %}

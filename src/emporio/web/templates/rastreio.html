@@ -12,6 +12,7 @@
   <button type="submit" class="botao-cheio">Consultar</button>
 </form>
 {% if aviso %}<p class="aviso" role="alert">{{ aviso }}</p>{% endif %}
+{% if bloqueio %}<p class="aviso aviso-erro" role="alert">{{ bloqueio }} Se precisar de ajuda agora, use o <a href="/fale-conosco">Fale conosco</a>.</p>{% endif %}
 {% if demo %}{% set d = demo %}{% include "_pedido_demo.html" %}{% endif %}
 {% if resultado %}
 <section class="pedido" aria-label="Pedido">

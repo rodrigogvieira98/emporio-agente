@@ -150,7 +150,7 @@ def test_pagina_do_produto_descontinuado_nao_tem_botao_de_carrinho(cliente):
 
 def test_pagina_do_produto_vendavel_adiciona_ao_carrinho_e_mantem_a_lia(cliente):
     html = cliente.get(f"/produto/{TAKAMINE}").text
-    assert 'action="/carrinho/adicionar"' in html and "Quero comprar com a Lia" in html
+    assert 'action="/carrinho/adicionar"' in html and "Conversar com a Lia" in html and "Adicionar ao carrinho" in html
 
 
 def test_quantidade_de_1_a_3(cliente, sql):

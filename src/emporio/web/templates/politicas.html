@@ -12,7 +12,7 @@
     <h2 id="t-{{ t.ancora }}">{{ t.titulo }}</h2>
     {% for s in t.secoes %}
       {% if s.titulo != t.titulo %}<h3>{{ s.titulo }}</h3>{% endif %}
-      <p class="texto-politica">{{ s.texto | quebras }}</p>
+      {{ s.texto | politica }}
     {% endfor %}
     {% if t.nota %}<p class="nota-politica">{{ t.nota }}</p>{% endif %}
   </section>

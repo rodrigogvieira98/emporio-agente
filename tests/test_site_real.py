@@ -335,7 +335,8 @@ def test_imagens_tem_alt_dimensoes_e_lazy(cliente):
             if "lia.svg" in tag:
                 continue
             assert "alt=" in tag and "width=" in tag and "height=" in tag, (caminho, tag)
-        assert "Imagem ilustrativa" not in html and "Foto do produto indisponível" not in html
+        assert "Foto do produto indisponível" not in html
+        assert ("Imagem ilustrativa" in html) == caminho.startswith("/produto/")  # aviso só na página do produto
 
 
 # ---- linguagem ao cliente e boas práticas ------------------------------------------------------------

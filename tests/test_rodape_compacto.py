@@ -39,8 +39,8 @@ def test_rodape_traz_onde_estamos_e_horario_do_manual_sem_contatos(cliente):
 
     r = rodape(cliente.get("/").text)
     e = fato("empresa.endereco").valor
-    assert "Onde estamos" in r and e["logradouro"] in r and e["cep"] in r and "Horário de funcionamento" in r
-    assert "09:00" in r
+    assert "Onde estamos" in r and e["logradouro"] in r and e["cep"] in r and "Horário de atendimento" in r
+    assert "Seg. a sex., das 9h às 18h" in r
     for chave in ("contato.telefone_capa", "contato.email_capa", "contato.telefone_whatsapp_dados_empresa"):
         assert str(fato(chave).valor) not in r
 

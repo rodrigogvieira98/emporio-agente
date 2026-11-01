@@ -98,8 +98,8 @@ def test_rota_offline_existe_e_traz_endereco_e_horario_do_manual(cliente):
     assert r.status_code == 200
     assert "Sem conexão" in r.text and "Preços, estoque, pedidos e a Lia precisam de internet" in r.text
     assert fato("empresa.endereco").valor["logradouro"] in r.text
-    for faixa in apresentacao.loja()["horario"]:
-        assert faixa.split(": ")[1] in r.text
+    for _, horas in apresentacao.loja()["horario_linhas"]:
+        assert horas in r.text
 
 
 def test_pagina_offline_nao_guarda_estado_que_envelhece(cliente):

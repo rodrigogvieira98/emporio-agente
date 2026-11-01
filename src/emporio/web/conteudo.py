@@ -67,7 +67,7 @@ def _frete() -> str:
     cidade = _v("frete.cidade_base", "")
     return (f"Em {cidade}: frete grátis a partir de {_brl('frete.gratis_acima_centavos')} e taxa de "
             f"{_brl('frete.taxa_abaixo_centavos')} abaixo disso. "
-            "Para as demais cidades, o checkout mostra o frete estimado (simulação), calculado pelo CEP de destino, "
+            "Para as demais cidades, a finalização do pedido mostra o frete estimado (simulação), calculado pelo CEP de destino, "
             "peso e dimensões. É uma estimativa do protótipo, não a tarifa de uma transportadora, e instrumentos de "
             "grande porte têm cotação individual.")
 
@@ -85,7 +85,8 @@ def _rastreio() -> str:
     envio = " e ".join(_v("rastreamento.enviado_por") or [])
     return (f"Quando o pedido é despachado, o código de rastreamento chega por {envio}. "
             "Você também pode consultar o andamento em Rastrear pedido, com o número do pedido e os 4 últimos "
-            "dígitos do telefone.")
+            "dígitos do telefone. Se o pedido foi feito aqui no site, o número começa com PED-: informe só o número, "
+            "sem o telefone. Ele abre no mesmo navegador em que foi feito.")
 
 
 def _troca() -> str:
@@ -93,7 +94,8 @@ def _troca() -> str:
     p = _v("regra.preferencia") or {}
     return (f"Compra online: devolução em até {a.get('prazo_dias')} dias {a.get('tipo_dias')} após o recebimento, "
             f"com o produto na embalagem original. Troca por preferência: em até {p.get('prazo_dias')} dias, "
-            f"conforme a disponibilidade do produto desejado. A contagem desse prazo é um ponto em aberto. {CONFIRMAR}")
+            f"conforme a disponibilidade do produto desejado. A regra não informa de quando esse prazo começa a contar. "
+            f"{CONFIRMAR}")
 
 
 def _devolucao() -> str:
@@ -110,7 +112,7 @@ def _defeito() -> str:
     d = _v("regra.defeito") or {}
     return (f"Defeito de fabricação: troca em até {d.get('prazo_dias')} dias {d.get('tipo_dias')} após a compra. "
             "Depois desse prazo, a garantia é acionada com o fabricante, e podemos intermediar se você pedir. "
-            f"Como esse prazo se combina com a garantia legal é um ponto em aberto. {CONFIRMAR}")
+            f"A regra não informa como esse prazo se combina com a garantia legal. {CONFIRMAR}")
 
 
 def _garantia() -> str:
@@ -169,7 +171,15 @@ def nota_do_tema(ancora: str) -> str:
         return ""
     cidade = _v("frete.cidade_base", "")
     return (f"Frete grátis e taxa fixa valem somente em {cidade}. As demais cidades seguem o frete estimado "
-            "(simulação) do checkout, calculado pelo CEP, peso e dimensões, sem ser a tarifa de uma transportadora.")
+            "(simulação) da finalização do pedido, calculado pelo CEP, peso e dimensões, sem ser a tarifa de uma transportadora.")
+
+
+# Linhas do manual que são instrução para a equipe, não regra para o cliente. Saem só da exibição; o manual não muda.
+LINHAS_INTERNAS = ("Comunicação:",)
+
+
+def _sem_instrucao_interna(texto: str) -> str:
+    return "\n".join(l for l in texto.splitlines() if not l.strip().startswith(LINHAS_INTERNAS))
 
 
 def politicas() -> list[dict[str, Any]]:
@@ -179,7 +189,8 @@ def politicas() -> list[dict[str, Any]]:
     por_id = {s["id"]: s for s in r.dados["secoes"] if s["publico"]}
     saida = []
     for ancora, titulo, ids in TEMAS_POLITICAS:
-        secoes = [por_id[i] for i in ids if i in por_id and por_id[i]["texto"]]
+        secoes = [{**por_id[i], "texto": _sem_instrucao_interna(por_id[i]["texto"])}
+                  for i in ids if i in por_id and por_id[i]["texto"]]
         if secoes:
             saida.append({"ancora": ancora, "titulo": titulo, "secoes": secoes, "nota": nota_do_tema(ancora)})
     return saida

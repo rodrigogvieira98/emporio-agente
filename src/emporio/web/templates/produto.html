@@ -5,6 +5,7 @@
 <div class="produto-grade">
   <div class="produto-arte">
     {% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="{{ p.foto.alt }}" decoding="async">
+    <span class="legenda-ilustrativa">Imagem ilustrativa</span>
     {% else %}<svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>{% endif %}
   </div>
   <div class="produto-info">
@@ -27,8 +28,8 @@
         <label>Quantidade
           <select name="quantidade">{% for n in range(1, 4) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select>
         </label>
-        <button type="submit" class="botao-cheio btn-comprar">Quero comprar</button>
-        <button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button>
+        <button type="submit" class="botao-cheio btn-comprar">Adicionar ao carrinho</button>
+        <button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Conversar com a Lia</button>
       </form>
     {% else %}
       <p class="aviso">Este produto não está disponível para compra no momento. A Lia pode sugerir alternativas.</p>

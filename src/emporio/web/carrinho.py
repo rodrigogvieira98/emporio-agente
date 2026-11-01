@@ -48,7 +48,7 @@ def adicionar(sessao: str, produto_id: int, quantidade: int) -> None:
     if r.estado == "vazio":
         raise RecusaCarrinho("Não achamos esse produto.")
     if r.estado != "ok":
-        raise RecusaCarrinho("Não consegui consultar o produto agora. Tente de novo em instantes.")
+        raise RecusaCarrinho("Não conseguimos consultar o produto agora. Tente de novo em instantes.")
     if r.dados["situacao_venda"] != "disponivel":
         raise RecusaCarrinho(f"{r.dados['nome']} não está disponível para compra, então não entra no carrinho.")
     conn = _conn()

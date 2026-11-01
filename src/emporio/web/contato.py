@@ -127,7 +127,7 @@ def faixa() -> dict[str, Any]:
     """Telefone, horário e endereço resumido para a faixa "Fale conosco"; tudo vem do manual."""
     from .apresentacao import loja
     c = {x["chave"]: x for x in canais()}
-    abertos = [h.replace(": ", " ") for h in loja()["horario"] if "fechado" not in h.lower()]
+    abertos = [f"{dias}, {horas}" for dias, horas in loja()["horario_linhas"] if horas != "fechado"]
     return {"telefone": _valor("contato.telefone_capa"), "link": (c.get("ligar") or {}).get("link"),
             "whatsapp": (c.get("conversar") or {}).get("link"), "horario": " · ".join(abertos),
             "endereco": loja()["endereco_resumido"]}

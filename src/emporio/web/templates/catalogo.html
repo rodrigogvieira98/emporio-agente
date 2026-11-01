@@ -10,7 +10,7 @@
     <label>Categoria
       <select name="categoria">
         <option value="">Todas</option>
-        {% for c in categorias() %}<option value="{{ c }}"{% if c == filtros.categoria %} selected{% endif %}>{{ c }}</option>{% endfor %}
+        {% for c in nomes_categorias %}<option value="{{ c }}"{% if c == filtros.categoria %} selected{% endif %}>{{ c }}</option>{% endfor %}
       </select>
     </label>
     <label>Busca <input name="termo" type="search" value="{{ filtros.termo }}"></label>
@@ -23,6 +23,16 @@
 <div class="catalogo-lista">
 {% if erro %}
   <p class="aviso" role="status">{{ erro }}</p>
+{% elif busca_vazia %}
+  <div class="busca-vazia" role="status">
+    <p class="aviso">{% if filtros.termo %}Nenhum produto encontrado para “{{ filtros.termo }}”.{% else %}Nenhum produto encontrado com esses filtros.{% endif %}</p>
+    <p>Você pode:</p>
+    <ul class="busca-vazia-caminhos">
+      <li><a href="/catalogo">Ver todos os instrumentos</a></li>
+      <li>Ver uma categoria: {% for c in nomes_categorias %}<a href="/catalogo?categoria={{ c | urlencode }}">{{ c }}</a>{{ ", " if not loop.last else "" }}{% endfor %}</li>
+      <li>Conversar com a Lia ou <a href="/fale-conosco">falar com a nossa equipe</a></li>
+    </ul>
+  </div>
 {% else %}
   <p class="contagem" data-total="{{ total }}">{{ total }} {{ 'produto' if total == 1 else 'produtos' }}, do menor para o maior preço. Página {{ pagina_atual }} de {{ paginas }}.</p>
   <div class="grade grade-catalogo">

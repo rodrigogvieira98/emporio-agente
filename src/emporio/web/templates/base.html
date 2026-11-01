@@ -39,8 +39,8 @@
   <div class="contorno faixa-in">
     <p class="faixa-estado {{ 'aberta' if S.aberto else 'fechada' }}">
       <span class="ponto" aria-hidden="true"></span>
-      {% if S.aberto %}<strong>Aberta agora</strong>{% if S.hoje %}<span class="faixa-detalhe">hoje até {{ S.hoje.fecha }}</span>{% endif %}
-      {% else %}<strong>Fechada</strong>{% if S.retorno %}<span class="faixa-detalhe">abre {{ S.retorno.quando }} às {{ S.retorno.hora }}</span>{% endif %}{% endif %}
+      {% if S.aberto %}<strong>Aberta agora</strong>{% if S.hoje %}<span class="faixa-detalhe">hoje até {{ S.hoje.fecha | hora }}</span>{% endif %}
+      {% else %}<strong>Fechada</strong>{% if S.retorno %}<span class="faixa-detalhe">abre {{ S.retorno.quando }} às {{ S.retorno.hora | hora }}</span>{% endif %}{% endif %}
     </p>
   </div>
 </div>{% endif %}{% endblock %}
@@ -104,7 +104,7 @@
       <address class="rodape-endereco">{{ L.endereco }}</address>
     </div>
     <div class="rodape-horario">
-      <p class="rodape-rotulo">Horário de funcionamento</p>
+      <p class="rodape-rotulo">Horário de atendimento</p>
       <ul class="rodape-horas">{% for h in L.horario %}<li>{{ h }}</li>{% endfor %}</ul>
     </div>
     <nav class="rodape-links" aria-label="Links do rodapé">
@@ -124,7 +124,7 @@
   <section id="chat" class="chat" aria-label="Chat com a Lia" data-painel hidden>
     <header class="chat-topo">
       <img class="lia-retrato" src="/static/lia.svg" width="44" height="44" alt="">
-      <div class="chat-id"><strong>Lia</strong><small>assistente virtual da {{ L.nome }}</small></div>
+      <div class="chat-id"><strong>Lia</strong><small>assistente virtual do {{ L.nome }}</small></div>
       <button id="chat-fechar" class="chat-fechar" type="button" aria-label="Fechar conversa com a Lia">Fechar</button>
     </header>
     <div id="chat-corpo" class="chat-corpo">

@@ -20,7 +20,7 @@
   <div class="contorno abertura-grade">
     <div class="abertura-texto">
       <h1>Seu próximo som começa aqui.</h1>
-      <p class="abertura-linha">Violões, guitarras, baixos, teclados, baterias e ukuleles, com o preço e a condição de pagamento à vista.</p>
+      <p class="abertura-linha">Violões, guitarras, baixos, teclados, baterias e ukuleles, com preço claro e as condições de pagamento de cada produto.</p>
       <p class="abertura-acoes"><a class="botao botao-cheio botao-grande" href="/catalogo">Explorar instrumentos</a></p>
     </div>
     {% if abertura %}<div class="abertura-foto"><img src="{{ abertura.src }}" width="{{ abertura.largura }}" height="{{ abertura.altura }}" alt="{{ abertura.alt }}" decoding="async"></div>{% endif %}
@@ -52,8 +52,8 @@
 
 {% if grade %}
 <section class="secao contorno" id="mais" aria-labelledby="t-mais">
-  <div class="secao-cabeca"><h2 id="t-mais">Para começar</h2><a href="/catalogo">Ver todos os instrumentos</a></div>
-  {{ carrossel_de(grade, "Instrumentos para começar", "Instrumento anterior", "Próximo instrumento", "Para começar") }}
+  <div class="secao-cabeca"><h2 id="t-mais">Menores preços por categoria</h2><a href="/catalogo">Ver todos os instrumentos</a></div>
+  {{ carrossel_de(grade, "Menores preços por categoria", "Instrumento anterior", "Próximo instrumento", "Menores preços por categoria") }}
 </section>
 {% endif %}
 

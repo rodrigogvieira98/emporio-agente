@@ -277,40 +277,53 @@ def _prazo(regra: dict[str, Any]) -> str:
     if regra.get("tipo_dias") not in (None, "nao_informado"):
         txt += f" {regra['tipo_dias']}"
     marco = {"compra": "da compra", "recebimento": "do recebimento"}.get(regra.get("marco_inicial"))
-    return f"{txt}, contados a partir {marco}" if marco else txt
+    return f"{txt}, contados {marco}" if marco else txt
 
 
 def trocas_info(e: Estado, p: dict) -> str:
-    """Informação geral de troca, devolução e garantia, só com o que o manual diz."""
+    """Resumo curto de troca, devolução e garantia: uma linha por regra. Exclusões ficam para o 'sim'."""
     c = _condicoes(e)
-    linhas = []
-    arrep, defeito, pref = c.get("regra.arrependimento"), c.get("regra.defeito"), c.get("regra.preferencia")
-    if arrep:
-        t = f"- Devolução por arrependimento: {_prazo(arrep)}"
-        t += ", para compra online" if arrep.get("aplica_a") == "compra_online" else ""
-        dias = c.get("devolucao.arrependimento_reembolso_dias_uteis_max")
-        t += f". Reembolso em até {dias} dias úteis" if dias else ""
-        t += "; o frete da devolução fica por conta da loja" if c.get("devolucao.arrependimento_frete_por_conta_da_loja") else ""
-        linhas.append(t + ".")
-    if defeito:
-        linhas.append(f"- Troca por defeito: {_prazo(defeito)}.")
-    if pref:
-        t = f"- Troca por preferência: {pref['prazo_dias']} dias, sujeita à disponibilidade do produto"
-        t += "; a diferença de valor é cobrada ou reembolsada" if c.get("troca_preferencia.diferenca_de_valor_cobrada_ou_reembolsada") else ""
-        linhas.append(t + ".")
-    if not linhas and "regra.garantia_legal" not in c:
-        return sem_dado(e, p)
     amb = _ambiguidades(e)
-    if pref and "marco_troca_preferencia" in amb:
-        linhas.append("  Atenção: " + amb["marco_troca_preferencia"]["descricao"])
-    txt = ("Como funcionam troca e devolução:\n" + "\n".join(linhas)) if linhas else ""
+    arrep, defeito, pref = c.get("regra.arrependimento"), c.get("regra.defeito"), c.get("regra.preferencia")
+    legal = c.get("regra.garantia_legal")
+    linhas = []
+    if arrep:
+        online = " (compra online)" if arrep.get("aplica_a") == "compra_online" else ""
+        linhas.append(f"- Arrependimento: {_prazo(arrep)}{online}.")
+    if defeito:
+        linhas.append(f"- Defeito: {_prazo(defeito)}.")
+    if pref:
+        if "marco_troca_preferencia" in amb:
+            linhas.append(f"- Preferência: {pref['prazo_dias']} dias; o manual não diz de quando a contagem parte.")
+        else:
+            linhas.append(f"- Preferência: {_prazo(pref)}.")
+    if legal:
+        extra = ""
+        if defeito and "prazo_30_x_90" in amb:
+            extra = f"; como convive com os {defeito['prazo_dias']} dias do defeito, a equipe confirma"
+        linhas.append(f"- Garantia legal: {_prazo(legal)}{extra}.")
+    if not linhas:
+        return sem_dado(e, p)
+    return ("Troca, devolução e garantia:\n" + "\n".join(linhas)
+            + "\nQuer ver o que não entra em troca e o que a garantia não cobre? Se preferir, posso verificar um pedido seu.")
+
+
+def trocas_detalhe(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    partes = []
     nao = c.get("trocas.itens_nao_elegiveis")
     if nao:
-        txt += "\nNão entram em troca: " + "; ".join(x[0].lower() + x[1:] for x in nao) + "."
-    if "regra.garantia_legal" in c:
-        txt += "\n" + garantia_info(e, p).split("\n")[0]
-    txt = txt.strip()
-    return txt + "\nSe quiser, posso verificar um pedido seu: é só dizer que quer trocar ou devolver e o número do pedido."
+        partes.append("Não entram em troca: " + "; ".join(x[0].lower() + x[1:] for x in nao) + ".")
+    cobre = c.get("garantia.nao_cobre")
+    if cobre:
+        partes.append("A garantia não cobre: " + "; ".join(x[0].lower() + x[1:] for x in cobre) + ".")
+    fab = c.get("garantia.fabricante_prazo_meses")
+    if fab:
+        partes.append(f"Os fabricantes costumam ter garantia própria, de {fab['min']} meses a {fab['max'] // 12} anos, "
+                      "descrita no certificado do produto.")
+    if not partes:
+        return sem_dado(e, p)
+    return "\n".join(partes) + "\nSe tiver um caso seu, me diga que quer trocar ou devolver e o número do pedido."
 
 
 def busca(e: Estado, p: dict) -> str:
@@ -639,7 +652,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
-        atendente_ja_registrado, trocas_info)
+        atendente_ja_registrado, trocas_info, trocas_detalhe)
 }
 
 

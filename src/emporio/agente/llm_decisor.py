@@ -30,7 +30,8 @@ FORMAS = ["pix", "debito", "credito", "boleto"]
 AGUARDA = {"pedir_pedido": "pedido", "pedido_negado": "pedido", "pedir_dados_posvenda": "dados_posvenda",
            "pedir_categoria": "categoria", "pedir_produto": "referencia_produto",
            "produto_nao_encontrado": "referencia_produto", "escolha_produto": "escolha_produto",
-           "pedir_valor_pedido": "valor_pedido", "frete_info": "cidade", "pedir_relato": "relato"}
+           "pedir_valor_pedido": "valor_pedido", "frete_info": "cidade", "pedir_relato": "relato",
+           "trocas_info": "detalhe_trocas"}
 # respostas que sempre terminam oferecendo registro, e o tipo padrão do chamado
 PROPOR_SEMPRE = {"reclamacao_empatia": "reclamacao", "propor_posvenda": "atendente", "sem_dado": "sem_dado",
                  "pedido_negado_limite": "atendente", "nao_entendi_de_novo": "sem_dado",
@@ -78,7 +79,7 @@ REQUISITOS = {
     "saudacao": lambda e: _ok(e, "consultar_politica"), "horario": lambda e: _ok(e, "consultar_politica"),
     "endereco": lambda e: _ok(e, "consultar_politica"), "contato": lambda e: _ok(e, "consultar_politica"),
     "pagamento": lambda e: _ok(e, "consultar_politica"), "garantia_info": lambda e: _ok(e, "consultar_politica"),
-    "trocas_info": lambda e: _ok(e, "consultar_politica"),
+    "trocas_info": lambda e: _ok(e, "consultar_politica"), "trocas_detalhe": lambda e: _ok(e, "consultar_politica"),
     "fora_escopo": lambda e: _ok(e, "consultar_politica"), "fora_escopo_geral": lambda e: _ok(e, "consultar_politica"),
     "frete_info": lambda e: _ok(e, "consultar_politica"),
     "busca": lambda e: _ok(e, "buscar_produtos", "ok", "vazio"),
@@ -133,6 +134,7 @@ DICAS = {
     "endereco": "Rode antes consultar_politica endereco.", "contato": "Rode antes consultar_politica contato.",
     "pagamento": "Rode antes consultar_politica pagamento.", "garantia_info": "Rode antes consultar_politica garantia.",
     "trocas_info": "Rode antes consultar_politica trocas e garantia (pergunta geral, sem pedido).",
+    "trocas_detalhe": "Rode antes consultar_politica trocas e garantia; só depois de o cliente aceitar ver os detalhes.",
     "fora_escopo": "Rode antes consultar_politica escopo.", "fora_escopo_geral": "Rode antes consultar_politica escopo.",
     "frete_info": "Rode antes consultar_politica frete.", "recusa_manipulacao": "Rode antes consultar_politica pagamento.",
 }

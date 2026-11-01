@@ -139,7 +139,15 @@ class RegrasDecisor:
     _i_devolucao = _i_troca_preferencia = _i_defeito = _posvenda
 
     def _i_info_trocas(self, estado: Estado) -> Acao:
-        return self._info(estado, ["trocas", "garantia"], "trocas_info")
+        r = resultado_de(estado, "consultar_politica", temas=["trocas", "garantia"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["trocas", "garantia"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return perguntar("trocas_info", "detalhe_trocas")  # uma pergunta só: detalhar exclusões e garantia
+
+    def _i_detalhe_trocas(self, estado: Estado) -> Acao:
+        return self._info(estado, ["trocas", "garantia"], "trocas_detalhe")
 
     def _i_garantia(self, estado: Estado) -> Acao:
         return self._info(estado, ["garantia"], "garantia_info", oferta="solicitacao")

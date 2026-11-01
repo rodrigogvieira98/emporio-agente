@@ -337,6 +337,17 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.coletados.pop("proposta", None)
         estado.aguardando = None
         ag = None
+    if ag == "detalhe_trocas":  # "quer ver o que não entra em troca e o que a garantia não cobre?"
+        estado.aguardando = None
+        if s["afirmativo"] and not s["negativo"]:
+            estado.intencao = "detalhe_trocas"
+            return
+        if s["negativo"]:
+            estado.objetivo = None
+            estado.intencao = "retomada_recusada"
+            return
+        estado.objetivo = None
+        ag = None
     if ag == "relato":
         if s["negativo"] and s["palavras"] <= 4:
             estado.intencao = estado.objetivo

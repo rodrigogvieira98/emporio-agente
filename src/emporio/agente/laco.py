@@ -284,8 +284,8 @@ def _assinatura(acao: Acao) -> dict[str, Any]:
 
 def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:
     """A terceira pergunta igual seguida vira oferta de registro para a equipe, em vez de outro laço."""
-    if acao.tipo != "perguntar":
-        return acao
+    if acao.tipo != "perguntar" or acao.parametros.get("aguardando") == "detalhe_trocas":
+        return acao  # a oferta de detalhes é informação, não um dado que o cliente deixou de dar
     anterior = estado.ultima_pergunta
     assinatura = _assinatura(acao)
     if (anterior and anterior.get("vezes", 0) >= MAX_REPETICOES_PERGUNTA

@@ -70,6 +70,8 @@ O resumo do chamado pode conter o relato livre do cliente, inclusive nome, porqu
 
 Na mesma conversa, com chamado já registrado, novo pedido de atendente informa o protocolo existente e não abre outro chamado. O teste `test_mesmo_pedido_repetido_nao_duplica_chamado` passou a esperar 1 chamado em vez de 2. Mudança de teste aprovada pelo Rodrigo em 01/11/2026.
 
+Também aprovadas pelo Rodrigo em 01/11/2026 estas alterações de testes existentes: "Eu sou a Lia" para "Sou a Lia" em `test_concisao.py` e `test_llm.py`; nova ordem de consultas em `test_devolucao_do_pedido_4_conversa_completa` e `test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas`, porque a regra é dita antes de pedir o pedido; teste do rodapé em `test_web.py`, que passa a exigir um telefone e um e-mail.
+
 CLI `python -m emporio.cli --origem demo`.
 
 ## Concisão e redundância

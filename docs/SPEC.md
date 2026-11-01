@@ -444,6 +444,15 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Provedor de modelo plugável (etapa 17)
+
+Pedido do Rodrigo em 01/11/2026: a Lia precisa poder usar outro modelo, inclusive pago por API, sem mudar a arquitetura.
+
+- `EMPORIO_PROVEDOR` escolhe o provedor: `ollama` (padrão, comportamento atual) ou `anthropic`. Uma interface única em `src/emporio/agente/llm.py` (`conversar`, `conferir_modelo`, `aquecer`) com uma implementação por provedor; redação, reserva e decisor usam só a interface. Adicionar outro provedor é escrever uma implementação.
+- Provedor `anthropic`: SDK oficial `anthropic`, importado só quando escolhido, em `requirements-api.txt` separado. Chave lida de `ANTHROPIC_API_KEY` (ou perfil do `ant auth login`), nunca gravada. Modelo padrão `claude-haiku-5-5`, `output_config.effort` baixo, sem `temperature`; formato JSON pela `output_config.format` quando a chamada pede formato. Erros do SDK viram `ErroModelo`, e a Lia segue só com as regras, como hoje com o Ollama fora do ar. `/saude` informa provedor e modelo.
+- Testes com cliente falso, sem rede e sem chave. Nada muda com a variável ausente.
+- README: seção "Trocar de modelo" com as variáveis, os candidatos e a estimativa de custo, deixando claro que nenhum modelo por API foi medido neste projeto e que a troca deve passar pelo mesmo harness e critério antes de virar padrão.
+
 ## Voz da Lia e QA móvel (etapa 16)
 
 Pedido do Rodrigo em 01/11/2026.

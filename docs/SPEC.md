@@ -280,9 +280,9 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 
 **Canais e contato: decisão final do Rodrigo em 01/11/2026.** Prevalece sobre o que estiver diferente nesta seção.
 - O botão "Fale conosco" da faixa abre `/fale-conosco`.
-- Em `/fale-conosco`, WhatsApp e Telefone ficam com ícone e texto, sem link. Contatos fictícios só ganham link com as variáveis `EMPORIO_WHATSAPP_URL` e `EMPORIO_TELEFONE_LINK`, quando forem canais controlados.
-- O bloco de e-mail tem o link específico "Enviar e-mail", com `mailto:`. É o único link de canal ativo por padrão.
-- O telefone da faixa fica como texto.
+- Em `/fale-conosco`, WhatsApp e Telefone têm ícone e link ativo por padrão, gerado dos dados do manual: `https://wa.me/55DDDNUMERO`, em nova aba, e `tel:`. Decisão do Rodrigo, que prevalece sobre a anterior de deixar sem link. `EMPORIO_WHATSAPP_URL` e `EMPORIO_TELEFONE_LINK` substituem o padrão. O README avisa que os números são os do manual da loja fictícia.
+- O bloco de e-mail tem o link específico "Enviar e-mail", com `mailto:`.
+- O telefone da faixa tem link `tel:`, com o ícone do WhatsApp ao lado, com o mesmo link da página.
 - A faixa mostra o endereço resumido (rua, número e cidade/UF). O endereço completo, com CEP, fica em `/fale-conosco`. É uma repetição útil e permitida.
 - O rodapé segue sem link "Fale conosco" e sem dados de contato.
 

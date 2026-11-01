@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from .. import config
 from ..dinheiro import formatar
+from ..texto import normalizar
 from . import expediente
 from .estado import Estado
 
@@ -18,6 +19,8 @@ ROTULOS_ASSUNTO = {
     "busca_produto": "a busca de produtos", "frete": "o frete", "reclamacao": "a reclamação", "garantia": "a garantia",
     "pagamento": "as formas de pagamento",
 }
+ROTULOS_REGRA = {"devolucao": "devolução por arrependimento", "defeito": "troca por defeito",
+                 "troca_preferencia": "troca por preferência"}
 STATUS_PEDIDO = {"pending": "pendente", "confirmed": "confirmado", "shipped": "enviado", "delivered": "entregue",
                  "cancelled": "cancelado"}
 SITUACAO = {"disponivel": "disponível", "esgotado": "esgotado no momento", "descontinuado": "descontinuado",
@@ -195,6 +198,9 @@ def pagamento(e: Estado, p: dict) -> str:
         txt += aviso(e, "parcela_minima_duas_leituras",
                      f" A tabela de pagamento fala em {formatar(c['pagamento.credito_parcela_minima_tabela_centavos'])} "
                      "por parcela, então em casos de limite a equipe confirma.", proprio=True)
+    combinar = c.get("pagamento.combinacao_formas_acima_centavos")
+    if combinar:
+        txt += f"\nÉ possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de {formatar(combinar)}."
     return txt + "\nSe quiser, me diga o produto e o número de parcelas que eu calculo."
 
 
@@ -212,6 +218,21 @@ def frete_info(e: Estado, p: dict) -> str:
     if mods:
         txt += " Para outras cidades o envio é por " + _lista([m["nome"] for m in mods]) + ", com valor calculado pelo CEP."
     return txt + "\nMe diga a cidade e o valor do pedido que eu confirmo o frete."
+
+
+def frete_prazo(e: Estado, p: dict) -> str:
+    """Prazo de entrega da cidade informada, do manual; o valor do frete só depois de saber o valor do pedido."""
+    c = _condicoes(e)
+    prazo, base = c.get("frete.prazo_dias_uteis"), c.get("frete.cidade_base")
+    if not prazo or not base:
+        return sem_dado(e, p)
+    if normalizar(p.get("cidade", "")) == normalizar(base):
+        txt = f"Para {base}, o prazo é de {prazo['min']} a {prazo['max']} dias úteis."
+    else:
+        mods = c.get("frete.outras_cidades_modalidades", [])
+        itens = [f"{m['nome']}: {m['prazo_dias_uteis']['min']} a {m['prazo_dias_uteis']['max']} dias úteis" for m in mods]
+        txt = "Para outras cidades o prazo depende da modalidade: " + "; ".join(itens) + "." if itens else sem_dado(e, p)
+    return txt + "\nSe quiser saber o valor do frete, me diga o valor do pedido."
 
 
 def pedir_valor_pedido(e: Estado, p: dict) -> str:
@@ -432,7 +453,8 @@ def fora_escopo_geral(e: Estado, p: dict) -> str:
 
 def disponibilidade(e: Estado, p: dict) -> str:
     d = _dados(e, "ver_produto")
-    return f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque do sistema agora."
+    txt = f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque do sistema agora."
+    return f"{txt} Preço de tabela: {formatar(d['preco_centavos'])}." if d.get("preco_centavos") else txt
 
 
 def preco(e: Estado, p: dict) -> str:
@@ -468,7 +490,18 @@ def preco_promocao_conflitante(e: Estado, p: dict) -> str:
             f"Quer que eu registre para a equipe confirmar o valor? {CONFIRMA}")
 
 
+def item_nao_elegivel(e: Estado, p: dict) -> str:
+    return (f"Pelo manual da loja, esse item não entra em troca: {p['trecho']}. "
+            "Se o seu caso for outro, é só me contar.")
+
+
 def pedir_pedido(e: Estado, p: dict) -> str:
+    regra = e.coletados.get("regra")
+    if regra and p.get("com_regra") and e.objetivo in ROTULOS_REGRA:
+        v = regra["valor"]
+        return (f"Pela regra do manual, {ROTULOS_REGRA[e.objetivo]}: {_prazo(v)}. A equipe confirma se o seu caso se "
+                "enquadra. Para consultar o pedido, me diga o número do pedido e os 4 últimos dígitos do telefone "
+                "cadastrado.")
     if p.get("tem_pedido") and not p.get("tem_final"):
         return "Agora preciso dos 4 últimos dígitos do telefone cadastrado no pedido."
     if p.get("tem_final") and not p.get("tem_pedido"):
@@ -694,7 +727,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
-        atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado)
+        atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
+        item_nao_elegivel)
 }
 
 

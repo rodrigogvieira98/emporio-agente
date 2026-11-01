@@ -178,6 +178,11 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     if any(re.search(r"\d", t) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
+    elif any(re.search(r"\d", t) for t in conteudo) and re.search(
+            r"\b(preco\w*|custa\w*|valor|quanto|vende\w*|tem|disponivel|estoque)\b", norm):
+        # modelo com número que o catálogo não conhece ("Stradivarius 1715"): a ferramenta diz se existe
+        slots["referencia"] = " ".join(conteudo)
+        slots["tem_modelo"] = True
     palavras_da_msg = set(tokens(norm))
     for c in voc.campanhas:
         chaves = [t for t in tokens(c) if t not in ("de", "da", "do", "dos", "das")]
@@ -193,6 +198,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["estado_produto"] = "com sinais de uso ou sem a embalagem original"
     elif v.ESTADO_BOM.search(norm):
         slots["estado_produto"] = "na embalagem original, sem sinais de uso"
+    slots["pergunta_prazo"] = bool(v.PERGUNTA_PRAZO.search(norm))
     slots["afirmativo"] = bool(v.AFIRMATIVO.search(norm))
     slots["negativo"] = bool(v.NEGATIVO.search(norm))
     slots["nega_reclamacao"] = bool(v.NEGA_RECLAMACAO.search(norm))
@@ -223,6 +229,10 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.DADO_DE_TERCEIRO.search(norm):
         return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
+    for flag, intencao in (("nega_atendente", "pedir_atendente"), ("nega_reclamacao", "reclamacao")):
+        sobra = [n for n in achadas if n != intencao]
+        if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale
+            achadas = sobra
     ref, categoria = slots.get("referencia"), slots.get("categoria")
     if achadas and achadas[0] == "reclamacao" and not v.RECLAMACAO_EXPLICITA.search(norm):
         # desabafo ("que absurdo") com pedido concreto: segue o pedido; sem pedido concreto continua reclamação
@@ -263,7 +273,7 @@ def _trocar_assunto(estado: Estado, novo: str) -> None:
         estado.pendentes.append({"objetivo": estado.objetivo, "coletados": estado.coletados,
                                  "declarados": estado.declarados, "aguardando": estado.aguardando})
         estado.pendentes = estado.pendentes[-3:]
-        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo")}
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo", "ultimo_produto")}
         estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
     estado.objetivo = novo
     estado.aguardando = None
@@ -318,6 +328,11 @@ def perceber(estado: Estado, mensagem: str) -> None:
     s = estado.slots
     ag = ag_inicial = estado.aguardando
     nova = classificar(norm, s)
+    ultimo = estado.coletados.get("ultimo_produto")
+    if (nova == "pagamento" and ultimo and "referencia" not in s and (s.get("forma") or s.get("parcelas"))
+            and s["palavras"] <= 5 and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
+        nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
+        s["produto_id"] = ultimo
     estado.intencao = nova
     s["nova"] = nova
 
@@ -412,7 +427,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
     else:
         estado.objetivo = nova
         estado.aguardando = None
-        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo")}
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo", "ultimo_produto")}
         estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
     if nova == "reclamacao" and s["abrir_reclamacao"]:
         estado.coletados["registro_explicito"] = True

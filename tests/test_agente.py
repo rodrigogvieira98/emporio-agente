@@ -37,7 +37,8 @@ def test_devolucao_do_pedido_4_conversa_completa(sql):
     # 2) pergunta canal, data e estado
     assert "online ou na loja" in r2.texto and "data em que você recebeu" in r2.texto and "estado do produto" in r2.texto
     assert r2.estado == "aguardando:dados_posvenda"
-    assert [a["ferramenta"] for a in r2.acoes if "ferramenta" in a] == ["consultar_pedido", "consultar_politica"]
+    assert [a["ferramenta"] for a in r1.acoes if "ferramenta" in a] == ["consultar_politica", "consultar_politica"]  # exceções e regra, antes de pedir o pedido
+    assert [a["ferramenta"] for a in r2.acoes if "ferramenta" in a] == ["consultar_pedido"]
     # 3) propõe registro separando sistema, declarado e equipe, sem afirmar elegibilidade
     assert "O que o sistema mostra" in r3.texto and "R$ 799,90" in r3.texto
     assert "(não verificado)" in r3.texto and "compra online" in r3.texto and "15/12/2025" in r3.texto
@@ -430,9 +431,9 @@ def test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas(sql):
     msgs = sql.execute("SELECT turno, texto, origem FROM mensagens_exibidas ORDER BY id").fetchall()
     exec_ = sql.execute("SELECT ferramenta, estado, entrada_json FROM execucoes ORDER BY id").fetchall()
     assert [m["turno"] for m in msgs] == [1, 2] and all(m["origem"] == "eval" for m in msgs)
-    assert [e["ferramenta"] for e in exec_] == ["consultar_pedido", "consultar_politica"]
+    assert [e["ferramenta"] for e in exec_] == ["consultar_politica", "consultar_politica", "consultar_pedido"]
     assert FINAL not in " ".join(e["entrada_json"] for e in exec_)
-    assert json.loads(exec_[0]["entrada_json"])["final_telefone"] == "[omitido]"
+    assert json.loads(exec_[2]["entrada_json"])["final_telefone"] == "[omitido]"
     assert not any(e["ferramenta"] in m["texto"] for m in msgs for e in exec_)
 
 

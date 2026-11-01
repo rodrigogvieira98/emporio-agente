@@ -254,6 +254,8 @@ def integrar(estado: Estado, passo: Passo) -> None:
         elif r.estado == "negado":
             estado.declarados.pop("pedido_demo", None)
     elif nome == "ver_produto":
+        if r.estado == "ok":
+            estado.coletados["ultimo_produto"] = r.dados["id"]
         if r.estado == "ambiguo":
             estado.coletados["opcoes"] = r.dados["opcoes"]
         else:

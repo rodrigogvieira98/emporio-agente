@@ -54,6 +54,8 @@ CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "horario", "en
              "frete", "promocao", "garantia"}
 RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento ruim)\b")
 
+PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|dias uteis|chega em)\b")
+
 # palavra do cliente -> termo de categoria entendido por buscar_produtos
 CATEGORIAS = {
     "violao": "violao", "violoes": "violao", "guitarra": "guitarra", "guitarras": "guitarra",
@@ -81,6 +83,7 @@ disponivel disponiveis disponibilidade estoque modelo modelos opcao opcoes indic
 bom boa dia tarde noite oi ola tudo bem e ai
 hoje agora atualmente mesmo la aquele aquela aquilo coisa negocio
 instrumento instrumentos iniciante iniciantes barato baratos barata baratas melhor melhores
+vende vendem vendo vender existe existem trabalha trabalham confirma confirmar confirmo
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 """.split())
 
@@ -118,7 +121,10 @@ MANIPULACAO = re.compile(
 DADO_DE_TERCEIRO = re.compile(
     r"\b(telefone|celular|fone|e-?mail|endereco|cpf|nome|sobrenome|dados|contato)\b.{0,30}"
     r"\b(do cliente|da cliente|do comprador|do dono|do titular|de outro cliente|de outra pessoa|de quem comprou)\b"
-    r"|\bquem (comprou|fez o pedido|e o dono|e o cliente)\b")
+    r"|\bquem (comprou|fez o pedido|e o dono|e o cliente)\b"
+    # dado pessoal de uma pessoa nomeada ("o e-mail do Bruno Martins"), não da loja
+    r"|\b(telefone|celular|fone|e-?mail|cpf)\b\s+d[oae]s?\s+(?!loja\b|empresa\b|site\b|atendimento\b|suporte\b|"
+    r"setor\b|financeiro\b|vendas\b|voces\b|vcs\b|pedido\b|entrega\b|gerente da loja\b)[a-z]{3,}")
 FORA_DO_ASSUNTO = re.compile(
     r"\b(copa|futebol|campeonato|time de|jogo de|presidente|eleicao|eleicoes|politica|previsao do tempo|"
     r"vai chover|clima|receita de|filme|serie|novela|noticia\w*|bitcoin|piada|horoscopo|signo|loteria|"

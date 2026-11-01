@@ -28,6 +28,25 @@ def propor(chave: str, tipo: str, resumo: str, **parametros: Any) -> Acao:
                 parametros={"propor_registro": {"tipo": tipo, "resumo": resumo}, **parametros})
 
 
+def _trecho_excluido(r: Resultado, texto: str) -> str | None:
+    """Linha do manual que exclui da troca o item citado, se o cliente citou algum (casamento por palavras
+    distintivas de cada item da lista, nunca por palavra genérica)."""
+    from ..texto import radical, tokens
+
+    genericas = {"instrumentos", "instrumento", "produtos", "produto", "adquiridos", "com", "sob", "de", "do", "da"}
+    msg = {radical(t) for t in tokens(texto)}
+    for s in r.dados["secoes"]:
+        itens = [c["valor"] for c in s["condicoes"] if c["chave"] == "trocas.itens_nao_elegiveis"]
+        for lista in itens:
+            for item in lista:
+                distintivas = {radical(t) for t in tokens(item) if len(t) >= 5 and t not in genericas}
+                if distintivas and len(distintivas & msg) / len(distintivas) >= 0.4:
+                    achado = next((ln.strip(" •\t") for ln in (s["texto"] or "").splitlines()
+                                   if distintivas & {radical(t) for t in tokens(ln)} & msg), None)
+                    return (achado or item).rstrip(".")
+    return None
+
+
 def resultado_de(estado: Estado, nome: str, **args: Any) -> Resultado | None:
     for p in reversed(estado.passos):
         if p.ferramenta == nome and all(p.args.get(k) == v for k, v in args.items()):
@@ -115,8 +134,25 @@ class RegrasDecisor:
 
     # --- pós-venda -------------------------------------------------------------------
 
+    def _item_nao_elegivel(self, estado: Estado) -> Acao | None:
+        """Cliente fala de item que o manual exclui de troca (ex.: boquilha): responde a exceção, sem pedir pedido."""
+        if estado.objetivo not in ("devolucao", "troca_preferencia"):
+            return None
+        r = resultado_de(estado, "consultar_politica", temas=["itens_nao_elegiveis"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["itens_nao_elegiveis"])
+        if r.estado != "ok":
+            return None
+        trecho = _trecho_excluido(r, estado.slots.get("texto_limpo", ""))
+        return responder("item_nao_elegivel", trecho=trecho) if trecho else None
+
     def _posvenda(self, estado: Estado) -> Acao:
-        acao, pedido = self._pedido(estado)
+        regra = estado.coletados.get("regra")
+        if not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo):
+            acao = self._item_nao_elegivel(estado)
+            if acao:
+                return acao
+        acao, pedido = self._pedido_com_regra(estado)
         if acao:
             return acao
         intencao = estado.objetivo
@@ -128,6 +164,19 @@ class RegrasDecisor:
             return perguntar("pedir_dados_posvenda", "dados_posvenda", campos=faltam)
         resumo = self._resumo_posvenda(estado, pedido, regra)
         return propor("propor_posvenda", "atendente", resumo)
+
+    def _pedido_com_regra(self, estado: Estado) -> tuple[Acao | None, dict[str, Any] | None]:
+        """Antes de pedir o pedido pela primeira vez, diz a regra do manual (o cliente já sabe o prazo)."""
+        pedido = estado.coletados.get("pedido")
+        sem_dados = estado.declarado("pedido_id") is None and estado.slots.get("final_telefone") is None
+        regra = estado.coletados.get("regra")
+        if (not pedido and sem_dados and estado.objetivo in ("devolucao", "troca_preferencia", "defeito")
+                and (not regra or regra.get("objetivo") != estado.objetivo)):
+            return self._info_regra(estado, estado.objetivo), None
+        acao, pedido = self._pedido(estado)
+        if acao and acao.resposta == "pedir_pedido" and regra and regra.get("objetivo") == estado.objetivo and sem_dados:
+            acao.parametros["com_regra"] = True
+        return acao, pedido
 
     def _info_regra(self, estado: Estado, intencao: str) -> Acao:
         temas = [TEMA_POR_INTENCAO[intencao]]
@@ -203,6 +252,13 @@ class RegrasDecisor:
                 return propor("frete_calculado", "duvida_politica",
                               "Cliente perguntou frete de pedido exatamente no valor limite do manual.")
             return responder("frete_calculado")
+        if cidade and s.get("pergunta_prazo"):
+            r = resultado_de(estado, "consultar_politica", temas=["frete"])
+            if r is None:
+                return ferramenta("consultar_politica", temas=["frete"])
+            if r.estado != "ok":
+                return self._erro(estado, r)
+            return perguntar("frete_prazo", "valor_pedido", cidade=cidade)
         if cidade:
             return perguntar("pedir_valor_pedido", "valor_pedido")
         r = resultado_de(estado, "consultar_politica", temas=["frete"])

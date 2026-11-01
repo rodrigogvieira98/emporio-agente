@@ -7,6 +7,7 @@ from .. import dinheiro
 from ..dados import banco
 from ..politicas import manual
 from ..texto import normalizar
+from . import cep as cep_mod
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 from .produtos import FONTE_BANCO, promocoes_ativas, situacao_venda
 
@@ -17,6 +18,7 @@ class EntradaCondicoes(EntradaBase):
     forma: Literal["pix", "debito", "credito", "boleto"]
     parcelas: int = 1
     cidade: str | None = None
+    uf: str | None = None  # quando informada, a cidade-base só vale com a UF da loja
     valor_pedido: int | None = None  # centavos, base do frete
 
 
@@ -34,9 +36,10 @@ def _faixa(parcelas: int) -> int:
     raise KeyError("faixa de parcelamento ausente no manual")
 
 
-def _frete(cidade: str, base: int, fontes: list[Fonte]) -> dict[str, Any]:
+def _frete(cidade: str, base: int, fontes: list[Fonte], uf: str | None = None) -> dict[str, Any]:
     fontes.append(_fonte_manual("frete.gratis_acima_centavos"))
-    if normalizar(cidade) != normalizar(manual.valor("frete.cidade_base")):
+    mesma_cidade = normalizar(cidade) == normalizar(manual.valor("frete.cidade_base"))
+    if not mesma_cidade or (uf is not None and not cep_mod.eh_cidade_base(cidade, uf)):
         return {"situacao": "cotacao_necessaria", "taxa_centavos": None}
     limite = manual.valor("frete.gratis_acima_centavos")
     prazo = manual.valor("frete.prazo_dias_uteis")
@@ -114,5 +117,5 @@ def calcular_condicoes(e: EntradaCondicoes) -> Resultado:
     if e.cidade is not None:
         # o limite do frete olha os produtos com promoção e antes do desconto do PIX; a forma nunca muda o frete
         base = e.valor_pedido if e.valor_pedido is not None else (final if promo is not None else original)
-        dados["frete"] = _frete(e.cidade, base, fontes)
+        dados["frete"] = _frete(e.cidade, base, fontes, e.uf)
     return resultado("ok", dados, fontes)

@@ -32,6 +32,10 @@ def fatos_do_resultado(ferramenta: str, args: dict[str, Any], r: Resultado) -> l
             add("condicao", ent, atributo, d.get(atributo), cond)
         if "frete" in d:
             add("condicao", ent, "frete", d["frete"]["situacao"], cond)
+    elif ferramenta == "estimar_frete":
+        add("condicao", "frete_simulado", "situacao", d.get("situacao"), "simulação")
+        for m in d.get("modalidades", []):
+            add("condicao", "frete_simulado", f"{m['id']}_centavos", m["valor_centavos"], "simulação")
     elif ferramenta == "consultar_pedido":
         for atributo, chave in (("status", "status"), ("total_gravado_centavos", "total_gravado_centavos"),
                                 ("previsao", "previsao"), ("rastreio", "rastreio")):

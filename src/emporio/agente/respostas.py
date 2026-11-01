@@ -256,6 +256,8 @@ def frete_calculado(e: Estado, p: dict) -> str:
     r = _dados(e, "calcular_condicoes")
     f = r.get("frete", {})
     cidade = e.coletados.get("cidade", "").title()
+    if e.coletados.get("uf"):
+        cidade = f"{cidade}/{e.coletados['uf']}"
     prazo = f.get("prazo_dias_uteis")
     prazo_txt = f" Prazo de {prazo['min']} a {prazo['max']} dias úteis." if prazo else ""
     sit = f.get("situacao")
@@ -266,20 +268,74 @@ def frete_calculado(e: Estado, p: dict) -> str:
     mods = _condicoes(e).get("frete.outras_cidades_modalidades")
     extra = f" Os envios são por {_lista([m['nome'] for m in mods])}." if mods else ""
     return (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
-            f"dimensões do produto, e eu não consigo informar o valor por aqui.{extra}")
+            f"dimensões do produto, e eu não consigo informar o valor por aqui.{extra}{DICA_ESTIMATIVA}")
+
+
+DICA_ESTIMATIVA = " Se me disser o produto e o CEP de entrega, eu faço uma estimativa de frete (simulação)."
+
+
+def _destino(d: dict) -> str:
+    return f"{d['cidade']}/{d['uf']}"
+
+
+def frete_estimado(e: Estado, p: dict) -> str:
+    d = _dados(e, "estimar_frete")
+    partes = []
+    for m in d["modalidades"]:
+        prazo = m.get("prazo_dias_uteis")
+        prazo_txt = f", prazo estimado de {prazo['min']} a {prazo['max']} dias úteis" if prazo else ""
+        partes.append(f"{m['nome']}: {formatar(m['valor_centavos'])}{prazo_txt}")
+    return (f"Para {_destino(d)}, com 1 unidade de {p['produto']}, o frete estimado (simulação) é: "
+            + "; ".join(partes) + ". É uma estimativa do protótipo, não a tarifa de uma transportadora, "
+            "e o valor final depende da cotação da nossa equipe.")
+
+
+def frete_cidade_base(e: Estado, p: dict) -> str:
+    d = _dados(e, "estimar_frete")
+    f = d["frete"]
+    prazo = f.get("prazo_dias_uteis")
+    prazo_txt = f" Prazo de {prazo['min']} a {prazo['max']} dias úteis." if prazo else ""
+    if f["situacao"] == "gratis":
+        return f"Para {d['cidade']}, com esse produto o frete é grátis.{prazo_txt}"
+    return f"Para {d['cidade']}, o frete é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
+
+
+def frete_cotacao_individual(e: Estado, p: dict) -> str:
+    d = _dados(e, "estimar_frete")
+    return (f"Para {_destino(d)}, o frete de {p['produto']} é de cotação individual: a nossa equipe faz o cálculo, "
+            "e eu não informo valor por aqui.")
+
+
+def frete_cep_indisponivel(e: Estado, p: dict) -> str:
+    return ("Não consegui consultar esse CEP agora, então prefiro não chutar um valor de frete. "
+            "Tente de novo em instantes.")
+
+
+def frete_cep_nao_encontrado(e: Estado, p: dict) -> str:
+    return "Não encontrei esse CEP. Confere os números e me manda de novo?"
+
+
+def frete_pedir_cep(e: Estado, p: dict) -> str:
+    return "Para estimar o frete, qual é o CEP de entrega?"
+
+
+def frete_pedir_produto(e: Estado, p: dict) -> str:
+    return "Para estimar o frete, qual é o produto? Me diga a marca e o modelo."
 
 
 def frete_outra_cidade(e: Estado, p: dict) -> str:
     """Cidade fora da base do manual: a equipe calcula o frete; não pede o valor do pedido."""
     c = _condicoes(e)
     cidade = str(p.get("cidade", "")).title()
+    if p.get("uf"):
+        cidade = f"{cidade}/{p['uf']}"
     txt = (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
            "dimensões do produto, e eu não consigo informar o valor por aqui.")
     mods = c.get("frete.outras_cidades_modalidades", [])
     if mods:
         itens = [f"{m['nome']} ({m['prazo_dias_uteis']['min']} a {m['prazo_dias_uteis']['max']} dias úteis)" for m in mods]
         txt += " Os envios são por " + _lista(itens) + "."
-    return txt
+    return txt + DICA_ESTIMATIVA
 
 
 def fora_escopo(e: Estado, p: dict) -> str:
@@ -572,7 +628,7 @@ def status_pedido_demo(e: Estado, p: dict) -> str:
     d = e.coletados["pedido_demo"]
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in d["itens"])
     return (f"Pedido {d['numero']}: feito no site. {d['aviso']}\n"
-            f"Itens: {itens}.\nTotal do pedido: {formatar(d['total_gravado_centavos'])}.")
+            f"Itens: {itens}.\n{d['frete_linha']}.\n{d['total_rotulo']}: {formatar(d['total_gravado_centavos'])}.")
 
 
 def pedido_demo_negado(e: Estado, p: dict) -> str:
@@ -840,7 +896,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
         item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
-        previsao_entrega, extremo_lista, frete_outra_cidade)
+        previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,
+        frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base)
 }
 
 

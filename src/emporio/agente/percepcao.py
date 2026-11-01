@@ -25,7 +25,11 @@ FAMILIAS = {
     "defeito": "posvenda", "garantia": "posvenda",
 }
 # esperando um dado: respostas curtas continuam o assunto
-AGUARDA_DADO = {"pedido", "dados_posvenda", "referencia_produto", "escolha_produto", "cidade", "valor_pedido", "categoria"}
+AGUARDA_DADO = {"pedido", "dados_posvenda", "referencia_produto", "escolha_produto", "cidade", "valor_pedido", "categoria",
+                "cep"}
+RE_CEP = re.compile(r"(?<!\d)(\d{5})-(\d{3})(?!\d)|\bcep\D{0,12}?(\d{5})(\d{3})(?!\d)")
+UFS = ("ac", "al", "ap", "am", "ba", "ce", "df", "es", "go", "ma", "mt", "ms", "mg", "pa", "pb", "pr", "pe", "pi", "rj",
+       "rn", "rs", "ro", "rr", "sc", "sp", "se", "to")
 
 _PRECO = r"(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(?:\s*(mil))?(?:\s*reais|\s*real)?"
 RE_MAX = re.compile(r"\b(?:ate|no maximo|maximo|abaixo de|menos de|por ate)\s*" + _PRECO)
@@ -127,7 +131,8 @@ def _numeros_de_pedido(norm: str, estado: Estado) -> dict[str, Any]:
 
 
 def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
-    s = RE_MAX.sub(" ", norm)
+    s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b", " ", norm)  # o CEP não faz parte do nome do produto
+    s = RE_MAX.sub(" ", s)
     s = RE_MIN.sub(" ", s)
     s = RE_VALOR.sub(" ", s)
     s = RE_PARCELAS.sub(lambda m: m.group(0) if m.group(0).replace(" ", "") in voc.df else " ", s)
@@ -233,6 +238,16 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
             if cand and cand.split()[0] not in NAO_E_CIDADE:
                 slots["cidade"] = cand
                 break
+    m_cep = RE_CEP.search(mensagem.lower())
+    if m_cep:
+        slots["cep"] = f"{m_cep.group(1) or m_cep.group(3)}-{m_cep.group(2) or m_cep.group(4)}"
+    elif estado.aguardando == "cep" and re.fullmatch(r"\d{8}", mensagem.strip()):
+        slots["cep"] = f"{mensagem.strip()[:5]}-{mensagem.strip()[5:]}"
+    if slots.get("cidade"):
+        ufs = "|".join(UFS)
+        m_uf = re.search(rf"\b{re.escape(slots['cidade'])}\s*(?:/|-|,|\s)\s*({ufs})\b", norm)
+        if m_uf:
+            slots["uf"] = m_uf.group(1).upper()
     if estado.aguardando == "cidade" and "cidade" not in slots:
         slots["cidade"] = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
     if estado.aguardando == "valor_pedido" and "valor" not in slots:
@@ -271,6 +286,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale
             achadas = sobra
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if slots.get("cep") and ("frete" in achadas or not achadas or achadas[0] in ("preco_produto", "disponibilidade")):
+        return "frete"  # CEP na mensagem: o cliente quer o frete (estimativa com produto e CEP)
     extremo = "min" if v.EXTREMO_MIN.search(norm) else "max" if v.EXTREMO_MAX.search(norm) else None
     if (extremo and not ref and not categoria
             and all(n in ("preco_produto", "disponibilidade", "pagamento") for n in achadas)):

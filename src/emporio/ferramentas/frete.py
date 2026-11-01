@@ -19,6 +19,7 @@ from ..dados import banco
 from ..politicas import manual
 from ..texto import normalizar
 from . import cep as cep_mod
+from .condicoes import calcular_condicoes
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 from .produtos import FONTE_BANCO
 
@@ -125,9 +126,6 @@ def estimar_frete(e: EntradaFrete) -> Resultado:
     destino = {"cep": loc.cep, "cidade": loc.cidade, "uf": loc.uf}
     cfg = tabelas()
     fontes = _fontes()
-    if cep_mod.eh_cidade_base(loc.cidade, loc.uf):
-        return resultado("ok", {**destino, "situacao": "cidade_base", "simulacao": False}, fontes)
-
     zona = _zona(cfg, loc.uf)
     conn = banco.conectar()
     try:
@@ -140,6 +138,19 @@ def estimar_frete(e: EntradaFrete) -> Resultado:
             produtos[pid] = linha
     finally:
         conn.close()
+
+    if cep_mod.eh_cidade_base(loc.cidade, loc.uf):  # regra da loja, não simulação: promoções valem, PIX não
+        valor = 0
+        for pid, qtd in pedido.items():
+            c = calcular_condicoes(produto_id=pid, forma="boleto")
+            if c.estado != "ok":
+                return resultado("falha", fontes=fontes, motivo="erro_interno")
+            valor += c.dados["final_centavos"] * qtd
+        f = calcular_condicoes(valor=valor, forma="boleto", cidade=loc.cidade, uf=loc.uf, valor_pedido=valor)
+        if f.estado != "ok":
+            return resultado("falha", fontes=fontes, motivo="erro_interno")
+        return resultado("ok", {**destino, "situacao": "cidade_base", "simulacao": False, "produtos_centavos": valor,
+                                "frete": f.dados["frete"]}, fontes + f.fontes)
 
     caixas, sem_valor = [], []
     for pid, qtd in pedido.items():

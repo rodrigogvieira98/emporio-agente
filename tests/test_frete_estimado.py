@@ -146,3 +146,19 @@ def test_cep_inexistente_invalido_e_entradas_ruins():
 def test_e_deterministico():
     a, b = estimar("50030-230", (TECLADO_61, 1)), estimar("50030-230", (TECLADO_61, 1))
     assert a.dados == b.dados
+
+
+def test_cidade_base_devolve_a_regra_da_loja_pelo_preco_com_promocao_e_sem_pix():
+    ms = estimar("79002-000", (UKULELE_SOPRANO, 1))
+    assert ms.dados["frete"]["situacao"] == "taxa" and ms.dados["frete"]["taxa_centavos"] == 3500
+    caro = estimar("79002-000", (UKULELE_TENOR, 1), (GUITARRA, 1), (TECLADO_61, 1))
+    assert caro.dados["frete"]["situacao"] == "gratis" and caro.dados["produtos_centavos"] >= 50000
+
+
+def test_calcular_condicoes_compara_cidade_e_uf_quando_a_uf_vem():
+    from emporio.ferramentas.condicoes import calcular_condicoes
+
+    base = dict(valor=60000, forma="boleto", cidade="Campo Grande", valor_pedido=60000)
+    assert calcular_condicoes(**base, uf="MS").dados["frete"]["situacao"] == "gratis"
+    assert calcular_condicoes(**base, uf="RN").dados["frete"]["situacao"] == "cotacao_necessaria"
+    assert calcular_condicoes(**base).dados["frete"]["situacao"] == "gratis"

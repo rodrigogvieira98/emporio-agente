@@ -14,6 +14,7 @@ from ..dados import banco
 from ..ferramentas.condicoes import calcular_condicoes
 from ..ferramentas.encaminhamento import registrar_encaminhamento
 from ..ferramentas.envelope import Fato, Resultado
+from ..ferramentas.frete import estimar_frete
 from ..ferramentas.pedido_demo import consultar_pedido_demo
 from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
@@ -34,12 +35,12 @@ log = logging.getLogger("emporio.agente")
 MAX_PASSOS = 3
 FERRAMENTAS = {f.__name__: f for f in (buscar_produtos, ver_produto, calcular_condicoes, consultar_pedido,
                                        consultar_politica, registrar_encaminhamento, listar_promocoes,
-                                       consultar_pedido_demo)}
+                                       consultar_pedido_demo, estimar_frete)}
 # só o caminho "encaminhar" (com permissão) pode gravar chamado
 SO_ENCAMINHAR = {"registrar_encaminhamento"}
 NECESSITA_CONVERSA = {"consultar_pedido", "consultar_pedido_demo", "registrar_encaminhamento"}
 LIMPAR_AO_CONCLUIR = ("proposta", "regra", "relato", "registro_explicito", "opcoes", "referencia", "cidade",
-                      "valor_pedido", "forma", "parcelas")
+                      "valor_pedido", "forma", "parcelas", "cep", "uf")
 
 
 class Agente:
@@ -261,7 +262,7 @@ def integrar(estado: Estado, passo: Passo) -> None:
     r, nome = passo.resultado, passo.ferramenta
     if r.estado in ("falha", "negado") and nome in ("consultar_pedido", "consultar_pedido_demo", "buscar_produtos", "ver_produto",
                                                     "calcular_condicoes", "consultar_politica",
-                                                    "registrar_encaminhamento", "listar_promocoes"):
+                                                    "registrar_encaminhamento", "listar_promocoes", "estimar_frete"):
         estado.falhas_seguidas += 1
     elif r.estado == "ok":
         estado.falhas_seguidas = 0

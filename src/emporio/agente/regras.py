@@ -281,10 +281,44 @@ class RegrasDecisor:
                     return str(c["valor"])
         return None
 
+    def _frete_por_cep(self, estado: Estado, cep: str) -> Acao:
+        """Produto e CEP: estimativa (simulação) pela ferramenta única `estimar_frete`; o que faltar, pergunta."""
+        acao, produto = self._produto(estado)
+        if acao:
+            return perguntar("frete_pedir_produto", "referencia_produto") if acao.resposta == "pedir_produto" else acao
+        if produto["situacao_venda"] != "disponivel":
+            return self._indisponivel(estado, produto)
+        itens = [{"produto_id": produto["id"], "quantidade": 1}]
+        r = resultado_de(estado, "estimar_frete", cep=cep)
+        if r is None:
+            return ferramenta("estimar_frete", itens=itens, cep=cep)
+        if r.estado == "vazio" and r.motivo == "cep_inexistente":
+            estado.coletados.pop("cep", None)
+            return perguntar("frete_cep_nao_encontrado", "cep")
+        if r.estado == "falha" and r.motivo == "cep_indisponivel":
+            return responder("frete_cep_indisponivel")
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        if r.dados["situacao"] == "cidade_base":  # a regra da loja vale pelo preço do produto, antes do PIX
+            return responder("frete_cidade_base")
+        if r.dados["situacao"] == "cotacao_individual":
+            return responder("frete_cotacao_individual", produto=produto["nome"])
+        return responder("frete_estimado", produto=produto["nome"])
+
     def _i_frete(self, estado: Estado) -> Acao:
         s = estado.slots
+        cep = s.get("cep") or estado.coletados.get("cep")
+        if cep:
+            estado.coletados["cep"] = cep
+            return self._frete_por_cep(estado, cep)
         cidade = s.get("cidade") or estado.coletados.get("cidade")
         valor = s.get("valor") or estado.coletados.get("valor_pedido")
+        if not cidade and (s.get("referencia") or s.get("produto_id")):  # produto sem destino: pede o CEP
+            estado.coletados["referencia"] = s.get("produto_id") or s["referencia"]
+            return perguntar("frete_pedir_cep", "cep")
+        if s.get("cidade"):
+            estado.coletados["uf"] = s.get("uf")
+        uf = estado.coletados.get("uf")
         if cidade:
             estado.coletados["cidade"] = cidade
             r = resultado_de(estado, "consultar_politica", temas=["frete"])
@@ -298,8 +332,10 @@ class RegrasDecisor:
         if cidade and valor:
             estado.coletados["valor_pedido"] = valor
             r = resultado_de(estado, "calcular_condicoes", cidade=cidade)
-            if r is None:
-                return ferramenta("calcular_condicoes", valor=valor, forma="boleto", cidade=cidade, valor_pedido=valor)
+            if r is None:  # com UF informada, a ferramenta compara cidade e UF: a cidade-base de outro estado não recebe a regra
+                extra = {"uf": uf} if uf else {}
+                return ferramenta("calcular_condicoes", valor=valor, forma="boleto", cidade=cidade, valor_pedido=valor,
+                                  **extra)
             if r.estado != "ok":
                 return self._erro(estado, r)
             return responder("frete_calculado")

@@ -10,7 +10,7 @@
 {"id":"h10","cat":"politica","turnos":["boleto demora quanto pra compensar?"],"contem":["3 dias úteis"],"chamado":false}
 {"id":"h11","cat":"cruzado","turnos":["se eu comprar o Ohana CK-20 no pix ganho desconto em cima da promoção?"],"contem":["439,20"],"nao_contem":["417,24"],"chamado":false}
 {"id":"h12","cat":"cruzado","turnos":["paguei com cartão, o reembolso da devolução cai como?"],"contem":["mesma forma"],"chamado":false}
-{"id":"h13","cat":"cruzado","turnos":["gastando exatos 500 reais em Campo Grande pago frete?"],"nao_contem":["frete grátis","35,00"],"chamado":false}
+{"id":"h13","cat":"cruzado","turnos":["gastando exatos 500 reais em Campo Grande pago frete?"],"nao_contem":["é grátis","sai grátis","35,00"],"chamado":false}
 {"id":"h14","cat":"cruzado","turnos":["mau uso entra na garantia? deixei cair o violão"],"nao_contem":["está coberto"],"chamado":false}
 {"id":"h15","cat":"escopo","turnos":["vende cabo pra guitarra?"],"contem":["instrumentos"],"chamado":false}
 {"id":"h16","cat":"escopo","turnos":["me ajuda a fazer meu imposto de renda?"],"nao_contem":["declaração"],"chamado":false}

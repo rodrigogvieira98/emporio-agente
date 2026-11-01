@@ -111,3 +111,11 @@ def gravar(campos: dict[str, str]) -> str:
         raise
     finally:
         conn.close()
+
+
+def faixa() -> dict[str, Any]:
+    """Telefone e horário em uma linha para a faixa "Fale conosco"; tudo vem do manual."""
+    from .apresentacao import loja
+    link = (os.environ.get("EMPORIO_TELEFONE_LINK") or "").strip() or None
+    abertos = [h.replace(": ", " ") for h in loja()["horario"] if "fechado" not in h.lower()]
+    return {"telefone": _valor("contato.telefone_capa"), "link": link, "horario": " · ".join(abertos)}

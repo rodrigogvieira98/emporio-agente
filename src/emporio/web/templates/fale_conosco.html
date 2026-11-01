@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block faixa_contato %}{% endblock %}
 {% block conteudo %}
 <div class="contorno pagina">
 <h1>Fale conosco</h1>
@@ -9,50 +10,57 @@
   <p><a class="botao" href="/">Voltar ao início</a></p>
 </section>
 {% else %}
-<p class="lead">Escolha como prefere falar com a loja.</p>
-<ul class="intencoes">
+{% set L = loja() %}
+<p class="lead">Fale com a equipe pelo canal que preferir ou deixe uma mensagem.</p>
+<section class="cartao-3 fc-canais" aria-label="Canais de atendimento">
+  {% set rotulos = {'conversar': 'WhatsApp', 'ligar': 'Telefone', 'escrever': 'E-mail'} %}
   {% for c in canais() %}
-  <li class="intencao">
-    <h2>{{ c.rotulo }}</h2>
-    {% if c.link %}<a class="canal" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>
-      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#{{ c.icone }}"/></svg><span>{{ c.valor }}</span></a>
-    {% else %}<p class="canal"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#{{ c.icone }}"/></svg><span>{{ c.valor }}</span></p>{% endif %}
-  </li>
+  <div class="bloco-3">
+    <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#{{ c.icone }}"/></svg>
+    <div class="bloco-texto">
+      <h2 class="bloco-titulo">{{ rotulos.get(c.chave, c.rotulo) }}</h2>
+      {% if c.link %}<a class="bloco-fone" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>{{ c.valor }}</a>
+      {% else %}<p class="bloco-fone">{{ c.valor }}</p>{% endif %}
+    </div>
+  </div>
   {% endfor %}
-  <li class="intencao"><h2><a href="#mensagem">Deixar uma mensagem</a></h2>
-    <p class="canal"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#mensagem"/></svg><span>Pelo formulário abaixo</span></p></li>
-</ul>
-
-<section class="contato-visita" aria-labelledby="t-onde">
-  {% set L = loja() %}
-  <h2 id="t-onde">Onde estamos</h2>
-  <address><p class="visite-rua">{{ L.endereco }}</p></address>
-  <table class="horario"><caption class="so-leitor">Horário de funcionamento</caption><tbody>
-  {% for h in L.horario %}{% set par = h.split(': ', 1) %}<tr><th scope="row">{{ par[0] }}</th><td>{{ par[1] }}</td></tr>{% endfor %}
-  </tbody></table>
 </section>
 
-<section id="mensagem" class="contato-form" aria-labelledby="t-form">
-  <h2 id="t-form">Deixar uma mensagem</h2>
-  {% if erros.geral %}<p class="aviso aviso-erro" role="alert">{{ erros.geral }}</p>{% endif %}
-  <form action="/fale-conosco" method="post" novalidate>
-    <label for="f-assunto">Assunto</label>
-    <input id="f-assunto" name="assunto" maxlength="{{ limites.assunto }}" value="{{ valores.assunto or '' }}" required
-           {% if erros.assunto %}aria-invalid="true" aria-describedby="e-assunto"{% endif %}>
-    {% if erros.assunto %}<p class="erro-campo" id="e-assunto">{{ erros.assunto }}</p>{% endif %}
-    <label for="f-mensagem">Mensagem</label>
-    <textarea id="f-mensagem" name="mensagem" rows="6" maxlength="{{ limites.mensagem }}" required
-              {% if erros.mensagem %}aria-invalid="true" aria-describedby="e-mensagem"{% endif %}>{{ valores.mensagem or '' }}</textarea>
-    {% if erros.mensagem %}<p class="erro-campo" id="e-mensagem">{{ erros.mensagem }}</p>{% endif %}
-    <label for="f-contato">E-mail ou telefone para retorno</label>
-    <input id="f-contato" name="contato_retorno" maxlength="{{ limites.contato }}" value="{{ valores.contato or '' }}" autocomplete="email" required
-           {% if erros.contato %}aria-invalid="true" aria-describedby="e-contato"{% endif %}>
-    {% if erros.contato %}<p class="erro-campo" id="e-contato">{{ erros.contato }}</p>{% endif %}
-    <div class="isca" aria-hidden="true"><label for="f-site">Deixe em branco</label><input id="f-site" name="site" tabindex="-1" autocomplete="off"></div>
-    <p class="nota-valores">Usamos seus dados só para responder esta mensagem. Veja a <a href="/privacidade">política de privacidade</a>.</p>
-    <button type="submit" class="botao-cheio">Enviar mensagem</button>
-  </form>
-</section>
+<div class="fc-colunas">
+  <section id="mensagem" class="cartao contato-form" aria-labelledby="t-form">
+    <h2 id="t-form">Envie uma mensagem</h2>
+    {% if erros.geral %}<p class="aviso aviso-erro" role="alert">{{ erros.geral }}</p>{% endif %}
+    <form action="/fale-conosco" method="post" novalidate>
+      <label for="f-assunto">Assunto</label>
+      <input id="f-assunto" name="assunto" maxlength="{{ limites.assunto }}" value="{{ valores.assunto or '' }}" required
+             {% if erros.assunto %}aria-invalid="true" aria-describedby="e-assunto"{% endif %}>
+      {% if erros.assunto %}<p class="erro-campo" id="e-assunto">{{ erros.assunto }}</p>{% endif %}
+      <label for="f-mensagem">Mensagem</label>
+      <textarea id="f-mensagem" name="mensagem" rows="6" maxlength="{{ limites.mensagem }}" required
+                {% if erros.mensagem %}aria-invalid="true" aria-describedby="e-mensagem"{% endif %}>{{ valores.mensagem or '' }}</textarea>
+      {% if erros.mensagem %}<p class="erro-campo" id="e-mensagem">{{ erros.mensagem }}</p>{% endif %}
+      <label for="f-contato">E-mail ou telefone para retorno</label>
+      <input id="f-contato" name="contato_retorno" maxlength="{{ limites.contato }}" value="{{ valores.contato or '' }}" autocomplete="email" required
+             {% if erros.contato %}aria-invalid="true" aria-describedby="e-contato"{% endif %}>
+      {% if erros.contato %}<p class="erro-campo" id="e-contato">{{ erros.contato }}</p>{% endif %}
+      <div class="isca" aria-hidden="true"><label for="f-site">Deixe em branco</label><input id="f-site" name="site" tabindex="-1" autocomplete="off"></div>
+      <p class="nota-valores">Usamos seus dados só para responder esta mensagem. Veja a <a href="/privacidade">política de privacidade</a>.</p>
+      <button type="submit" class="botao-cheio">Enviar mensagem</button>
+    </form>
+  </section>
+
+  <aside class="cartao fc-horario" aria-labelledby="t-onde">
+    <h2 id="t-onde">Onde estamos e horários</h2>
+    <address class="fc-endereco"><p>{{ L.endereco }}</p></address>
+    <table class="horario"><caption class="so-leitor">Horário de atendimento</caption><tbody>
+    {% for h in L.horario %}{% set par = h.split(': ', 1) %}<tr><th scope="row">{{ par[0] }}</th><td>{{ par[1] }}</td></tr>{% endfor %}
+    </tbody></table>
+    <div class="fc-rastreio">
+      <p>Já fez seu pedido e quer saber onde ele está?</p>
+      <a class="botao" href="/rastreio">Rastrear pedido</a>
+    </div>
+  </aside>
+</div>
 {% endif %}
 </div>
 {% endblock %}

@@ -80,11 +80,10 @@ def test_compra_de_demonstracao_completa_em_390px(url_site, celular):
     pagina.click("text=Ir para o checkout")
 
     pagina.wait_for_url("**/checkout")
-    assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()  # falta a cidade
+    assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()  # falta o CEP
     pagina.select_option("select[name=forma]", "pix")
-    pagina.fill("input[name=cidade]", "Campo Grande")
-    pagina.click("button:has-text('Atualizar valores')")
-    pagina.wait_for_load_state()
+    pagina.fill("input[name=cep]", "79002-000")
+    pagina.wait_for_selector("#checkout-dinamico :text('Frete grátis')")  # recalcula sozinho, sem botão de atualizar
     texto = pagina.inner_text("main")
     assert "R$ 1.967,18" in texto and "promoção -18%" in texto and "desconto do PIX" not in texto
     assert "Frete grátis" in texto
@@ -109,7 +108,7 @@ def test_parcela_a_confirmar_bloqueia_a_finalizacao_em_390px(url_site, celular):
     pagina.goto(f"{url_site}/produto/89")  # Shelby SN-100: 6x fica a confirmar
     pagina.click(".btn-comprar")
     pagina.wait_for_url("**/carrinho")
-    pagina.goto(f"{url_site}/checkout?forma=credito&parcelas=6&cidade=Campo+Grande")
+    pagina.goto(f"{url_site}/checkout?forma=credito&parcelas=6&cep=79002-000")
     assert "a confirmar com a equipe" in pagina.inner_text("main").lower()  # o selo é exibido em caixa alta
     assert pagina.locator("button:has-text('Registrar pedido')").is_disabled()
     assert sem_rolagem_horizontal(pagina)

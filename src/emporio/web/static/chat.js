@@ -84,18 +84,20 @@
       // respostas 422 e 503 do chat também trazem um fragmento com o aviso
       if (e.detail.xhr && (e.detail.xhr.status === 422 || e.detail.xhr.status === 503) && e.detail.target === log) e.detail.shouldSwap = true;
     });
-    function enviar(texto) {
+    // Sugestão e "Quero comprar" só preparam a conversa: abrem o painel, preenchem o campo e põem o foco nele.
+    // A mensagem sai quando o cliente envia (Enter ou botão Enviar), e o texto pode ser editado antes.
+    function preencher(texto) {
       if (!aberto()) Sobreposicoes.abrir(gestor);
       campo.value = texto || "";
       campo.focus();
-      htmx.trigger(form, "submit");
+      campo.setSelectionRange(campo.value.length, campo.value.length);
     }
     document.addEventListener("click", function (e) {
       var abrir = e.target.closest && e.target.closest("[data-abrir-chat]");
       if (abrir) { e.preventDefault(); abrirChat(); return; }
       var alvo = e.target.closest && e.target.closest("[data-pergunta], .btn-compra");
       if (!alvo) return;
-      enviar(alvo.getAttribute("data-pergunta") || alvo.getAttribute("data-mensagem"));
+      preencher(alvo.getAttribute("data-pergunta") || alvo.getAttribute("data-mensagem"));
     });
   });
 })();

@@ -89,7 +89,7 @@ def _rotulo_esperado(rotulo: str) -> str | None:
     r = re.sub(r"^Ver produto:\s*", "", rotulo.replace("→", "").replace("←", "")).strip()
     genericos = {"Todos os instrumentos": "Catálogo", "Explorar instrumentos": "Catálogo", "Ver o catálogo completo": "Catálogo",
                  "Ver todos os instrumentos": "Catálogo", "Catálogo": "Catálogo", "Voltar ao catálogo": "Catálogo",
-                 "Ver todas as perguntas": "Perguntas frequentes", "Falar com a loja": "Fale conosco", "Todos os canais": "Fale conosco",
+                 "Ver todas as perguntas": "Perguntas frequentes",
                  "Fale conosco": "Fale conosco", "Rastrear pedido": "Rastrear pedido", "Carrinho": "Carrinho", "Início": "",
                  "Voltar ao início": "", "Políticas": "Políticas", "Privacidade e cookies": "Privacidade", "Créditos das imagens": "Créditos",
                  "Perguntas frequentes": "Perguntas frequentes", "política de privacidade": "Privacidade",
@@ -212,9 +212,14 @@ def test_sugestoes_da_lia_recebem_resposta_util(url_site, navegador, largura):
         pagina.goto(url_site + "/")
         pagina.click("#chat-alternar")
         antes = pagina.locator("#chat-log .msg.lia").count()
+        enviadas_antes = pagina.locator("#chat-log .msg.voce").count()
         botao = pagina.locator(f"#chat .chat-sugestoes button:has-text('{rotulo}')")
         enviada = botao.get_attribute("data-pergunta")
         botao.click()
+        pagina.wait_for_timeout(400)
+        assert pagina.locator("#chat-log .msg.voce").count() == enviadas_antes  # clicar na sugestão não envia
+        assert pagina.input_value("#chat-mensagem") == enviada and pagina.evaluate("document.activeElement.id") == "chat-mensagem"
+        pagina.keyboard.press("Enter")
         pagina.wait_for_function(f"document.querySelectorAll('#chat-log .msg.lia').length > {antes}", timeout=20000)
         assert pagina.locator("#chat-log .msg.voce").last.inner_text().strip() == enviada  # o texto enviado é o do botão
         resposta = pagina.locator("#chat-log .msg.lia").last.inner_text()
@@ -418,9 +423,8 @@ def test_percurso_por_teclado_encontrar_condicoes_comprar_e_acompanhar(url_site,
     pagina.keyboard.press("Enter")
     pagina.wait_for_url("**/checkout**")
     assert "não gera cobrança nem entrega" in pagina.inner_text("main")  # entender o alcance da compra
-    pagina.fill("input[name=cidade]", "Campo Grande")
-    pagina.click("button:has-text('Atualizar valores')")
-    pagina.wait_for_load_state()
+    pagina.fill("input[name=cep]", "79002-000")
+    pagina.wait_for_selector("#checkout-dinamico :text('Frete grátis')")
     pagina.focus("button:has-text('Registrar pedido')")
     pagina.keyboard.press("Enter")
     pagina.wait_for_url("**/pedido/PED-*")

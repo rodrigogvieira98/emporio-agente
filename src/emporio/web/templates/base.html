@@ -67,7 +67,6 @@
         </ul>
       </details>{% endblock %}
       <a href="/perguntas-frequentes">Perguntas frequentes</a>
-      <a href="/fale-conosco">Fale conosco</a>
       <a href="/rastreio">Rastrear pedido</a>
       {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
     </nav>
@@ -76,11 +75,30 @@
 
 <main id="conteudo">{% block conteudo %}{% endblock %}</main>
 
+{% block faixa_contato %}{% set F = faixa_contato() %}
+<section class="contorno faixa-contato" aria-label="Fale conosco">
+  <div class="cartao-3">
+    <div class="bloco-3">
+      <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#email"/></svg>
+      <div class="bloco-texto"><p class="bloco-titulo">Precisa de ajuda?</p><a class="botao" href="/fale-conosco">Fale conosco</a></div>
+    </div>
+    <div class="bloco-3">
+      <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#telefone"/></svg>
+      <div class="bloco-texto">{% if F.link %}<a class="bloco-fone" href="{{ F.link }}">{{ F.telefone }}</a>{% else %}<p class="bloco-fone">{{ F.telefone }}</p>{% endif %}
+        <p class="bloco-nota">{{ F.horario }}</p></div>
+    </div>
+    <div class="bloco-3">
+      <svg class="icone-grande" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#pacote"/></svg>
+      <div class="bloco-texto"><p class="bloco-titulo">Já fez seu pedido e quer saber onde ele está?</p><a class="botao" href="/rastreio">Rastrear pedido</a></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
 <footer class="rodape">
   <div class="contorno rodape-grade">
     <div class="rodape-loja">
       <p class="rodape-marca">{{ L.nome }}</p>
-      {% if L.endereco %}<p>{{ L.endereco }}</p>{% endif %}
     </div>
     <div>
       <h2 class="rodape-titulo">Comprar</h2>
@@ -92,13 +110,9 @@
       </ul>
     </div>
     <div>
-      <h2 class="rodape-titulo">Atendimento</h2>
-      {% include "_canais.html" %}
-      <p><a href="/fale-conosco">Todos os canais</a></p>
-    </div>
-    <div>
       <h2 class="rodape-titulo">Informações</h2>
       <ul class="rodape-lista">
+        <li><a href="/fale-conosco">Fale conosco</a></li>
         <li><a href="/privacidade">Privacidade e cookies</a></li>
         <li><a href="/creditos">Créditos das imagens</a></li>
       </ul>

@@ -281,7 +281,7 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 - bloco do telefone da faixa: número com link `tel:` e, ao lado, ícone do WhatsApp com link `https://wa.me/55DDDNUMERO`, em nova aba;
 - em `/fale-conosco`: WhatsApp, Telefone e E-mail com os mesmos links.
 
-`EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK` continuam podendo substituir os links padrão. O link "Fale conosco" do rodapé segue para `/fale-conosco`, onde fica o formulário. O README avisa que os números são os do manual da loja fictícia.
+`EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK` continuam podendo substituir os links padrão. O rodapé não tem link "Fale conosco", por decisão do Rodrigo, o que prevalece sobre o parágrafo "Fale conosco sai do cabeçalho". A página `/fale-conosco`, com formulário e endereço, continua no ar e é alcançada pelos links de Perguntas frequentes e Privacidade. O README avisa que os números são os do manual da loja fictícia.
 
 A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
 

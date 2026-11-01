@@ -63,6 +63,18 @@ def resultado_de(estado: Estado, nome: str, **args: Any) -> Resultado | None:
     return None
 
 
+def busca_exata(estado: Estado, args: dict[str, Any]) -> Resultado | None:
+    """Resultado de buscar_produtos com exatamente estes argumentos (a consulta de apoio tem argumentos a mais)."""
+    for p in reversed(estado.passos):
+        if p.ferramenta == "buscar_produtos" and p.args == args:
+            return p.resultado
+    return None
+
+
+def recusada(estado: Estado, oferta: str) -> bool:
+    return oferta in (estado.coletados.get("ofertas_recusadas") or [])
+
+
 class RegrasDecisor:
     def decidir(self, estado: Estado, mensagem: str) -> Acao:
         s = estado.slots
@@ -369,12 +381,52 @@ class RegrasDecisor:
                 args[k] = s[k]
         if not args:
             return perguntar("pedir_categoria", "categoria", categorias=categorias_com_produto())
-        r = resultado_de(estado, "buscar_produtos", **args)
+        r = busca_exata(estado, args)
         if r is None:
             return ferramenta("buscar_produtos", **args)
         if r.estado == "falha":
             return self._erro(estado, r)
-        return responder("busca")
+        if r.estado != "ok":
+            return responder("busca")
+        return self._aquecer_busca(estado, args, r)
+
+    def _aquecer_busca(self, estado: Estado, args: dict[str, Any], r: Resultado) -> Acao:
+        """Lead: qualifica uma busca ampla (uma pergunta, uma rodada por assunto) e, sabendo faixa ou nível, destaca
+        uma opção com motivo verificável no dado. Cliente frustrado ou irritado só recebe a lista."""
+        s = estado.slots
+        itens, total = r.dados["itens"], r.dados["total_encontrado"]
+        if estado.sentimento != "neutro" or len(itens) < 2:
+            return responder("busca")
+        faixa = args.get("preco_min") is not None or args.get("preco_max") is not None
+        so_categoria = set(args) == {"categoria"}
+        nivel, baixo = s.get("nivel"), bool(s.get("orcamento_baixo"))
+        if (so_categoria and not nivel and not baixo and not estado.coletados.get("qualificada")
+                and not s.get("secundaria")  # duas perguntas na mensagem: responde as duas, sem abrir uma terceira
+                and not recusada(estado, f"qualificacao:{args['categoria']}")):
+            estado.coletados["qualificacao"] = {"categoria": args["categoria"]}
+            return perguntar("busca", "qualificacao", qualificar=True)
+        if "termo" in args or not (faixa or nivel or baixo or s.get("qualificado")):
+            return responder("busca")
+        motivo, escolhido = None, None
+        if nivel == "iniciante":
+            extra = {**args, "termo": "iniciante", "limite": 1}  # o próprio catálogo diz "iniciantes" na descrição
+            r2 = busca_exata(estado, extra)
+            if r2 is None:
+                return ferramenta("buscar_produtos", **extra)
+            if r2.estado == "ok" and r2.dados["itens"][0]["id"] in {i["id"] for i in itens}:
+                escolhido, motivo = r2.dados["itens"][0], "iniciante"
+        if escolhido is None:
+            promos = [i for i in itens if i["promocao"] and not i["promocao"].get("ambigua")]
+            if promos:
+                escolhido, motivo = max(promos, key=lambda i: i["promocao"]["percentual"]), "promocao"
+            else:
+                escolhido, motivo = itens[0], "menor_preco"
+        estado.coletados["recomendado"] = escolhido["id"]
+        recomendacao = {"id": escolhido["id"], "nome": escolhido["nome"], "motivo": motivo,
+                        "orcamento": args.get("preco_max") is not None,
+                        "percentual": (escolhido["promocao"] or {}).get("percentual")}
+        oferta = not recusada(estado, f"condicoes:{escolhido['id']}")
+        return responder("busca", recomendacao=recomendacao, oferta_condicoes=oferta, total=total)
 
     def _i_extremo_lista(self, estado: Estado) -> Acao:
         """"Qual o mais barato?" sobre a lista mostrada: nova consulta com a mesma busca, um item."""
@@ -397,6 +449,11 @@ class RegrasDecisor:
     def _produto(self, estado: Estado) -> tuple[Acao | None, dict[str, Any] | None]:
         s = estado.slots
         ref = s.get("produto_id") or s.get("referencia") or estado.coletados.get("referencia")
+        if ref is None and estado.aguardando == "escolha_produto" and estado.coletados.get("opcoes"):
+            # "e em 12x" logo depois de uma lista de modelos parecidos: pede o modelo em uma frase, sem escolher por ele
+            return perguntar("escolha_produto_curta", "escolha_produto"), None
+        if ref is None and (s.get("compra") or estado.coletados.get("compra")) and not s.get("desconhecidas"):
+            ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
         if ref is None and not s.get("desconhecidas") and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}
@@ -476,6 +533,13 @@ class RegrasDecisor:
         forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
         parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
         args = {"produto_id": produto["id"], "forma": forma, "parcelas": parcelas}
+        compra = bool(estado.slots.get("compra") or estado.coletados.get("compra"))
+        # valor: o frete grátis na cidade-base entra como condição que ajuda, uma vez por conversa e só se o cliente
+        # está sem frustração; a cidade vem do manual, e a ferramenta diz se o frete é grátis para este produto
+        if "frete_gratis" not in estado.valores_citados:
+            from ..politicas import manual
+
+            args["cidade"] = str(manual.valor("frete.cidade_base"))
         r = resultado_de(estado, "calcular_condicoes", **args)
         if r is None:
             return ferramenta("calcular_condicoes", **args)
@@ -488,9 +552,14 @@ class RegrasDecisor:
             return propor("preco", "duvida_politica",
                           f"Cliente perguntou parcelamento em {parcelas}x do produto {produto['id']}; "
                           "as duas leituras da parcela minima do manual divergem.")
-        if forma != "credito":  # próximo passo curto, de sim ou não: as parcelas do produto em foco
-            return responder("preco", oferta_parcelas=True)
-        return responder("preco")
+        extra: dict[str, Any] = {}
+        if compra:
+            extra["compra"] = True  # o próximo passo é o botão de carrinho, não outra pergunta
+        if (r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro":
+            extra["valor_frete"] = args["cidade"]  # o fato é o mesmo para qualquer humor; só a oferta some
+        if forma != "credito" and not compra and not recusada(estado, f"parcelas:{produto['id']}"):
+            extra["oferta_parcelas"] = True  # próximo passo curto, de sim ou não: as parcelas do produto em foco
+        return responder("preco", **extra)
 
     def _i_parcelamento_produto(self, estado: Estado) -> Acao:
         """O "sim" à oferta de parcelas: o parcelamento máximo do produto em foco, em duas consultas à ferramenta."""
@@ -512,6 +581,40 @@ class RegrasDecisor:
             return propor("preco", "duvida_politica",
                           f"Cliente pediu o parcelamento do produto {pid}; as duas leituras da parcela minima divergem.")
         return responder("preco")
+
+    def _i_objecao_preco(self, estado: Estado) -> Acao:
+        """"Tá caro": opção mais barata da categoria, promoção ativa ou parcelamento. Nunca desconto inventado."""
+        acao, produto = self._produto(estado)
+        if acao:
+            return acao
+        if produto["situacao_venda"] != "disponivel":
+            return self._indisponivel(estado, produto)
+        if estado.sentimento != "neutro":
+            return responder("objecao_preco", sem_oferta=True)  # irritado ou frustrado não recebe oferta
+        args = {"categoria": produto["categoria"], "preco_max": produto["preco_centavos"] - 1, "limite": 1}
+        r = busca_exata(estado, args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        if r.estado == "falha":
+            return self._erro(estado, r)
+        promo = produto.get("promocao") or {}
+        parcelas = not recusada(estado, f"parcelas:{produto['id']}")
+        return responder("objecao_preco", oferta_parcelas=parcelas,
+                         mais_barato=r.dados["itens"][0] if r.estado == "ok" else None,
+                         percentual=None if promo.get("ambigua") else promo.get("percentual"),
+                         produto=produto["nome"], categoria=produto["categoria"])
+
+    def _i_vou_pensar(self, estado: Estado) -> Acao:
+        """"Vou pensar": respeito, o link do produto em foco e nenhuma insistência."""
+        ref = estado.coletados.get("ultimo_produto")
+        if ref is None:
+            return responder("vou_pensar")
+        r = resultado_de(estado, "ver_produto", referencia=ref)
+        if r is None:
+            return ferramenta("ver_produto", referencia=ref)
+        if r.estado != "ok":
+            return responder("vou_pensar")
+        return responder("vou_pensar", produto=r.dados["nome"])
 
     # --- reclamação e atendente ------------------------------------------------------
 

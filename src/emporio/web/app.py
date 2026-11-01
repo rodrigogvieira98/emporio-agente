@@ -462,7 +462,8 @@ def criar_app(agente: Any = None) -> FastAPI:
             return pagina(request, "_chat_troca.html", 200, usuario=mensagem, lia=None, aviso=MSG_FALHA)
         finally:
             trava_agente.release()
-        return pagina(request, "_chat_troca.html", usuario=mensagem, lia=resposta.texto, aviso=None)
+        return pagina(request, "_chat_troca.html", usuario=mensagem, lia=resposta.texto, aviso=None,
+                      links=resposta.links)
 
     return app
 

@@ -1,3 +1,4 @@
 {% if usuario %}<p class="msg voce">{{ usuario | quebras }}</p>{% endif %}
 {% if lia %}<p class="msg lia">{{ lia | quebras }}</p>{% endif %}
+{% if lia and links %}<div class="msg-acoes">{% for x in links %}{% if x.tipo == "carrinho" %}<form class="chat-carrinho" action="{{ x.acao }}" method="post"><input type="hidden" name="produto_id" value="{{ x.produto_id }}"><input type="hidden" name="quantidade" value="{{ x.quantidade }}"><button type="submit" class="chat-carrinho-botao">{{ x.rotulo }}</button></form>{% else %}<a class="chat-link" href="{{ x.href }}">{{ x.rotulo }}</a>{% endif %}{% endfor %}</div>{% endif %}
 {% if aviso %}<p class="msg aviso-chat">{{ aviso }}</p>{% endif %}

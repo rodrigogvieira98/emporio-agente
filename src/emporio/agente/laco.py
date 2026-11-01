@@ -20,6 +20,7 @@ from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
 from ..ferramentas.promocoes import listar_promocoes
 from ..ferramentas.produtos import buscar_produtos, ver_produto
+from . import links as links_mod
 from . import respostas, trace
 from .concisao import deduplicar_frases, registrar_entregas, respostas_anteriores
 from .redacao import Redator
@@ -40,7 +41,9 @@ FERRAMENTAS = {f.__name__: f for f in (buscar_produtos, ver_produto, calcular_co
 SO_ENCAMINHAR = {"registrar_encaminhamento"}
 NECESSITA_CONVERSA = {"consultar_pedido", "consultar_pedido_demo", "registrar_encaminhamento"}
 LIMPAR_AO_CONCLUIR = ("proposta", "regra", "relato", "registro_explicito", "opcoes", "referencia", "cidade",
-                      "valor_pedido", "forma", "parcelas", "cep", "uf")
+                      "valor_pedido", "forma", "parcelas", "cep", "uf", "compra", "qualificacao", "qualificada")
+# Respostas sobre produto em que a compra, uma vez pedida, vale até o fim do assunto.
+INTENCOES_DE_COMPRA = ("preco_produto", "disponibilidade")
 
 
 class Agente:
@@ -71,6 +74,8 @@ class Agente:
         if estado.objetivo and estado.objetivo != "pedir_atendente":
             estado.ultimo_assunto = estado.objetivo
         completar_datas(estado)
+        if estado.slots.get("compra") and estado.intencao in INTENCOES_DE_COMPRA:
+            estado.coletados["compra"] = True  # vale também depois da escolha numerada entre modelos parecidos
         contagens: Counter[str] = Counter()
         telemetria: list[dict[str, Any]] = []
 
@@ -81,6 +86,8 @@ class Agente:
         chave_final: str | None = None
         motivo_saida = "ok"
         concluiu = False
+        links: list[dict[str, Any]] = []
+        etapa_lead: str | None = None
 
         partes: list[str] = []  # respostas já prontas de perguntas anteriores da mesma mensagem
         for numero in range(1, MAX_PASSOS * (2 if estado.slots.get("secundaria") else 1) + 1):
@@ -141,6 +148,10 @@ class Agente:
                 permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
                 texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,
                                               respostas_anteriores(conversa_id) if self.concisao else [])
+            if not partes:
+                links = links_mod.gerar(estado, chave_final, acao.parametros,
+                                        bool(estado.coletados.get("compra")))
+                etapa_lead = links_mod.etapa_do_lead(chave_final, acao.parametros, links)
             texto, concluiu = fechar_turno(estado, acao, texto)
             if oferecer and estado.aguardando is None:  # no máximo uma pergunta por turno
                 texto, concluiu = oferecer_humano(estado, texto), False
@@ -179,11 +190,13 @@ class Agente:
                 "estado_antes": antes, "estado_depois": estado.resumo_curto(), "passos": passos_trace,
                 "acoes": acoes, "estado_resposta": estado_resposta, "latencia_ms": latencia,
                 "modelo": getattr(self.decisor, "modelo", None), "concisao": self.concisao,
+                "etapa_lead": etapa_lead, "links": [x.get("href") or x.get("acao") for x in links],
                 "contagens": dict(contagens), "telemetria_modelo": telemetria,
                 "tokens": sum(x.get("tokens_prompt", 0) + x.get("tokens_resposta", 0) for x in telemetria)})
         except OSError:
             log.exception("nao foi possivel gravar o trace")
-        return Resposta(texto=texto, acoes=acoes, fatos=fatos, estado=estado_resposta, contagens=dict(contagens))
+        return Resposta(texto=texto, acoes=acoes, fatos=fatos, estado=estado_resposta, contagens=dict(contagens),
+                        links=links)
 
 
 # --- validação e execução ------------------------------------------------------------------
@@ -284,6 +297,7 @@ def integrar(estado: Estado, passo: Passo) -> None:
     elif nome == "ver_produto":
         if r.estado == "ok":
             estado.coletados["ultimo_produto"] = r.dados["id"]
+            estado.coletados.pop("recomendado", None)  # o produto consultado agora é o foco
         if r.estado == "ambiguo":
             estado.coletados["opcoes"] = r.dados["opcoes"]
         else:
@@ -319,7 +333,13 @@ def completar_datas(estado: Estado) -> None:
 
 # Sem redação do modelo: recusa e escopo (o texto livre não pode abrir brecha), e respostas curtas já completas.
 SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "recusa_instrucoes", "fora_escopo",
-               "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta"}
+               "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta",
+               # toda recusa fica sem texto livre do modelo: ele não pode abrir brecha nem suavizar o "não"
+               "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",
+               "preco_promocao_conflitante", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
+               "sem_dado", "dado_recusado",
+               # lead: a resposta de objeção e a de "vou pensar" não ganham convite do modelo
+               "objecao_preco", "vou_pensar"}
 
 # Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
 SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
@@ -417,6 +437,8 @@ def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
     estado.declarados = {k: v for k, v in estado.declarados.items() if k == "pedido_id"}
     if p.get("oferta_parcelas"):
         estado.aguardando = "parcelamento"  # a resposta termina em pergunta de sim ou não sobre as parcelas
+    elif p.get("oferta_condicoes"):
+        estado.aguardando = "condicoes"  # termina em "quer ver as condições dele?": o sim mostra o preço
     # uma pergunta por resposta: se o texto já termina em pergunta, o convite de retomar espera o próximo turno
     if estado.pendentes and not texto.rstrip().endswith("?"):
         assunto = estado.pendentes[-1]["objetivo"]

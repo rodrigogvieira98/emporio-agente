@@ -18,9 +18,9 @@ from .estado import Estado
 
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
-MANTER = ("pedido", "protocolo", "ultimo_produto", "ultima_busca")
+MANTER = ("pedido", "protocolo", "ultimo_produto", "ultima_busca", "ofertas_recusadas", "recomendado")
 FAMILIAS = {
-    "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto",
+    "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
     "defeito": "posvenda", "garantia": "posvenda",
 }
@@ -223,6 +223,9 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["estado_produto"] = "com sinais de uso ou sem a embalagem original"
     elif v.ESTADO_BOM.search(norm):
         slots["estado_produto"] = "na embalagem original, sem sinais de uso"
+    slots["compra"] = bool(v.COMPRA.search(norm))
+    slots["nivel"] = "iniciante" if v.NIVEL_INICIANTE.search(norm) else "outro" if v.NIVEL_OUTRO.search(norm) else None
+    slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
     slots["pergunta_prazo"] = bool(v.PERGUNTA_PRAZO.search(norm))
     slots["afirmativo"] = bool(v.AFIRMATIVO.search(norm))
     slots["negativo"] = bool(v.NEGATIVO.search(norm))
@@ -318,6 +321,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "busca_produto"
     if ref:
         return "disponibilidade" if re.search(r"\btem\b", norm) else "preco_produto"
+    if slots.get("compra"):
+        return "preco_produto"  # "quero comprar": o produto em foco, ou pergunta qual
     if slots.get("termo") and re.search(chr(92) + "btem" + chr(92) + "b", norm):
         return "busca_produto"
     if (re.search(r"\b(vende\w*|trabalha\w*|tem|existe\w*)\b", norm) and slots.get("desconhecidas")
@@ -337,6 +342,14 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if slots["palavras"] <= 2 and slots.get("negativo"):
         return "confirmacao_solta"
     return None
+
+
+def _recusar_oferta(estado: Estado, oferta: str) -> None:
+    """Oferta recusada não se repete no assunto (produto ou categoria)."""
+    recusadas = list(estado.coletados.get("ofertas_recusadas") or [])
+    if oferta not in recusadas:
+        recusadas.append(oferta)
+    estado.coletados["ofertas_recusadas"] = recusadas[-10:]
 
 
 def _trocar_assunto(estado: Estado, novo: str) -> None:
@@ -459,10 +472,46 @@ def perceber(estado: Estado, mensagem: str) -> None:
             estado.objetivo = estado.intencao = "parcelamento_produto"
             return
         if resposta_curta and s["negativo"] and s["palavras"] <= 4:
+            _recusar_oferta(estado, f"parcelas:{estado.coletados.get('ultimo_produto')}")
             estado.objetivo = None
             estado.intencao = "confirmacao_solta"
             return
         ag = None
+    if ag == "condicoes":  # "quer ver as condições dele?": o sim mostra o preço da opção que a Lia destacou
+        estado.aguardando = None
+        alvo = estado.coletados.get("recomendado")
+        resposta_curta = nova in (None, "confirmacao_solta")
+        if resposta_curta and alvo and s["afirmativo"] and not s["negativo"]:
+            estado.objetivo = estado.intencao = "preco_produto"
+            s["produto_id"] = alvo
+            _aplicar_slots(estado)
+            return
+        if resposta_curta and alvo and s["negativo"] and s["palavras"] <= 4:
+            _recusar_oferta(estado, f"condicoes:{alvo}")
+            estado.objetivo = None
+            estado.intencao = "confirmacao_solta"
+            return
+        ag = None
+    if ag == "qualificacao":  # "é para iniciante? qual a faixa de preço?": a resposta refina a busca da mesma categoria
+        qual = estado.coletados.get("qualificacao") or {}
+        estado.aguardando = None
+        informa = any(s.get(k) is not None for k in ("preco_max", "preco_min", "valor", "nivel")) or s["orcamento_baixo"]
+        if qual.get("categoria") and informa and nova in (None, "confirmacao_solta", "busca_produto", "preco_produto"):
+            if s.get("valor") is not None and "preco_max" not in s and "preco_min" not in s:
+                s["preco_max"] = s["valor"]  # "uns 1000 reais" é o teto da faixa
+            s.setdefault("categoria", qual["categoria"])
+            s["qualificado"] = True
+            estado.coletados["qualificada"] = True
+            estado.objetivo = estado.intencao = "busca_produto"
+            _aplicar_slots(estado)
+            return
+        if (s["negativo"] or v.SEM_PREFERENCIA.search(norm)) and nova in (None, "confirmacao_solta"):  # recusou: não volta
+            _recusar_oferta(estado, f"qualificacao:{qual.get('categoria')}")
+            estado.objetivo = None
+            estado.intencao = "confirmacao_solta"
+            return
+        estado.objetivo = None  # perguntou outra coisa: a pergunta ficou sem resposta e não vira "retomar"
+        ag = ag_inicial = None
     if ag == "retentar_parecidas":
         estado.aguardando = None
         if s["afirmativo"] and not s["negativo"]:

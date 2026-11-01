@@ -267,8 +267,8 @@ def frete_calculado(e: Estado, p: dict) -> str:
         return f"Para {cidade}, o frete é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
     mods = _condicoes(e).get("frete.outras_cidades_modalidades")
     extra = f" Os envios são por {_lista([m['nome'] for m in mods])}." if mods else ""
-    return (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
-            f"dimensões do produto, e eu não consigo informar o valor por aqui.{extra}{DICA_ESTIMATIVA}")
+    return (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, e eu não consigo informar o valor "
+            f"por aqui.{extra}{DICA_ESTIMATIVA}")
 
 
 DICA_ESTIMATIVA = " Se me disser o produto e o CEP de entrega, eu faço uma estimativa de frete (simulação)."
@@ -323,17 +323,24 @@ def frete_pedir_produto(e: Estado, p: dict) -> str:
     return "Para estimar o frete, qual é o produto? Me diga a marca e o modelo."
 
 
+def _modalidade_com_prazo(m: dict[str, Any]) -> str:
+    """Nome da modalidade que já traz parênteses recebe o prazo dentro deles, sem parênteses seguidos."""
+    prazo = f"{m['prazo_dias_uteis']['min']} a {m['prazo_dias_uteis']['max']} dias úteis"
+    nome = str(m["nome"])
+    return f"{nome[:-1]}, {prazo})" if nome.endswith(")") else f"{nome} ({prazo})"
+
+
 def frete_outra_cidade(e: Estado, p: dict) -> str:
     """Cidade fora da base do manual: a equipe calcula o frete; não pede o valor do pedido."""
     c = _condicoes(e)
     cidade = str(p.get("cidade", "")).title()
     if p.get("uf"):
         cidade = f"{cidade}/{p['uf']}"
-    txt = (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
-           "dimensões do produto, e eu não consigo informar o valor por aqui.")
+    txt = (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, e eu não consigo informar o valor "
+           "por aqui.")
     mods = c.get("frete.outras_cidades_modalidades", [])
     if mods:
-        itens = [f"{m['nome']} ({m['prazo_dias_uteis']['min']} a {m['prazo_dias_uteis']['max']} dias úteis)" for m in mods]
+        itens = [_modalidade_com_prazo(m) for m in mods]
         txt += " Os envios são por " + _lista(itens) + "."
     return txt + DICA_ESTIMATIVA
 
@@ -427,7 +434,9 @@ def trocas_detalhe(e: Estado, p: dict) -> str:
 
 
 def busca(e: Estado, p: dict) -> str:
-    r = e.ultimo("buscar_produtos")
+    # a busca principal não leva "limite"; a consulta de apoio da recomendação (limite 1) não é a lista mostrada
+    r = next((x.resultado for x in reversed(e.passos)
+              if x.ferramenta == "buscar_produtos" and "limite" not in x.args), None)
     if r is None:
         return falha_ferramenta(e, p)
     if r.estado == "vazio":
@@ -446,7 +455,29 @@ def busca(e: Estado, p: dict) -> str:
     cab = (f"Encontrei {n} " + ("opção disponível" if n == 1 else "opções disponíveis")
            + (f", do menor para o maior preço (mostrando {mostrados}):" if d["total_encontrado"] > mostrados else ":"))
     a = aviso(e, "valores_de_tabela", "Os valores são o preço de tabela.")
-    return cab + "\n" + "\n".join(linhas) + "\n" + (a + " " if a else "") + "Quer ver as condições de algum deles?"
+    fecho = "Quer ver as condições de algum deles?"
+    rec = p.get("recomendacao")
+    if p.get("qualificar"):  # uma pergunta só, sobre nível, uso ou orçamento
+        fecho = QUALIFICACAO
+    elif rec:
+        fecho = f"Quer ver as condições do {rec['nome']}?" if p.get("oferta_condicoes") else ""
+    sugestao = ""
+    if rec:
+        motivo = MOTIVO_RECOMENDACAO[rec["motivo"]].format(percentual=rec.get("percentual"))
+        if rec.get("orcamento"):
+            motivo += " e cabe no orçamento que você informou"
+        sugestao = f"Minha sugestão: {rec['nome']}, porque {motivo}."
+    corpo = cab + "\n" + "\n".join(linhas) + "\n" + (a + " " if a else "")
+    return (corpo + " ".join(x for x in (sugestao, fecho) if x)).rstrip()
+
+
+# Lead: a pergunta de qualificação é uma só; o motivo da sugestão vem sempre do dado (nunca "o melhor" ou "o mais vendido").
+QUALIFICACAO = "Para eu indicar melhor, é para quem está começando ou já toca, e qual a faixa de preço?"
+MOTIVO_RECOMENDACAO = {
+    "iniciante": "o catálogo o descreve como indicado para iniciantes",
+    "promocao": "está em promoção ativa, com {percentual}% de desconto",
+    "menor_preco": "é a opção de menor preço desta lista",
+}
 
 
 def pedir_categoria(e: Estado, p: dict) -> str:
@@ -469,6 +500,35 @@ def escolha_produto(e: Estado, p: dict) -> str:
     opcoes = e.coletados.get("opcoes", [])
     linhas = [f"{i}) {o['nome']}" for i, o in enumerate(opcoes, start=1)]
     return "Achei mais de um modelo parecido:\n" + "\n".join(linhas) + "\nQual deles? Pode responder com o número."
+
+
+def escolha_produto_curta(e: Estado, p: dict) -> str:
+    return "Em qual desses modelos? Responda com o número da lista."
+
+
+def objecao_preco(e: Estado, p: dict) -> str:
+    """"Tá caro": só o que existe no dado (opção mais barata, promoção ativa, parcelas), sem desconto inventado."""
+    if p.get("sem_oferta"):
+        return ("Entendo. Os valores que eu informo são os do catálogo e os das promoções ativas, "
+                "e eu não consigo oferecer desconto fora disso.")
+    partes = ["Entendo."]
+    barato = p.get("mais_barato")
+    if barato:
+        partes.append(f"Uma opção mais em conta em {p['categoria']} é o {barato['nome']}, por "
+                      f"{formatar(barato['preco_centavos'])} (preço de tabela).")
+    else:
+        partes.append(f"O {p['produto']} já é a opção de menor preço em {p['categoria']}.")
+    if p.get("percentual"):
+        partes.append(f"O {p['produto']} está em promoção ativa, com {p['percentual']}% de desconto.")
+    if p.get("oferta_parcelas"):
+        partes.append("Quer ver as parcelas no cartão de crédito?")
+    return " ".join(partes)
+
+
+def vou_pensar(e: Estado, p: dict) -> str:
+    if p.get("produto"):
+        return f"Claro, sem pressa. Deixo aqui o link do {p['produto']} para você ver com calma."
+    return "Claro, sem pressa. Quando quiser, é só me chamar."
 
 
 def produto_indisponivel(e: Estado, p: dict) -> str:
@@ -566,6 +626,12 @@ def preco(e: Estado, p: dict) -> str:
                           f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
+        return " ".join(partes)
+    if p.get("valor_frete"):  # uma condição que ajuda por vez, e só uma vez na conversa
+        partes.append(f"Em {str(p['valor_frete']).title()}, o frete desse produto é grátis.")
+        e.valores_citados.append("frete_gratis")
+    if p.get("compra"):  # o passo seguinte é o botão: a Lia nunca adiciona nada sozinha
+        partes.append("Para comprar, toque em Adicionar ao carrinho; eu não adiciono nada por você.")
     elif d["forma"] != "credito" and p.get("oferta_parcelas"):
         partes.append("Quer ver as parcelas no cartão de crédito?")
     return " ".join(partes)
@@ -899,7 +965,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
         item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
         previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,
-        frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base)
+        frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
+        escolha_produto_curta, objecao_preco, vou_pensar)
 }
 
 

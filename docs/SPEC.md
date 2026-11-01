@@ -444,6 +444,14 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Voz da Lia e QA móvel (etapa 16)
+
+Pedido do Rodrigo em 01/11/2026.
+
+**Voz.** A Lia fala de 1 para 1, em primeira pessoa, como quem atende. Sem narrar a loja ou a equipe em terceira pessoa. Quando ela não pode decidir, diz isso e propõe o próximo passo, sem prometer o que não fez. Exemplos: "A equipe confirma se o seu caso se enquadra." vira "Daqui eu não consigo confirmar se o seu caso se enquadra, mas posso encaminhar para um atendente avaliar."; "A equipe volta amanhã às 09:00" vira "Estamos fora do expediente. Voltamos ...". "Chamado registrado." vira "Registrei o seu chamado."; "Eu" para o que ela faz, "nós" para a loja, "um atendente" para quem assume. Pergunta sim ou não só quando há oferta real. Revisão de todas as respostas para que façam sentido lidas em voz alta. Fatos, regras e ações não mudam.
+
+**QA móvel.** Corrigir: POST sem rede com aviso na página e dados mantidos; URLs de `/static/` versionadas por hash e `cache: "reload"` no pré-cache; sugestões da Lia escondidas com o campo em foco ou depois da primeira mensagem; painel da Lia limitado à área visível em qualquer orientação; cabeçalho móvel compacto com navegação recolhida em um botão de menu e carrinho visível; `font-size: 1rem` em todo `input` e `select`; CEP com `autocomplete="postal-code"`; rolagem e foco no resultado do rastreio; alvos de 44 px; camada transparente na faixa da Lia para o toque não passar ao que está embaixo; duas primeiras fotos do catálogo sem lazy; carrosséis com lazy; `autocapitalize` no pedido; foco contido na Lia aberta. O botão Fechar continua fora, por decisão do Rodrigo: a saída é o toque na faixa, Esc e o botão da Lia.
+
 ## Endereço do CEP e linha do tempo do rastreio (etapa 15)
 
 Pedidos do Rodrigo em 01/11/2026. Só site; agente e medição não mudam.

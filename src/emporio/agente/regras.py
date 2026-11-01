@@ -138,6 +138,9 @@ class RegrasDecisor:
 
     _i_devolucao = _i_troca_preferencia = _i_defeito = _posvenda
 
+    def _i_info_trocas(self, estado: Estado) -> Acao:
+        return self._info(estado, ["trocas", "garantia"], "trocas_info")
+
     def _i_garantia(self, estado: Estado) -> Acao:
         return self._info(estado, ["garantia"], "garantia_info", oferta="solicitacao")
 

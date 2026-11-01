@@ -272,6 +272,47 @@ def garantia_info(e: Estado, p: dict) -> str:
     return txt + "\nSe estiver com problema em algum produto, me conta que eu te ajudo a abrir a solicitação."
 
 
+def _prazo(regra: dict[str, Any]) -> str:
+    txt = f"{regra['prazo_dias']} dias"
+    if regra.get("tipo_dias") not in (None, "nao_informado"):
+        txt += f" {regra['tipo_dias']}"
+    marco = {"compra": "da compra", "recebimento": "do recebimento"}.get(regra.get("marco_inicial"))
+    return f"{txt}, contados a partir {marco}" if marco else txt
+
+
+def trocas_info(e: Estado, p: dict) -> str:
+    """Informação geral de troca, devolução e garantia, só com o que o manual diz."""
+    c = _condicoes(e)
+    linhas = []
+    arrep, defeito, pref = c.get("regra.arrependimento"), c.get("regra.defeito"), c.get("regra.preferencia")
+    if arrep:
+        t = f"- Devolução por arrependimento: {_prazo(arrep)}"
+        t += ", para compra online" if arrep.get("aplica_a") == "compra_online" else ""
+        dias = c.get("devolucao.arrependimento_reembolso_dias_uteis_max")
+        t += f". Reembolso em até {dias} dias úteis" if dias else ""
+        t += "; o frete da devolução fica por conta da loja" if c.get("devolucao.arrependimento_frete_por_conta_da_loja") else ""
+        linhas.append(t + ".")
+    if defeito:
+        linhas.append(f"- Troca por defeito: {_prazo(defeito)}.")
+    if pref:
+        t = f"- Troca por preferência: {pref['prazo_dias']} dias, sujeita à disponibilidade do produto"
+        t += "; a diferença de valor é cobrada ou reembolsada" if c.get("troca_preferencia.diferenca_de_valor_cobrada_ou_reembolsada") else ""
+        linhas.append(t + ".")
+    if not linhas and "regra.garantia_legal" not in c:
+        return sem_dado(e, p)
+    amb = _ambiguidades(e)
+    if pref and "marco_troca_preferencia" in amb:
+        linhas.append("  Atenção: " + amb["marco_troca_preferencia"]["descricao"])
+    txt = ("Como funcionam troca e devolução:\n" + "\n".join(linhas)) if linhas else ""
+    nao = c.get("trocas.itens_nao_elegiveis")
+    if nao:
+        txt += "\nNão entram em troca: " + "; ".join(x[0].lower() + x[1:] for x in nao) + "."
+    if "regra.garantia_legal" in c:
+        txt += "\n" + garantia_info(e, p).split("\n")[0]
+    txt = txt.strip()
+    return txt + "\nSe quiser, posso verificar um pedido seu: é só dizer que quer trocar ou devolver e o número do pedido."
+
+
 def busca(e: Estado, p: dict) -> str:
     r = e.ultimo("buscar_produtos")
     if r is None:
@@ -598,7 +639,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
-        atendente_ja_registrado)
+        atendente_ja_registrado, trocas_info)
 }
 
 

@@ -217,6 +217,9 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if (achadas and achadas[0] in ("devolucao", "troca_preferencia", "defeito")
+            and v.PERGUNTA_GERAL_TROCAS.search(norm) and not v.CASO_PROPRIO.search(norm)):
+        return "info_trocas"  # pergunta geral: responde a política, sem abrir o fluxo do pedido
     for nome in achadas:
         if nome == "promocao":
             if ref:

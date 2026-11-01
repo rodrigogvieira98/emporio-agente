@@ -22,7 +22,7 @@ CAMINHO_PROMPT = Path(__file__).with_name("prompt_decisor.md")
 NOMES_FERRAMENTAS = ["buscar_produtos", "ver_produto", "calcular_condicoes", "consultar_pedido",
                      "consultar_politica", "listar_promocoes", "registrar_encaminhamento"]
 TEMAS = ["horario", "endereco", "contato", "pagamento", "frete", "garantia", "escopo", "empresa",
-         "arrependimento", "defeito", "troca_preferencia"]
+         "arrependimento", "defeito", "troca_preferencia", "trocas"]
 CHAVES = sorted(respostas.TEXTOS)
 FORMAS = ["pix", "debito", "credito", "boleto"]
 
@@ -78,6 +78,7 @@ REQUISITOS = {
     "saudacao": lambda e: _ok(e, "consultar_politica"), "horario": lambda e: _ok(e, "consultar_politica"),
     "endereco": lambda e: _ok(e, "consultar_politica"), "contato": lambda e: _ok(e, "consultar_politica"),
     "pagamento": lambda e: _ok(e, "consultar_politica"), "garantia_info": lambda e: _ok(e, "consultar_politica"),
+    "trocas_info": lambda e: _ok(e, "consultar_politica"),
     "fora_escopo": lambda e: _ok(e, "consultar_politica"), "fora_escopo_geral": lambda e: _ok(e, "consultar_politica"),
     "frete_info": lambda e: _ok(e, "consultar_politica"),
     "busca": lambda e: _ok(e, "buscar_produtos", "ok", "vazio"),
@@ -131,6 +132,7 @@ DICAS = {
     "saudacao": "Rode antes consultar_politica.", "horario": "Rode antes consultar_politica horario.",
     "endereco": "Rode antes consultar_politica endereco.", "contato": "Rode antes consultar_politica contato.",
     "pagamento": "Rode antes consultar_politica pagamento.", "garantia_info": "Rode antes consultar_politica garantia.",
+    "trocas_info": "Rode antes consultar_politica trocas e garantia (pergunta geral, sem pedido).",
     "fora_escopo": "Rode antes consultar_politica escopo.", "fora_escopo_geral": "Rode antes consultar_politica escopo.",
     "frete_info": "Rode antes consultar_politica frete.", "recusa_manipulacao": "Rode antes consultar_politica pagamento.",
 }

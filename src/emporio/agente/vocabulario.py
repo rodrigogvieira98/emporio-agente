@@ -39,6 +39,16 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("saudacao", re.compile(r"\b(oi|ola|bom dia|boa tarde|boa noite|e ai|opa|tudo bem|eai)\b")),
 ]
 
+# Pergunta de informação geral sobre troca, devolução ou garantia (sem caso próprio do cliente)
+PERGUNTA_GERAL_TROCAS = re.compile(
+    r"\b(como funciona\w*|qual (e )?a (politica|regra)\w*|quais (sao )?as (politicas|regras)|politica\w* (de|da|do|para)|"
+    r"regras? (de|da|do|para)|voces (trocam|aceitam|fazem|tem|oferecem)|aceita(m)? (troca|devolucao)|"
+    r"existe (troca|devolucao|garantia)|prazo (de|para|da|do) (troca|devolucao|garantia)|"
+    r"(quero|queria|gostaria de) saber (como|se|qual|quais)|(como|quando) (e|sao) (a|as|o|os) )")
+CASO_PROPRIO = re.compile(
+    r"\b(meu|minha|meus|minhas|comprei|recebi|chegou|veio|me arrependi|preciso|"
+    r"(quero|queria|gostaria de|vou|posso|consigo) (trocar|devolver)|pedido (n|no|numero)? ?\d+)\b")
+
 # palavra do cliente -> termo de categoria entendido por buscar_produtos
 CATEGORIAS = {
     "violao": "violao", "violoes": "violao", "guitarra": "guitarra", "guitarras": "guitarra",

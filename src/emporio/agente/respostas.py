@@ -92,8 +92,11 @@ def _aviso_expediente(estado: Estado) -> str:
     if sit["aberto"] or not sit["retorno"]:
         return ""
     r = sit["retorno"]
+    # o horário vem da regra de funcionamento; sem calendário de feriados, a promessa leva a ressalva
+    ressalva = (" (pela regra de funcionamento; em feriado o horário pode mudar)"
+                if "feriados_sem_calendario" in _ambiguidades(estado) else "")
     return aviso(estado, "fora_do_expediente",
-                 f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}.",
+                 f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}{ressalva}.",
                  valor=f"{r['quando']} {r['hora']}")
 
 

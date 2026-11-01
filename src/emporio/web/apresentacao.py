@@ -4,13 +4,17 @@ Nada aqui calcula preço ou aplica regra. Valores de loja são lidos do manual p
 """
 from __future__ import annotations
 
+import re
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from markupsafe import Markup, escape
 
-from .. import dinheiro
+from .. import config, dinheiro
+from ..agente import expediente
 from ..politicas.manual import fato
+from ..texto import tokens
 
 NOMES_DIA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
@@ -94,7 +98,7 @@ def contatos() -> list[dict[str, str]]:
 
 def loja() -> dict[str, Any]:
     """Nome, endereço, contato e horário, todos do manual."""
-    info: dict[str, Any] = {"nome": "", "endereco": "", "contatos": [], "horario": []}
+    info: dict[str, Any] = {"nome": "", "endereco": "", "endereco_curto": "", "contatos": [], "horario": []}
     f = fato("empresa.nome_fantasia")
     if f:
         info["nome"] = f.valor
@@ -103,6 +107,7 @@ def loja() -> dict[str, Any]:
         e = f.valor
         info["endereco"] = (f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}, "
                             f"CEP {e['cep']}")
+        info["endereco_curto"] = f"{e['logradouro']}, {e['numero']}, {e['bairro']}, {e['cidade']}/{e['uf']}"
     info["contatos"] = contatos()
     f = fato("horario.funcionamento")
     if f and isinstance(f.valor, list):
@@ -130,3 +135,61 @@ def preparar_item(item: dict[str, Any], promos: dict[int, dict[str, Any]]) -> di
             saida.update(percentual=ref["percentual"], final=ref["final_centavos"],
                          descricao_promocao=ref["descricao"])
     return saida
+
+
+# ---- identidade visual: ilustração por categoria -------------------------------------------------
+
+ILUSTRACOES_SVG = Path(__file__).resolve().parent / "static" / "ilustracoes.svg"
+ILUSTRACAO_PADRAO = "instrumento"
+
+
+def _ids_de_ilustracao() -> frozenset[str]:
+    try:
+        return frozenset(re.findall(r'<symbol id="([a-z0-9-]+)"', ILUSTRACOES_SVG.read_text(encoding="utf-8")))
+    except OSError:
+        return frozenset()
+
+
+IDS_ILUSTRACAO = _ids_de_ilustracao()
+
+
+def ilustracao(categoria: str | None) -> str:
+    """Id do símbolo SVG da categoria (o nome da categoria vem do banco); sem desenho próprio, o genérico."""
+    ident = "-".join(tokens(categoria or ""))
+    return ident if ident in IDS_ILUSTRACAO else ILUSTRACAO_PADRAO
+
+
+# ---- faixa de expediente --------------------------------------------------------------------------
+
+def _faixa_de_hoje(funcionamento: list[dict[str, Any]], dia: int) -> dict[str, str] | None:
+    for r in funcionamento:
+        if dia in r["dias"] and not r.get("fechado"):
+            return {"abre": r["abre"], "fecha": r["fecha"]}
+    return None
+
+
+def situacao_loja() -> dict[str, Any]:
+    """Aberta ou fechada agora, no fuso da loja e com a data de referência, só a partir de horario.funcionamento."""
+    f = fato("horario.funcionamento")
+    if not f or not isinstance(f.valor, list):
+        return {"conhecida": False, "aberto": False, "hoje": None, "retorno": None}
+    agora = config.agora()
+    sit = expediente.situacao(f.valor, agora)
+    hoje = _faixa_de_hoje(f.valor, agora.weekday())
+    return {"conhecida": True, "aberto": sit["aberto"], "hoje": hoje, "retorno": sit["retorno"]}
+
+
+def formas_de_pagamento() -> str:
+    """Formas de pagamento em texto corrido, montadas dos fatos do manual."""
+    partes = []
+    if fato("pagamento.pix_desconto_percentual"):
+        partes.append("PIX")
+    if fato("pagamento.debito_a_vista"):
+        partes.append("cartão de débito")
+    f = fato("pagamento.credito_parcelas_max")
+    if f:
+        sj = fato("pagamento.credito_sem_juros")
+        partes.append(f"cartão de crédito em até {f.valor}x" + (" sem juros" if sj and sj.valor else ""))
+    if fato("pagamento.boleto_a_vista"):
+        partes.append("boleto bancário")
+    return ", ".join(partes)

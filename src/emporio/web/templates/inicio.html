@@ -1,32 +1,120 @@
 {% extends "base.html" %}
 {% block titulo %}Início{% endblock %}
+{% block corpo_attr %} data-home{% endblock %}
 {% block conteudo %}
-<h1>Instrumentos musicais</h1>
-<form class="busca" action="/catalogo" method="get" role="search">
-  <label class="so-leitor" for="busca-termo">Buscar</label>
-  <input id="busca-termo" name="termo" type="search" placeholder="Buscar instrumento">
-  <button type="submit">Buscar</button>
-</form>
-<h2>Categorias</h2>
-<ul class="categorias">
-{% for c in categorias() %}
-  <li><a href="/catalogo?categoria={{ c | urlencode }}">{{ c }}</a></li>
-{% endfor %}
-</ul>
-{% if destaque %}
-<h2>Promoções ativas</h2>
-<div class="grade">
-{% for d in destaque %}
-  <article class="card">
-    <h3><a href="/produto/{{ d.produto_id }}">{{ d.produto_nome }}</a></h3>
-    <div class="preco">
-      <span class="preco-original">{{ d.original_centavos | brl }}</span>
-      <span class="percentual">-{{ d.percentual }}%</span>
-      <span class="preco-final">{{ d.final_centavos | brl }}</span>
-      <small class="promo-desc">{{ d.descricao }}</small>
+<section class="abertura contorno">
+  <div class="abertura-texto">
+    <h1>Instrumentos musicais, com a etiqueta à vista.</h1>
+    <p class="abertura-linha">Veja o preço, a condição de pagamento e a situação de cada instrumento como estão no sistema agora. Na dúvida, a Lia responde com os dados da loja.</p>
+    <p class="abertura-acoes">
+      <a class="botao botao-cheio" href="#vitrine">Ver a vitrine</a>
+      <a class="botao" href="/catalogo">Catálogo completo</a>
+    </p>
+  </div>
+  <svg class="abertura-arte" viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#violoes"/></svg>
+</section>
+
+{% if vitrine %}
+<section class="secao contorno" id="vitrine" aria-labelledby="t-vitrine">
+  <div class="secao-cabeca">
+    <h2 id="t-vitrine">Na vitrine</h2>
+    <div class="setas" data-setas hidden>
+      <button type="button" data-seta="-1" aria-label="Produtos anteriores">&larr;</button>
+      <button type="button" data-seta="1" aria-label="Próximos produtos">&rarr;</button>
     </div>
-  </article>
-{% endfor %}
-</div>
+  </div>
+  <div class="trilho" tabindex="0" role="region" aria-label="Vitrine de produtos. Use as setas do teclado para percorrer." data-trilho>
+  <ul class="trilho-lista">
+  {% for p in vitrine %}
+    <li class="vitrine-item" data-produto="{{ p.id }}">
+      <a class="vitrine-arte" href="/produto/{{ p.id }}" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><use href="/static/ilustracoes.svg#{{ p.ilustracao }}"/></svg>
+      </a>
+      <div class="etiqueta">
+        {% if p.categoria %}<p class="et-categoria">{{ p.categoria }}</p>{% endif %}
+        <h3 class="et-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h3>
+        {% include "_preco.html" %}
+        <ul class="et-condicoes">
+          {% if p.pix %}<li>{% if p.pix.desconto %}PIX: <strong>{{ p.pix.valor | brl }}</strong> <span>(-{{ p.pix.desconto }}%)</span>{% else %}No PIX vale o preço acima{% endif %}</li>{% endif %}
+          {% if p.parcelamento %}<li>Ou {{ p.parcelamento.parcelas }}x de <strong>{{ p.parcelamento.parcela | brl }}</strong>{% if p.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
+        </ul>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+  </div>
+</section>
 {% endif %}
+
+<section class="secao contorno" id="categorias" aria-labelledby="t-categorias">
+  <div class="secao-cabeca"><h2 id="t-categorias">Categorias</h2></div>
+  <ul class="indice">
+  {% for c in categorias_home %}
+    {% if c.total %}
+    <li><a class="indice-item" href="/catalogo?categoria={{ c.nome | urlencode }}">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ c.ilustracao }}"/></svg>
+      <span class="indice-texto"><strong>{{ c.nome }}</strong>
+        <small>{{ c.total }} {{ 'produto' if c.total == 1 else 'produtos' }} &middot; a partir de {{ c.a_partir_de | brl }}</small></span>
+    </a></li>
+    {% else %}
+    <li><div class="indice-item vazio">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ c.ilustracao }}"/></svg>
+      <span class="indice-texto"><strong>{{ c.nome }}</strong><small>Em breve</small></span>
+    </div></li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+</section>
+
+{% if como_funciona %}
+<section class="secao contorno" id="como-funciona" aria-labelledby="t-como">
+  <div class="secao-cabeca"><h2 id="t-como">Como funciona comprar aqui</h2><a href="/politicas">Ler as políticas completas</a></div>
+  <dl class="regras">
+  {% for b in como_funciona %}
+    <div class="regra">
+      <dt><a href="/politicas#{{ b.ancora }}">{{ b.titulo }}</a></dt>
+      <dd>
+        <ul>{% for l in b.linhas %}<li>{{ l }}</li>{% endfor %}</ul>
+        {% if b.ressalvas %}<div class="ressalva"><p class="ressalva-titulo">A confirmar com a equipe</p>
+          <ul>{% for r in b.ressalvas %}<li>{{ r }}</li>{% endfor %}</ul></div>{% endif %}
+      </dd>
+    </div>
+  {% endfor %}
+  </dl>
+</section>
+{% endif %}
+
+<section class="lia-chamada" aria-labelledby="t-lia">
+  <div class="contorno lia-grade">
+    <div>
+      <h2 id="t-lia">Pergunte para a Lia</h2>
+      <p>Ela consulta os mesmos dados desta página. Toque em uma pergunta para começar a conversa.</p>
+    </div>
+    <ul class="perguntas">
+      <li><button type="button" data-pergunta="Qual violão você indica para quem está começando?">Qual violão você indica para quem está começando?</button></li>
+      {% if vitrine %}<li><button type="button" data-pergunta="Quanto fica {{ vitrine[0].nome }} no PIX?">Quanto fica {{ vitrine[0].nome }} no PIX?</button></li>{% endif %}
+      <li><button type="button" data-pergunta="Qual o prazo de entrega para a minha cidade?">Qual o prazo de entrega para a minha cidade?</button></li>
+      <li><button type="button" data-pergunta="Quero saber como funciona a troca e a garantia.">Quero saber como funciona a troca e a garantia.</button></li>
+    </ul>
+  </div>
+</section>
+
+<section class="secao contorno visite" id="visite" aria-labelledby="t-visite">
+  <div class="secao-cabeca"><h2 id="t-visite">Visite a loja</h2></div>
+  {% set L = loja() %}
+  <div class="visite-grade">
+    <address class="visite-endereco">
+      <p class="visite-rua">{{ L.endereco }}</p>
+      <ul class="visite-contatos">{% for c in L.contatos %}<li>{{ c.valor }} <span>({{ c.origem }})</span></li>{% endfor %}</ul>
+    </address>
+    <table class="horario">
+      <caption class="so-leitor">Horário de funcionamento</caption>
+      <tbody>
+      {% for h in L.horario %}{% set par = h.split(': ', 1) %}
+        <tr><th scope="row">{{ par[0] }}</th><td>{{ par[1] }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}

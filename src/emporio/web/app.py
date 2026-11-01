@@ -29,7 +29,7 @@ from ..ferramentas.politica import consultar_politica
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from ..ferramentas.promocoes import listar_promocoes
 from ..politicas.manual import carregar_manual, fato
-from . import apresentacao, navegacao
+from . import apresentacao, home, navegacao
 
 log = logging.getLogger("emporio.web")
 
@@ -78,7 +78,9 @@ def criar_app(agente: Any = None) -> FastAPI:
     app.state.agente = agente  # criado na primeira conversa, uma vez por processo
     app.mount("/static", StaticFiles(directory=AQUI / "static"), name="static")
     modelos = Jinja2Templates(directory=AQUI / "templates")
-    modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias)
+    modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias,
+                               situacao_loja=apresentacao.situacao_loja, ilustracao=apresentacao.ilustracao,
+                               menu_categorias=home.categorias, formas_pagamento=apresentacao.formas_de_pagamento)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
                                pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras)
 
@@ -132,16 +134,8 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     def inicio(request: Request):
-        promos = listar_promocoes()
-        destaque = []
-        if promos.estado == "ok":
-            for p in promos.dados["promocoes"]:
-                if p["conflito"] or p["situacao_venda"] != "disponivel":
-                    continue
-                destaque.append(p)
-                if len(destaque) == 4:
-                    break
-        return pagina(request, "inicio.html", destaque=destaque)
+        return pagina(request, "inicio.html", vitrine=home.vitrine(), categorias_home=home.categorias(),
+                      como_funciona=home.como_funciona())
 
     @app.get("/catalogo", response_class=HTMLResponse)
     def catalogo(request: Request, categoria: str = "", termo: str = "", preco_min: str = "",
@@ -162,7 +156,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                                 preco_min=minimo, preco_max=maximo, incluir_indisponiveis=filtros["todos"])
             if r.estado == "ok":
                 promos = _promocoes()
-                itens = [apresentacao.preparar_item(i, promos) for i in r.dados["itens"]]
+                itens = [home.com_categoria(apresentacao.preparar_item(i, promos)) for i in r.dados["itens"]]
                 total = r.dados["total_encontrado"]
             elif r.estado == "vazio":
                 erro = ("Não temos essa categoria no catálogo." if r.motivo == "categoria_inexistente"
@@ -182,6 +176,7 @@ def criar_app(agente: Any = None) -> FastAPI:
         if r.estado != "ok":
             return pagina(request, "mensagem.html", 502, titulo="Produto indisponível no momento", texto=MSG_FALHA)
         item = apresentacao.preparar_item(r.dados, _promocoes())
+        item["ilustracao"] = apresentacao.ilustracao(r.dados["categoria"])
         condicoes = _condicoes_de_pagamento(produto_id) if item["pode_comprar"] else None
         return pagina(request, "produto.html", p=item, categoria=r.dados["categoria"], descricao=r.dados["descricao"],
                       condicoes=condicoes)

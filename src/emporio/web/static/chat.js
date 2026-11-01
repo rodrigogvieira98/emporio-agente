@@ -23,7 +23,9 @@
       gravar(CHAVE_ABERTO, aberto ? "1" : "0");
     }
     var guardado = ler(CHAVE_ABERTO);
-    definir(guardado === null ? window.innerWidth > 700 : guardado === "1");
+    // a homepage abre com o chat fechado, para a vitrine aparecer inteira; nas demais páginas, aberto no desktop
+    var padrao = window.innerWidth >= 768 && !document.body.hasAttribute("data-home");
+    definir(guardado === null ? padrao : guardado === "1");
     botao.addEventListener("click", function () { definir(corpo.hidden); });
 
     document.body.addEventListener("htmx:afterSwap", function (e) {
@@ -39,6 +41,15 @@
       if (e.detail.xhr && e.detail.xhr.status === 422 && e.detail.target === log) e.detail.shouldSwap = true;
     });
     document.addEventListener("click", function (e) {
+      var abrir = e.target.closest && e.target.closest("[data-abrir-chat]");
+      if (abrir) { e.preventDefault(); definir(true); campo.focus(); return; }
+      var pergunta = e.target.closest && e.target.closest("[data-pergunta]");
+      if (pergunta) {  // abre o chat já preenchido; quem decide enviar é o cliente
+        definir(true);
+        campo.value = pergunta.getAttribute("data-pergunta") || "";
+        campo.focus();
+        return;
+      }
       var alvo = e.target.closest && e.target.closest(".btn-compra");
       if (!alvo) return;
       definir(true);

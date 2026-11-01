@@ -340,7 +340,7 @@ def completar_datas(estado: Estado) -> None:
 # --- fechamento do turno --------------------------------------------------------------------
 
 # Sem redação do modelo: recusa e escopo (o texto livre não pode abrir brecha), e respostas curtas já completas.
-SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "recusa_instrucoes", "fora_escopo",
+SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_pedido_indevido", "recusa_dado_de_terceiro", "recusa_instrucoes", "fora_escopo",
                "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta",
                # toda recusa fica sem texto livre do modelo: ele não pode abrir brecha nem suavizar o "não"
                "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",

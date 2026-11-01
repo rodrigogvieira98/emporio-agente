@@ -32,7 +32,7 @@ def test_conversa_longa_nao_repete_aviso_nem_saudacao(monkeypatch):
     assert sum("fora do expediente" in r.texto for r in rs) == 1
     assert sum("calendário de feriados" in r.texto for r in rs) == 1
     assert sum("não soma com" in r.texto for r in rs) == 1
-    assert sum("preço de tabela." in r.texto and "Os valores são o preço de tabela" in r.texto for r in rs) == 1
+    assert sum("preço de tabela." in r.texto and "Os valores seguem o preço de tabela" in r.texto for r in rs) == 1
 
 
 def test_o_controle_sem_concisao_repete_e_a_metrica_enxerga(monkeypatch):

@@ -122,7 +122,7 @@ def aviso(e: Estado, id_: str, texto: str, valor: str = "", proprio: bool = Fals
 
 def saudacao(e: Estado, p: dict) -> str:
     nome = _condicoes(e).get("empresa.nome_fantasia")
-    de = f" da {nome}" if nome else ""
+    de = f" do {nome}" if nome else ""
     if e.concisao and e.ja_saudou:  # saudação no máximo uma vez por conversa
         txt = "Em que posso ajudar?"
     else:
@@ -137,7 +137,7 @@ def horario(e: Estado, p: dict) -> str:
     for faixa in c.get("horario.funcionamento", []):
         dias = expediente.descrever_dias(faixa["dias"])
         linhas.append(f"- {dias}: fechado" if faixa.get("fechado") else
-                      f"- {dias}: {faixa['abre']} às {faixa['fecha']}")
+                      f"- {dias}: das {faixa['abre']} às {faixa['fecha']}")
     if not linhas:
         return sem_dado(e, p)
     if c.get("horario.feriados_fechado"):
@@ -320,7 +320,7 @@ def frete_cep_indisponivel(e: Estado, p: dict) -> str:
 
 
 def frete_cep_nao_encontrado(e: Estado, p: dict) -> str:
-    return "Não encontrei esse CEP. Confere os números e me manda de novo?"
+    return "Não encontrei esse CEP. Confira os números e me mande de novo."
 
 
 def frete_pedir_cep(e: Estado, p: dict) -> str:
@@ -375,7 +375,7 @@ def fora_escopo(e: Estado, p: dict) -> str:
         return sem_dado(e, p)
     acessorios = c.get("escopo.acessorios_nao_vendidos", [])
     lista = f" ({_lista(acessorios)})" if acessorios else ""
-    return (f"Aqui a gente trabalha só com instrumentos musicais, então não vendemos acessórios{lista}. "
+    return (f"Aqui trabalhamos só com instrumentos musicais, então não vendemos acessórios{lista}. "
             "Posso te ajudar a escolher um instrumento?")
 
 
@@ -399,7 +399,7 @@ def garantia_info(e: Estado, p: dict) -> str:
     nao = c.get("garantia.nao_cobre")
     if nao:
         txt += " Não cobre: " + "; ".join(x[0].lower() + x[1:] for x in nao) + "."
-    return txt + "\nSe estiver com problema em algum produto, me conta que eu te ajudo a abrir a solicitação."
+    return txt + "\nSe estiver com problema em algum produto, me conte, e eu te ajudo a abrir a solicitação."
 
 
 def _prazo(regra: dict[str, Any]) -> str:
@@ -481,7 +481,7 @@ def busca(e: Estado, p: dict) -> str:
     n = d["total_encontrado"]
     cab = (f"Encontrei {n} " + ("opção disponível" if n == 1 else "opções disponíveis")
            + (f", do menor para o maior preço (mostrando {mostrados}):" if d["total_encontrado"] > mostrados else ":"))
-    a = aviso(e, "valores_de_tabela", "Os valores são o preço de tabela.")
+    a = aviso(e, "valores_de_tabela", "Os valores seguem o preço de tabela.")
     fecho = "Quer ver as condições de algum deles?"
     rec = p.get("recomendacao")
     if p.get("qualificar"):  # uma pergunta só, sobre nível, uso ou orçamento
@@ -610,6 +610,23 @@ def recusa_manipulacao(e: Estado, p: dict) -> str:
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
     return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas"
             f"{extra}. Quer ver as promoções ativas?")
+
+
+def recusa_pedido_indevido(e: Estado, p: dict) -> str:
+    return ("Não consigo atender esse pedido, porque ele está fora do que posso fazer por aqui. Posso ajudar com "
+            "produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço.")
+
+
+def seguro_envio(e: Estado, p: dict) -> str:
+    """Seguro dos envios: a frase da seção de frete do manual (5.2), sem acrescentar nada."""
+    for passo in e.passos:
+        if passo.ferramenta == "consultar_politica" and passo.resultado.estado == "ok":
+            for sec in passo.resultado.dados["secoes"]:
+                for frase in re.split(r"(?<=\.)\s+", sec.get("texto") or ""):
+                    n = normalizar(frase)
+                    if "seguro" in n and "envios" in n:
+                        return frase.strip()
+    return sem_dado(e, p)
 
 
 def endereco_pedido_privado(e: Estado, p: dict) -> str:
@@ -865,7 +882,7 @@ def pedir_dados_posvenda(e: Estado, p: dict) -> str:
     ped = e.coletados["pedido"]
     campos = [CAMPOS.get(c, c) for c in p["campos"]]
     achei = aviso(e, "pedido_encontrado", f"Encontrei o pedido {ped['pedido_id']}.", str(ped["pedido_id"]))
-    return f"{achei}{_nota_prazo_defeito(e)} Para organizar sua solicitação, me conta: {_lista(campos)}.".strip()
+    return f"{achei}{_nota_prazo_defeito(e)} Para organizar sua solicitação, me conte: {_lista(campos)}.".strip()
 
 
 def propor_posvenda(e: Estado, p: dict) -> str:
@@ -902,7 +919,7 @@ def propor_posvenda(e: Estado, p: dict) -> str:
         f"1) O que consta no seu pedido: {consta}.\n"
         f"2) O que você me informou (não verificado): {'; '.join(decl)}.\n"
         f"3) O que a equipe confirma: se o seu caso se enquadra na regra da loja ({condicao}, {marco_txt}{aplica}).{exigido}"
-        f"{nota} Eu não consigo garantir a elegibilidade, a decisão é da equipe.\n"
+        f"{nota} Eu não consigo garantir a elegibilidade; a decisão é da equipe.\n"
         f"Posso registrar essa solicitação para a equipe? {CONFIRMA}")
 
 
@@ -912,7 +929,7 @@ def reclamacao_empatia(e: Estado, p: dict) -> str:
 
 
 def pedir_relato(e: Estado, p: dict) -> str:
-    return ("Entendo. Me conta em poucas palavras o que aconteceu? "
+    return ("Entendo. Pode me contar em poucas palavras o que aconteceu? "
             "Não precisa passar telefone nem e-mail, a equipe já tem como falar com você.")
 
 
@@ -945,7 +962,7 @@ def registro_falhou(e: Estado, p: dict) -> str:
 
 
 def registro_cancelado(e: Estado, p: dict) -> str:
-    return "Combinado, não registrei nada. Se mudar de ideia é só me avisar. Posso ajudar em mais alguma coisa?"
+    return "Combinado, não registrei nada. Se mudar de ideia, é só me avisar. Posso ajudar em mais alguma coisa?"
 
 
 def falha_ferramenta(e: Estado, p: dict) -> str:
@@ -958,7 +975,7 @@ def falha_ferramenta(e: Estado, p: dict) -> str:
 
 def identidade(e: Estado, p: dict) -> str:
     nome = _condicoes(e).get("empresa.nome_fantasia")
-    de = f" da {nome}" if nome else ""
+    de = f" do {nome}" if nome else ""
     return (f"Sou a Lia, assistente virtual{de}. Não sou uma pessoa: respondo de forma automática, com as informações "
             "da loja. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e "
             "endereço. Se você quiser falar com a equipe, é só pedir.")
@@ -1057,7 +1074,7 @@ def sem_info(e: Estado, p: dict) -> str:
 
 
 def perguntas_repetidas(e: Estado, p: dict) -> str:
-    return ("Parece que não estou conseguindo avançar com essa informação, desculpa. "
+    return ("Parece que não estou conseguindo avançar com essa informação, desculpe. "
             f"Posso registrar o seu caso para a equipe te ajudar? {CONFIRMA}")
 
 
@@ -1107,7 +1124,7 @@ def nao_entendi(e: Estado, p: dict) -> str:
 
 
 def nao_entendi_de_novo(e: Estado, p: dict) -> str:
-    return f"Ainda não consegui entender, desculpa. Quer que um atendente te ajude? {CONFIRMA}"
+    return f"Ainda não consegui entender, desculpe. Quer que um atendente te ajude? {CONFIRMA}"
 
 
 def ok_sem_retomar(e: Estado, p: dict) -> str:
@@ -1116,7 +1133,7 @@ def ok_sem_retomar(e: Estado, p: dict) -> str:
 
 def retomar(e: Estado, p: dict) -> str:
     assunto = ROTULOS_ASSUNTO.get(p["assunto"], "o assunto anterior")
-    return f"Antes a gente estava falando sobre {assunto}. Quer retomar? {CONFIRMA}"
+    return f"Antes estávamos falando sobre {assunto}. Quer retomar? {CONFIRMA}"
 
 
 # --- conformidade com o manual (etapa 10) -----------------------------------------------------------------
@@ -1223,7 +1240,7 @@ def empresa_dados(e: Estado, p: dict) -> str:
     if "fundacao" in foco and c.get("empresa.fundacao_ano"):
         end = c.get("empresa.endereco") or {}
         onde = f" em {end['cidade']}" if end.get("cidade") else ""
-        partes.append(f"A {nome} foi fundada em {c['empresa.fundacao_ano']}{onde}.")
+        partes.append(f"O {nome} foi fundado em {c['empresa.fundacao_ano']}{onde}.")
     if ("cnpj" in foco or "razao" in foco) and c.get("empresa.razao_social"):
         partes.append(f"A razão social é {c['empresa.razao_social']}")
         if "cnpj" in foco and c.get("empresa.cnpj"):
@@ -1313,7 +1330,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         status_pedido, status_pedido_demo, pedido_demo_negado, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado, sem_info, pix_sobre_promocao,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
-        recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
+        recusa_manipulacao, recusa_pedido_indevido, seguro_envio, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
         item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
         previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,

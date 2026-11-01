@@ -120,6 +120,10 @@ SEM_INFO = (
         r"\b((compr\w+|aceit\w+|vend\w+|troc\w+|recebem|pegam|negoci\w+)\b.{0,30}\b(usad[oa]s?|seminov[oa]s?|segunda mao)|"
         r"(usad[oa]s?|seminov[oa]s?|segunda mao)\b.{0,25}\b(voces|vcs|a loja)\b.{0,15}\b(compr\w+|aceit\w+|vend\w+))\b")),
     ("nota fiscal", re.compile(r"\b(nota fiscal|notas fiscais|nf-?e|nfe|danfe|nota no cnpj|nota em nome)\b")),
+    # seguro dos envios (manual 5.2): tem resposta pela regra do manual; seguro de roubo ou de queda segue sem dado
+    ("seguro_envio", re.compile(
+        r"(?<!\be )\bseguro\b.{0,40}\b(envios?|frete|entrega\w*|transporte|extravi\w+|danos?|encomendas?)\b"
+        r"|\b(envios?|frete|entrega\w*|transporte|encomendas?)\b.{0,40}(?<!\be )\bseguro\b")),
     ("extravio", re.compile(
         r"\b(extravi\w+|(se|caso) (o pedido |ele |ela |a encomenda |o produto )?(nao|nunca) chegar\w*|nunca chegou|"
         r"pedido (se )?perd\w+|perdeu (o )?pedido)\b")),
@@ -248,6 +252,8 @@ PEDIDO_INDEVIDO = re.compile(
     r"\b(escreve|escreva|registre|registra|anote|anota|prometa|promete|assine|assina|confirme ao cliente)\b.{0,30}"
     r"\b(garant\w+|vend\w+|\d+\s*reais|gratis|desconto)\b"
     r"|\breserv\w+\b.{0,30}\bsem (pagar|pagamento|sinal|entrada)\b|\bsem pagar\b.{0,20}\breserv\w+")
+# Pedido indevido que fala de preço ou desconto: a recusa cita as promoções; sem isso, a recusa é a curta.
+TERMO_DE_DESCONTO = re.compile(r"\b(desconto\w*|promoc\w+|cupom\w*|preco\w*|valor\w*|gratis|reais|barat\w+|pix)\b|%")
 DADO_DE_TERCEIRO = re.compile(
     r"\b(telefone|celular|fone|e-?mail|endereco|cpf|nome|sobrenome|dados|contato)\b.{0,30}"
     r"\b(do cliente|da cliente|do comprador|do dono|do titular|de outro cliente|de outra pessoa|de quem comprou)\b"

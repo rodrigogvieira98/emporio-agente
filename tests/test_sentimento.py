@@ -164,7 +164,7 @@ def test_desabafo_com_horario_responde_o_horario():
 
 def test_reclamacao_sobre_produto_continua_reclamacao():
     (r,) = conversar("o violão chegou riscado, que absurdo")
-    assert "Me conta em poucas palavras" in r.texto and r.estado == "aguardando:relato"
+    assert "Pode me contar em poucas palavras" in r.texto and r.estado == "aguardando:relato"
 
 
 # 4. "não" a um pedido de dados -----------------------------------------------------------------

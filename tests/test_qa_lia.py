@@ -151,7 +151,7 @@ def test_final_do_telefone_sozinho_nunca_e_despedida():
 def test_irritacao_no_meio_da_consulta_nao_abandona_a_consulta():
     t = textos("meu pedido nao chegou ainda e ja to puto", "pedido 8, ana carolina ferreira",
                "isso é um absurdo, quando chega?")
-    assert "4 últimos dígitos" in t[2] and "Me conta em poucas palavras" not in t[2]
+    assert "4 últimos dígitos" in t[2] and "Pode me contar em poucas palavras" not in t[2]
 
 
 def test_depois_da_irritacao_o_final_conclui_a_consulta(sql):

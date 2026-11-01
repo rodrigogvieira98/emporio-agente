@@ -48,7 +48,7 @@ def test_sim_responde_a_pergunta_so_do_estado_do_produto(sql):
 
 def test_sim_nao_preenche_quando_a_pergunta_tinha_varios_campos(sql):
     r = conversar("quero devolver", "pedido 4, final 3456", "sim")
-    assert "Posso registrar" not in r[2].texto and "me conta" in r[2].texto
+    assert "Posso registrar" not in r[2].texto and "me conte" in r[2].texto
 
 
 def test_nao_responde_estado_do_produto_como_com_uso(sql):
@@ -58,8 +58,8 @@ def test_nao_responde_estado_do_produto_como_com_uso(sql):
 
 def test_mesma_pergunta_no_maximo_duas_vezes_e_na_terceira_oferece_registro(sql):
     r = conversar("quero devolver", "pedido 4, final 3456", "hmm", "hmm", "sim")
-    assert "me conta" in r[1].texto and "me conta" in r[2].texto  # a pergunta saiu duas vezes
-    assert "me conta" not in r[3].texto and "Posso registrar o seu caso" in r[3].texto  # na terceira, oferta
+    assert "me conte" in r[1].texto and "me conte" in r[2].texto  # a pergunta saiu duas vezes
+    assert "me conte" not in r[3].texto and "Posso registrar o seu caso" in r[3].texto  # na terceira, oferta
     assert "EM-" in r[4].texto and len(protocolos(sql)) == 1
 
 

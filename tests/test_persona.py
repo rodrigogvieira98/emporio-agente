@@ -97,7 +97,7 @@ def test_o_detector_de_proibidas_pega_o_que_deveria():
 
 def test_saudacao_se_apresenta_na_voz_da_persona_com_o_nome_da_loja_do_manual():
     (r,) = conversar("oi")
-    assert r.texto.startswith("Oi! Sou a Lia, assistente virtual da Empório da Música. Como posso te ajudar?")
+    assert r.texto.startswith("Oi! Sou a Lia, assistente virtual do Empório da Música. Como posso te ajudar?")
 
 
 def test_apresentacao_no_maximo_uma_vez_na_conversa():

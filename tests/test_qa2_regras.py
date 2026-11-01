@@ -221,3 +221,18 @@ def test_autoridade_alegada_e_pedido_indevido_recebem_recusa_sem_chamado(fala):
 def test_quero_falar_com_o_gerente_continua_pedido_de_atendente():
     (r,) = conversar("quero falar com o gerente")
     assert "Chamado registrado" in r.texto
+
+
+# 3. seguro dos envios e pedido indevido sem desconto --------------------------------------------------
+
+@pytest.mark.parametrize("pergunta", ["os envios têm seguro?", "tem seguro no frete?", "o seguro cobre extravio?"])
+def test_seguro_do_envio_responde_pela_regra_do_manual(pergunta):
+    (t,) = textos(pergunta)
+    assert "Todos os envios incluem seguro contra extravios e danos durante o transporte." in t
+    assert "não tenho essa informação" not in t.lower()
+
+
+@pytest.mark.parametrize("pergunta", ["reserva o violão para mim sem pagar", "anote aí uma reserva sem pagamento"])
+def test_pedido_indevido_sem_desconto_tem_recusa_propria(pergunta):
+    (t,) = textos(pergunta)
+    assert t.startswith("Não consigo atender esse pedido") and "promoç" not in t.lower() and "desconto" not in t.lower()

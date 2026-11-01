@@ -7,6 +7,7 @@ from typing import Any
 from .. import config
 from ..ferramentas.envelope import Resultado
 from ..texto import normalizar
+from . import vocabulario as v
 from .estado import Acao, Estado
 
 REGRA_POR_INTENCAO = {"devolucao": "arrependimento", "troca_preferencia": "preferencia", "defeito": "defeito"}
@@ -422,6 +423,8 @@ class RegrasDecisor:
     def _i_sem_info(self, estado: Estado) -> Acao:
         """Tema que os dados não cobrem: diz que não tem a informação e oferece atendente, sem afirmar nada."""
         tema = estado.slots.get("tema_sem_info") or "esse assunto"
+        if tema == "seguro_envio":  # o manual (5.2) responde: todos os envios incluem seguro
+            return self._info(estado, ["frete"], "seguro_envio")
         return propor("sem_info", "sem_dado", f"Cliente perguntou sobre {tema} e o sistema nao tem a informacao.",
                       tema=tema)
 
@@ -757,6 +760,8 @@ class RegrasDecisor:
         return self._info(estado, ["pagamento"], "cupom_inexistente")
 
     def _i_tentativa_manipulacao(self, estado: Estado) -> Acao:
+        if not v.TERMO_DE_DESCONTO.search(normalizar(str(estado.slots.get("texto_limpo") or ""))):
+            return responder("recusa_pedido_indevido")  # sem preço nem desconto no pedido: recusa curta, sem falar de promoção
         return self._info(estado, ["pagamento"], "recusa_manipulacao")
 
     def _i_dado_de_terceiro(self, estado: Estado) -> Acao:

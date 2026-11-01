@@ -298,6 +298,28 @@ A seção "Visite a loja" sai da home, porque a faixa a substitui. O rodapé dei
 
 **Testes.** Aprovada a alteração de testes que preenchem cidade no checkout, do rótulo "Falar com a loja" e do teste que espera envio automático ao clicar na sugestão. Nenhum teste é apagado ou enfraquecido: cada um passa a cobrir o comportamento novo.
 
+## Revisão da Lia (etapa 7)
+
+Aprovada pelo Rodrigo em 01/11/2026, depois de 36 falas reais com cerca de metade das respostas ruins, apesar do dev em 62/62. Fatos continuam escritos por código, e o modelo nunca escreve preço, prazo ou protocolo.
+
+**Etapa 1: correções por regras.**
+1. Identidade: "quem é você", "é robô ou pessoa", "qual seu nome" e "o que você faz" recebem resposta da persona, dizendo que é assistente virtual.
+2. Encerramento: agradecimento e despedida recebem despedida curta, nunca oferta de chamado. Não contam como falha de entendimento e zeram o contador de falhas.
+3. Contexto: depois de uma lista, "qual o mais barato" usa essa lista; depois de um pedido consultado, "quando chega" usa esse pedido; "tem em estoque" e "quanto fica no pix" usam o produto em foco ou o primeiro da lista quando estiver claro.
+4. Catálogo: categoria sem marca lista produtos ("quanto custa uma gitarra", "violao barato", "tem teclado"), com tolerância a erro de digitação comum ("gitarra", "ukelele"), inclusive quando há "barato" ou "mais em conta". Um pedido genérico de preço nunca pede marca e modelo se a categoria foi identificada.
+5. Reembolso: "em quanto tempo recebo o dinheiro" responde com o prazo do manual.
+6. Frete: cidade fora da base informa que o frete é calculado pela equipe, sem pedir valor do pedido. O valor só é pedido para Campo Grande.
+7. Duas perguntas na mesma mensagem: responde as duas quando forem intenções conhecidas.
+8. Resposta proporcional: "aceitam boleto" e "vocês parcelam" respondem só o tema perguntado, sem listar todas as regras. "e em 12x" sem produto pede o produto em uma frase. Mantém a informação da ambiguidade da parcela mínima quando o assunto for parcela.
+9. Pedido: forma de pagamento nunca aparece crua (`debit`, `credit`), e a frase de status fica natural.
+10. Recusa: pedido de prompt ou de instruções internas recebe recusa própria, sem falar de desconto.
+11. Redação: o validador rejeita frase que comece em minúscula e frase genérica de oferta. Respostas de recusa e de escopo não recebem redação.
+12. "sim" sem pergunta pendente recebe resposta natural, sem "não entendi".
+
+**Etapa 2: modelo como reserva de intenção.** Só depois da etapa 1. Quando a percepção por regras não achar intenção e houver modelo, ele escolhe um rótulo de uma lista fechada de intenções sem efeito colateral, ou "nenhuma". Código valida o rótulo, e as regras seguem com slots, ferramentas e respostas. A lista exclui chamado, e o modelo nunca autoriza identificação de cliente. Falha, tempo esgotado ou rótulo inválido voltam ao fluxo atual, sem mentir. Telemetria: `reserva_tentada`, `reserva_aceita`, `reserva_nenhuma`, `reserva_falha`. `EMPORIO_RESERVA=0` desliga. A decisão de manter ligada segue `eval/PREREGISTRO_RESERVA.md`.
+
+**Avaliação.** Os achados viram `eval/casos_conversas.jsonl`, usado para ajuste. `eval/casos_frescos.jsonl` e o holdout não são lidos por quem implementa nem usados para ajuste.
+
 ## Testes obrigatórios
 
 Conversa longa falha se um fato ou aviso reaparecer sem pedido, ou se a saudação surgir duas vezes. Teste separado confirma que, ao perguntar de novo, o cliente recebe o fato.

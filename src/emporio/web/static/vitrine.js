@@ -46,7 +46,7 @@
       pontos.forEach(function (p, i) {
         if (i === ativo) p.setAttribute("aria-current", "true"); else p.removeAttribute("aria-current");
       });
-      if (anuncio) anuncio.textContent = "Em destaque: " + itens[ativo].getAttribute("data-nome") + ", " + (ativo + 1) + " de " + total;
+      if (anuncio) anuncio.textContent = (raiz.getAttribute("data-rotulo-anuncio") || "Em destaque") + ": " + itens[ativo].getAttribute("data-nome") + ", " + (ativo + 1) + " de " + total;
     }
     function ir(i) { ativo = ((i % total) + total) % total; desenhar(); }
 

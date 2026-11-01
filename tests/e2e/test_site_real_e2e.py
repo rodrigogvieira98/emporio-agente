@@ -313,19 +313,19 @@ def test_carrossel_por_teclado_clique_pontos_e_arrasto(url_site, navegador, larg
     pagina.wait_for_selector(".carrossel-ativo")
     pagina.evaluate("document.querySelector('[data-carrossel]').scrollIntoView({block: 'center'})")
     primeiro = _centro(pagina)
-    pagina.locator("[data-carrossel]").focus()
+    pagina.locator("#destaques [data-carrossel]").focus()
     pagina.keyboard.press("ArrowRight")
     segundo = _centro(pagina)
     assert segundo != primeiro
-    assert segundo in pagina.locator("[data-anuncio]").text_content()  # aria-live anuncia o destaque
+    assert segundo in pagina.locator("#destaques [data-anuncio]").text_content()  # aria-live anuncia o destaque
     pagina.keyboard.press("ArrowLeft")
     assert _centro(pagina) == primeiro
-    for _ in range(pagina.locator(".carrossel-item").count()):  # em laço: volta ao começo
+    for _ in range(pagina.locator("#destaques .carrossel-item").count()):  # em laço: volta ao começo
         pagina.keyboard.press("ArrowRight")
     assert _centro(pagina) == primeiro
-    pagina.click("[data-seta='1']")
+    pagina.click("#destaques [data-seta='1']")
     assert _centro(pagina) == segundo
-    pagina.locator("[data-ponto='0']").click()
+    pagina.locator("#destaques [data-ponto='0']").click()
     assert _centro(pagina) == primeiro
     # clique no vizinho da direita (o de menor escala logo depois do centro) o centraliza
     pagina.evaluate("document.querySelector('[data-carrossel]').scrollIntoView({block: 'center'})")
@@ -341,7 +341,7 @@ def test_carrossel_por_teclado_clique_pontos_e_arrasto(url_site, navegador, larg
     pagina.mouse.click(alvo[1], alvo[2])
     assert _centro(pagina) == alvo[0]
     antes = _centro(pagina)
-    caixa = pagina.locator(".carrossel-item.e-centro .preco").bounding_box()  # área sem link: um toque curto não navega
+    caixa = pagina.locator("#destaques .carrossel-item.e-centro .preco").bounding_box()  # área sem link: um toque curto não navega
     x, y = caixa["x"] + caixa["width"] / 2, caixa["y"] + caixa["height"] / 2
     pagina.mouse.move(x, y)
     pagina.mouse.down()
@@ -362,7 +362,7 @@ def test_carrossel_toque_navega_acima_de_40px(url_site, navegador):
     pagina.wait_for_selector(".carrossel-ativo")
     pagina.evaluate("document.querySelector('[data-carrossel]').scrollIntoView({block: 'center'})")
     antes = _centro(pagina)
-    caixa = pagina.locator(".carrossel-item.e-centro").bounding_box()
+    caixa = pagina.locator("#destaques .carrossel-item.e-centro").bounding_box()
     x, y = caixa["x"] + caixa["width"] / 2, caixa["y"] + 40
     pagina.evaluate("""([x, y]) => { const alvo = document.elementFromPoint(x, y); const o = {bubbles: true, pointerId: 1, isPrimary: true, pointerType: 'touch'};
         alvo.dispatchEvent(new PointerEvent('pointerdown', {...o, clientX: x, clientY: y}));
@@ -380,7 +380,7 @@ def test_carrossel_cai_na_grade_rolavel_sem_js(url_site, navegador):
     ctx = navegador.new_context(viewport={"width": 1280, "height": 800}, java_script_enabled=False)
     pagina = ctx.new_page()
     pagina.goto(url_site + "/")
-    assert pagina.locator("[data-controles]").is_hidden()
+    assert pagina.locator("#destaques [data-controles]").is_hidden()
     assert pagina.evaluate("getComputedStyle(document.querySelector('.carrossel-lista')).overflowX") == "auto"
     assert pagina.locator(".carrossel-item").count() >= 4
 

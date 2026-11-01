@@ -1,4 +1,19 @@
 {% extends "base.html" %}
+{% macro carrossel_de(lista, rotulo, anterior, proximo, anuncio) %}
+  <div class="carrossel" data-carrossel data-rotulo-anuncio="{{ anuncio }}" role="region" aria-roledescription="carrossel" aria-label="{{ rotulo }}" tabindex="0">
+    <ul class="carrossel-lista">
+    {% for p in lista %}
+      <li class="carrossel-item" data-produto="{{ p.id }}" data-nome="{{ p.nome }}">{% set carrossel = true %}{% include "_card.html" %}</li>
+    {% endfor %}
+    </ul>
+    <div class="carrossel-controles" data-controles hidden>
+      <button type="button" data-seta="-1" aria-label="{{ anterior }}">&larr;</button>
+      <ul class="carrossel-pontos">{% for p in lista %}<li><button type="button" data-ponto="{{ loop.index0 }}" aria-label="Ver {{ p.nome }}"></button></li>{% endfor %}</ul>
+      <button type="button" data-seta="1" aria-label="{{ proximo }}">&rarr;</button>
+    </div>
+    <p class="so-leitor" aria-live="polite" data-anuncio></p>
+  </div>
+{% endmacro %}
 {% block corpo_attr %} data-home{% endblock %}
 {% block conteudo %}
 <section class="abertura">
@@ -31,26 +46,14 @@
 {% if destaques %}
 <section class="secao contorno" id="destaques" aria-labelledby="t-destaques">
   <div class="secao-cabeca"><h2 id="t-destaques">Em destaque</h2><a href="/catalogo">Ver o catálogo completo</a></div>
-  <div class="carrossel" data-carrossel role="region" aria-roledescription="carrossel" aria-label="Produtos em destaque" tabindex="0">
-    <ul class="carrossel-lista">
-    {% for p in destaques %}
-      <li class="carrossel-item" data-produto="{{ p.id }}" data-nome="{{ p.nome }}">{% set carrossel = true %}{% include "_card.html" %}</li>
-    {% endfor %}
-    </ul>
-    <div class="carrossel-controles" data-controles hidden>
-      <button type="button" data-seta="-1" aria-label="Destaque anterior">&larr;</button>
-      <ul class="carrossel-pontos">{% for p in destaques %}<li><button type="button" data-ponto="{{ loop.index0 }}" aria-label="Ver {{ p.nome }}"></button></li>{% endfor %}</ul>
-      <button type="button" data-seta="1" aria-label="Próximo destaque">&rarr;</button>
-    </div>
-    <p class="so-leitor" aria-live="polite" data-anuncio></p>
-  </div>
+  {{ carrossel_de(destaques, "Produtos em destaque", "Destaque anterior", "Próximo destaque", "Em destaque") }}
 </section>
 {% endif %}
 
 {% if grade %}
 <section class="secao contorno" id="mais" aria-labelledby="t-mais">
   <div class="secao-cabeca"><h2 id="t-mais">Para começar</h2><a href="/catalogo">Ver todos os instrumentos</a></div>
-  <div class="grade">{% for p in grade %}{% include "_card.html" %}{% endfor %}</div>
+  {{ carrossel_de(grade, "Instrumentos para começar", "Instrumento anterior", "Próximo instrumento", "Para começar") }}
 </section>
 {% endif %}
 

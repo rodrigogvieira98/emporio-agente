@@ -92,8 +92,11 @@ def _aviso_expediente(estado: Estado) -> str:
     if sit["aberto"] or not sit["retorno"]:
         return ""
     r = sit["retorno"]
+    # o horário vem da regra de funcionamento; sem calendário de feriados, a promessa leva a ressalva
+    ressalva = (" (pela regra de funcionamento; em feriado o horário pode mudar)"
+                if "feriados_sem_calendario" in _ambiguidades(estado) else "")
     return aviso(estado, "fora_do_expediente",
-                 f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}.",
+                 f"No momento a loja está fora do expediente. A equipe volta {r['quando']} às {r['hora']}{ressalva}.",
                  valor=f"{r['quando']} {r['hora']}")
 
 
@@ -347,7 +350,23 @@ def frete_outra_cidade(e: Estado, p: dict) -> str:
     if mods:
         itens = [_modalidade_com_prazo(m) for m in mods]
         txt += " Os envios são por " + _lista(itens) + "."
+    if p.get("produto"):  # produto conhecido: só falta o CEP para a estimativa
+        return txt + f" Para uma estimativa (simulação) do {p['produto']}, me diga o CEP de entrega."
     return txt + DICA_ESTIMATIVA
+
+
+def frete_produto(e: Estado, p: dict) -> str:
+    """Frete na cidade da loja pelo preço do produto em foco (a ferramenta decide grátis ou taxa)."""
+    d = _dados(e, "calcular_condicoes")
+    f = d.get("frete") or {}
+    cidade = str(p.get("cidade", "")).title()
+    prazo = f.get("prazo_dias_uteis")
+    prazo_txt = f" Prazo de {prazo['min']} a {prazo['max']} dias úteis." if prazo else ""
+    if f.get("situacao") == "gratis":
+        return f"Em {cidade}, o frete do {d['produto_nome']} é grátis.{prazo_txt}"
+    if f.get("situacao") == "taxa":
+        return f"Em {cidade}, o frete do {d['produto_nome']} é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
+    return frete_outra_cidade(e, {"cidade": p.get("cidade", "")})
 
 
 def fora_escopo(e: Estado, p: dict) -> str:
@@ -580,6 +599,9 @@ def promocoes(e: Estado, p: dict) -> str:
             linhas.append(f"- {i['produto_nome']}: de {formatar(i['original_centavos'])} por "
                           f"{formatar(i['final_centavos'])} ({i['percentual']}% de desconto){extra}")
     a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com preço promocional.")
+    if p.get("citado"):
+        return (f"Não consigo confirmar um desconto de {p['citado']}% prometido por fora: só valem as promoções "
+                "ativas da loja.\nPromoções ativas:\n" + "\n".join(linhas) + (("\n" + a) if a else ""))
     return "Promoções ativas:\n" + "\n".join(linhas) + (("\n" + a) if a else "")
 
 
@@ -588,6 +610,100 @@ def recusa_manipulacao(e: Estado, p: dict) -> str:
     extra = f" e o desconto de {pix}% no PIX" if pix else ""
     return ("Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas"
             f"{extra}. Quer ver as promoções ativas?")
+
+
+def endereco_pedido_privado(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    canais = [f"{rot} {c[chave]}" for chave, rot in (("contato.whatsapp_secao_7", "WhatsApp"),
+                                                       ("contato.telefone_capa", "telefone")) if chave in c]
+    onde = f" Para conferir ou alterar, fale com a equipe: {_lista(canais)}." if canais else ""
+    return ("Por privacidade, eu não mostro o endereço de entrega de um pedido por aqui, nem confirmo o endereço de "
+            "quem comprou." + onde)
+
+
+ROTULO_SPEC = {"top": "tampo", "back_sides": "fundo e laterais", "neck": "braço", "strings": "cordas", "scale": "escala",
+               "electronics": "eletrônica", "color": "cor", "body": "corpo"}
+
+
+def _spec_texto(chave: str, valor: Any) -> str:
+    if chave == "electronics":
+        return "com eletrônica" if str(valor).lower() in ("yes", "sim", "true") else "sem eletrônica"
+    return str(valor)
+
+
+def comparacao(e: Estado, p: dict) -> str:
+    """Os dois produtos com preço de tabela, promoção ativa e as diferenças da ficha do catálogo. Sem veredito."""
+    produtos = [x.resultado.dados for x in e.passos if x.ferramenta == "ver_produto" and x.resultado.estado == "ok"][-2:]
+    a, b = produtos
+    linhas = []
+    for d in produtos:
+        promo = d.get("promocao") or {}
+        extra = f" (em promoção: {promo['percentual']}% de desconto)" if promo and not promo.get("ambigua") else ""
+        linhas.append(f"- {d['nome']}: {formatar(d['preco_centavos'])}{extra}")
+    ea, eb = a.get("especificacoes") or {}, b.get("especificacoes") or {}
+    difs = [f"{ROTULO_SPEC.get(k, k)}: {_spec_texto(k, ea[k])} no {a['nome']} e {_spec_texto(k, eb[k])} no {b['nome']}"
+            for k in ea if k in eb and ea[k] != eb[k] and k in ROTULO_SPEC]
+    txt = "Comparando os dois, preço de tabela:\n" + "\n".join(linhas)
+    if difs:
+        txt += "\nDiferenças da ficha do catálogo:\n" + "\n".join(f"- {x}" for x in difs)
+    for d in produtos:
+        if d.get("descricao"):
+            txt += f"\n{d['nome']}: {d['descricao']}"
+    return txt + "\nNão consigo dizer qual é melhor para o seu uso, só mostrar o que o catálogo informa. Quer ver as condições de algum deles?"
+
+
+def preco_pix_e_parcelas(e: Estado, p: dict) -> str:
+    """PIX e parcelas do mesmo produto, uma frase para cada, com os valores devolvidos pela ferramenta."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"]
+    pix = next(d for d in reversed(calc) if d["forma"] == "pix")
+    cred = next(d for d in reversed(calc) if d["forma"] == "credito")
+    nome = pix["produto_nome"]
+    if pix.get("percentual"):
+        a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com promoção.")
+        p1 = (f"{nome}: preço de tabela {formatar(pix['original_centavos'])}, promoção de {pix['percentual']}% e preço "
+              f"final {formatar(pix['final_centavos'])}." + (" " + a if a else ""))
+    else:
+        p1 = (f"{nome}: no PIX ({pix.get('pix_percentual')}% de desconto) fica {formatar(pix['final_centavos'])} "
+              f"(preço de tabela {formatar(pix['original_centavos'])}).")
+    p2 = f"No crédito em {cred['parcelas']}x, cada parcela fica em {formatar(cred['parcela_centavos'])}."
+    if cred["permitido"] == "sim":
+        p2 += " Esse parcelamento atende a parcela mínima da loja."
+    elif cred["permitido"] == "nao":
+        p2 += " Esse parcelamento não atende a parcela mínima da loja."
+    else:
+        p2 += (f" Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
+               f"{formatar(cred['minimo_tabela_centavos'])} em uma regra e {formatar(cred['minimo_faixa_centavos'])} "
+               f"na faixa de {cred['parcelas']}x.")
+    return f"{p1} {p2}"
+
+
+def combinacao_formas(e: Estado, p: dict) -> str:
+    """Combinar formas de pagamento: a regra do manual (acima de um valor) aplicada ao preço de tabela do produto."""
+    limite = _condicoes(e).get("pagamento.combinacao_formas_acima_centavos")
+    if not limite:
+        return sem_dado(e, p)
+    if p["preco"] > limite:
+        return (f"Pode, sim: é possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de "
+                f"{formatar(limite)}, e o {p['produto']} custa {formatar(p['preco'])} (preço de tabela). "
+                "Para calcular os valores de cada parte, me diga quanto vai no PIX e quanto no cartão.")
+    return (f"A combinação de formas de pagamento vale para compras acima de {formatar(limite)}, e o {p['produto']} custa "
+            f"{formatar(p['preco'])} (preço de tabela). Então, só com esse produto, não dá para dividir entre PIX e cartão.")
+
+
+def acolhimento(e: Estado, p: dict) -> str:
+    return f"Sinto muito por isso. Quer que um atendente da equipe te ajude? {CONFIRMA}"
+
+
+def so_portugues(e: Estado, p: dict) -> str:
+    tema = p.get("tema")
+    entendi = f" Entendi que o assunto é {tema}." if tema else ""
+    return f"O atendimento aqui é em português.{entendi} Pode escrever sua pergunta em português?"
+
+
+def cupom_inexistente(e: Estado, p: dict) -> str:
+    pix = _condicoes(e).get("pagamento.pix_desconto_percentual")
+    extra = f" e o desconto de {pix}% no PIX" if pix else ""
+    return ("Não existe esse cupom: eu só conheço as promoções ativas" + extra + ". Quer ver as promoções ativas?")
 
 
 def recusa_dado_de_terceiro(e: Estado, p: dict) -> str:
@@ -632,6 +748,22 @@ def preco(e: Estado, p: dict) -> str:
             partes.append(f"Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
                           f"{formatar(d['minimo_tabela_centavos'])} em uma regra e {formatar(d['minimo_faixa_centavos'])} "
                           f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
+    if p.get("promo_inativa"):
+        partes.insert(0, f"A promoção {str(p['promo_inativa']).title()} não está ativa para este produto, "
+                         "então não posso prometer esse desconto.")
+    elif p.get("desconto_citado"):
+        partes.insert(0, f"Não consigo confirmar um desconto de {p['desconto_citado']}%: só vale a promoção ativa "
+                         "da loja, e é isto que vale para este produto.")
+    if p.get("pergunta_promocao") and not d.get("percentual") and not p.get("promo_inativa"):
+        partes.append("Esse produto não está em promoção ativa agora.")
+    if p.get("quantidade"):
+        n = p["quantidade"]
+        if d["forma"] == "credito":
+            partes.append(f"Para {n} unidades, são {formatar(d['parcela_centavos'] * n)} por mês em {d['parcelas']}x "
+                          f"(total {formatar(d['final_centavos'] * n)}).")
+        else:
+            rotulo = " no PIX" if d["forma"] == "pix" and not d.get("percentual") else ""
+            partes.append(f"Para {n} unidades{rotulo}: {formatar(d['final_centavos'] * n)}.")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
         return " ".join(partes)
@@ -983,7 +1115,8 @@ def _sentenca(texto: str) -> str:
 
 def garantia_excluida(e: Estado, p: dict) -> str:
     itens = _condicoes(e).get("garantia.nao_cobre") or []
-    achados = [x for x in itens if re.search(r"queda|mau uso", normalizar(x))]
+    padrao = r"desgaste" if p.get("desgaste") and not p.get("mau_uso") else r"queda|mau uso"
+    achados = [x for x in itens if re.search(padrao, normalizar(x))]
     if not achados:
         return sem_dado(e, p)
     return (f"Pelas regras da loja, a garantia não cobre: {_sentenca(achados[0])}. Por isso esse caso não entra em troca por "
@@ -1104,6 +1237,60 @@ def frete_grande_porte(e: Estado, p: dict) -> str:
             "individual: a nossa equipe faz o cálculo, e eu não informo valor por aqui.")
 
 
+def motivo_cancelamento(e: Estado, p: dict) -> str:
+    ped = e.coletados["pedido"]
+    if ped["status"] != "cancelled":
+        return (f"O pedido {ped['pedido_id']} não está cancelado: ele {FRASE_STATUS.get(ped['status'], 'está em andamento')}.")
+    if ped.get("nota"):
+        return f"Pelo registro do pedido {ped['pedido_id']}: {ped['nota']}."
+    return (f"O registro do pedido {ped['pedido_id']} não traz o motivo do cancelamento, e eu não vou supor um. "
+            f"Quer que eu registre a dúvida para a equipe? {CONFIRMA}")
+
+
+def reembolso_cancelado(e: Estado, p: dict) -> str:
+    ped = e.coletados["pedido"]
+    dias = _condicoes(e).get("devolucao.arrependimento_reembolso_dias_uteis_max")
+    forma = _forma_pedido(ped.get("forma_pagamento") or "")
+    pago = f" no {forma}" if forma and forma.startswith("PIX") else (f" no {forma}" if forma else "")
+    if not dias:
+        return sem_dado(e, p)
+    return (f"O pedido {ped['pedido_id']} está cancelado e foi pago{pago}. Pela regra de reembolso da loja, o valor volta "
+            f"na mesma forma de pagamento em até {dias} dias úteis. Se o prazo passar, a equipe confirma o seu caso.")
+
+
+def soma_dois(e: Estado, p: dict) -> str:
+    """Soma das condições dos dois últimos produtos citados, com os valores que a ferramenta devolveu."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"]
+    forma = p.get("forma", "pix")
+    linhas, total, tabela = [], 0, 0
+    for d in calc[-2:]:
+        total += d["final_centavos"]
+        tabela += d["original_centavos"]
+        linhas.append(f"- {d['produto_nome']}: {formatar(d['final_centavos'])}")
+    if forma == "credito":
+        parcela = sum(d["parcela_centavos"] for d in calc[-2:])
+        fecho = f"Os dois juntos, no crédito em {p.get('parcelas', 1)}x: {formatar(parcela)} por mês (total {formatar(total)})."
+    elif forma == "pix":
+        fecho = f"Os dois juntos, no PIX: {formatar(total)} (preço de tabela somado: {formatar(tabela)})."
+    else:
+        fecho = f"Os dois juntos: {formatar(total)}."
+    return "Somando os dois últimos produtos que você viu:\n" + "\n".join(linhas) + "\n" + fecho
+
+
+def parecidos(e: Estado, p: dict) -> str:
+    """Outros modelos da mesma categoria do produto em foco, em faixa de preço próxima (ou mais baratos)."""
+    d = _dados(e, "ver_produto")
+    r = e.ultimo("buscar_produtos")
+    itens = [i for i in (r.dados["itens"] if r is not None and r.estado == "ok" else []) if i["id"] != d["id"]][:3]
+    faixa = "mais barato que" if p.get("mais_barato") else "de faixa de preço próxima ao"
+    if not itens:
+        return (f"Não encontrei outro modelo de {d['categoria']} disponível {faixa} {d['nome']}. "
+                "Quer que eu mostre as opções da categoria?")
+    linhas = [f"- {i['nome']}: {formatar(i['preco_centavos'])}" for i in itens]
+    return (f"Modelos de {d['categoria']} {faixa} {d['nome']}, preço de tabela:\n" + "\n".join(linhas)
+            + "\nQuer ver as condições de algum deles?")
+
+
 TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
     f.__name__: f for f in (
         saudacao, horario, endereco, contato, pagamento, frete_info, pedir_valor_pedido, frete_calculado,
@@ -1119,7 +1306,9 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte)
+        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
+        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
+        preco_pix_e_parcelas, combinacao_formas)
 }
 
 

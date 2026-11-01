@@ -43,27 +43,46 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"falar com (alguem|uma pessoa|um humano|gente)|passa (pra|para) (alguem|um))\b")),
     ("reclamacao", re.compile(
         r"\b(reclam\w*|insatisf\w*|pessim\w*|horrivel|absurdo|inadmissivel|descaso|decepcion\w*|"
-        r"indignad\w*|revoltad\w*|mau atendimento|atendimento ruim)\b")),
+        r"indignad\w*|revoltad\w*|mau atendimento|atendimento ruim|"
+        # queixa de atendimento: o conteúdo é a queixa, não um assunto de produto
+        r"(vendedor|atendente|funcionari[oa]|gerente|atendimento)\b.{0,40}\b(grosso|grossa|grosseir\w+|rude|mal educad\w+|"
+        r"debochou|ignorou|maltrat\w+|desrespeit\w+|ofendeu|despreparad\w+)|"
+        r"\b(grosseria|grosseiro|grosseira|desrespeito|maltratad[oa]|mal atendid[oa])\b)\b")),
     # quanto tempo para o dinheiro voltar: informação do manual, antes de abrir fluxo de devolução
     ("reembolso_prazo", re.compile(
         r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
         r"\b(dinheiro|reembols\w*|estorno|valor de volta|restitu\w*|receber de volta|pagamento de volta)|"
+        r"(reembols\w*|estorno|dinheiro de volta)\b.{0,30}\b(quanto tempo|quantos dias|quando|prazo|demora\w*)|"
         r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
-    ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno)\b")),
+    ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno|dinheiro de volta)\b")),
     ("defeito", re.compile(
         r"\b(defeit\w*|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
-        r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*)\b")),
+        r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*|"
+        r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
+        r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
     ("garantia", re.compile(r"\bgarantia\b")),
+    # endereço de entrega de um pedido (dado do cliente): a Lia não mostra, e nunca o troca pelo endereço da loja
+    ("endereco_pedido", re.compile(
+        r"\b(endereco (?:de |da |do )?(?:entrega|cadastrad\w+|do pedido|do meu pedido|de envio)|"
+        r"(?:em|pra|para) onde (?:vai|foi|sera|esta indo|vao) (?:ser )?(?:entreg\w+|enviad\w+|mandad\w+)|"
+        r"onde (?:vai|foi|sera) (?:ser )?(?:entreg\w+|enviad\w+)|confirm\w+ (?:o )?endereco)\b")),
     ("frete", re.compile(r"\b(frete|entregam|enviam|entrega (para|pra|em)|cep)\b")),
     # quando o pedido chega: usa o pedido já consultado na conversa, se houver
     ("previsao_entrega", re.compile(
         r"\b(quando (chega|vai chegar|chegara|chegam|entrega|entregam|vou receber|recebo|sai|saiu)|"
         r"(qual|e a) (a )?previsao( de entrega| de chegada)?|ja (saiu|foi enviado|foi despachado)|chega (quando|que dia|hoje|amanha))\b")),
+    # por que o pedido foi cancelado: responde com a observação gravada no pedido
+    ("motivo_cancelamento", re.compile(
+        r"\b(pq|por ?que|porque|motivo|razao)\b.{0,30}\bcancel\w+|\bcancel\w+.{0,20}\b(motivo|porque|razao)\b")),
     ("status_pedido", re.compile(r"\b(pedido|rastre\w*|encomenda|onde esta (meu|minha)|status)\b")),
+    # produto parecido com o que está em foco: a mesma categoria, sem acessório
+    ("parecido", re.compile(r"\b(parecid\w+|similar\w*|semelhante\w*|alternativ\w+|outro (modelo|igual)|algo assim)\b")),
     ("fora_escopo", re.compile(
-        r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
+        r"\b((?<!\d )(?<!\d)cordas?(?! orquestrais?)(?!\s+(?:\w+\s+)?(?:arrebent|rebent|estour|romp|partiu|soltou|enferruj|"
+        r"oxid|gast|desgast))|palhetas?|cabos?|cases?|capas?|pedal|pedais|pedaleiras?|amplificador\w*|ampli|"
         r"afinador\w*|suporte|estante|correia|caixas? de som|fone\w*|microfone\w*)\b")),
+    ("cupom", re.compile(r"\b(cupom|cupon|cupons|cupoes|voucher|codigo (?:promocional|de desconto|de cupom))\b")),
     ("promocao", re.compile(
         r"\b(promocao|promocoes|desconto\w*|black friday|oferta\w*|liquidacao|queima de estoque|"
         r"valendo|vigente)\b")),
@@ -71,14 +90,21 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("objecao_preco", re.compile(
         r"(?<!mais )\b(ta |esta |achei |muito |bem |meio |super |um pouco )+(caro|salgado)\b|\bcaro demais\b|"
         r"\bsem condicoes de pagar\b|\bnao cabe no (meu )?(bolso|orcamento)\b|"
-        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b")),
-    ("preco_produto", re.compile(r"\b(preco\w*|valor|quanto (custa|sai|fica|e|esta|ta)|custa)\b")),
+        r"\bfora do (meu )?orcamento\b|\bpesado no bolso\b|^(?:\w+ ){0,2}(?<!mais )(?:caro|carissimo|puxado)\W*$|"
+        r"\b(precinho|fazer um preco|melhorar (o )?preco|baixar (o )?preco|abaixar (o )?preco|negociar|negociacao|"
+        r"fazer (uma )?oferta|abatimento)\b")),
+    ("preco_produto", re.compile(
+        r"\b(preco\w*|valor|quanto (ele |ela |eles |elas |isso |esse |essa |os dois |as duas )?(custa|sai|fica|e|esta|ta)|custa)\b")),
     ("pagamento", re.compile(
         r"\b(pagamento\w*|pagar|pix|boleto|cartao|credito|debito|parcel\w*|financia\w*)\b")),
     ("disponibilidade", re.compile(r"\b(disponivel|disponibilidade|disponiveis|estoque|tem (ai|ainda|ai ainda))\b")),
     ("horario", re.compile(r"\b(horario\w*|abre|abrem|fecha|fecham|funcionamento|aberto|aberta|que horas)\b")),
     ("endereco", re.compile(r"\b(endereco|onde fica|onde ficam|localiza\w*|como chegar)\b")),
     ("contato", re.compile(r"\b(telefone|whatsapp|zap|e-?mail|contato|ligar)\b")),
+    # característica técnica do instrumento: o catálogo não traz ficha técnica; última antes da saudação
+    ("caracteristica", re.compile(
+        r"\b(captac\w+|captador\w*|cutaway|ficha tecnica|especificac\w+|diferenca entre|timbre|slap|"
+        r"qual (e )?(o )?melhor (pra|para))\b")),
     ("saudacao", re.compile(r"\b(oi|ola|bom dia|boa tarde|boa noite|e ai|opa|tudo bem|eai)\b")),
 ]
 
@@ -93,8 +119,8 @@ CASO_PROPRIO = re.compile(
     r"(quero|queria|gostaria de|vou|posso|consigo) (trocar|devolver)|pedido (n|no|numero)? ?\d+)\b")
 
 # Pedido concreto: se vier junto de um desabafo, a intenção concreta manda e o desabafo só muda o tom.
-CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "horario", "endereco", "contato", "pagamento",
-             "frete", "promocao", "garantia"}
+CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "previsao_entrega", "horario", "endereco", "contato",
+             "pagamento", "frete", "promocao", "garantia"}
 RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento ruim)\b")
 
 # Despedida e agradecimento: só valem quando a mensagem não traz outro pedido.
@@ -116,7 +142,7 @@ SECUNDARIAS = ("horario", "endereco", "contato")
 # Palavras que indicam pergunta geral sobre pagamento (não é "e em 12x" de um produto)
 PAGAMENTO_GERAL = re.compile(r"\b(quais|formas|aceita\w*|aceitam|como|posso|voces|vcs|quantas|ate quanto|parcelam|trabalham)\b")
 
-PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|dias uteis|chega em)\b")
+PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|quantos dias|dias uteis|chega em)\b")
 
 # Pedido de produto sem dizer qual: a Lia lista as categorias que têm o que vender.
 PEDIDO_GENERICO = (r"\b(me ajuda\w* (a|na|com a) escolh\w+|ajuda\w* (a|na) escolh\w+|"
@@ -154,6 +180,11 @@ instrumento instrumentos iniciante iniciantes barato baratos barata baratas melh
 vende vendem vendo vender existe existem trabalha trabalham confirma confirmar confirmo
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
+pro faz ha so semana semanas dia dias mes meses ano anos
+entregam entregar entrega enviam enviar envio frete envia entregamos coloca coloque colocar poe ponha joga bota manda mande pego pegar fechou
+outro outra outros outras nossa nossa entao tambem ele ela dele dela deles delas dois duas ambos ambas cada mas ne hmm
+ah poxa puxa caramba putz gostei legal otimo show beleza pois certo entendi tipo assim uns volta voltando ok
+agora ainda talvez ja eu nos gente tambem outra vez fico ficar fica ficaria dar da dou
 ta caro salgado super pouco muito achei meio demais pensar analisar avaliar depois talvez calma volto vejo decido
 """.split())
 
@@ -204,8 +235,53 @@ FORA_DO_ASSUNTO = re.compile(
 MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|umidade|chuva|bati|batida)\b")
 AVARIA = re.compile(
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
-    r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*")
-DIAS_DESDE_COMPRA = re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
+    r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*|"
+    r"\b(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
+    r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*)\b")
+# "esse", "essa guitarra", "ele": remetem ao produto em foco; "os dois" e a quantidade somam/multiplicam
+DEMONSTRATIVO = re.compile(r"\b(esse|essa|esses|essas|este|esta|desse|dessa|deste|desta|dele|dela|nele|nela|ele|ela|"
+                           r"o mesmo|a mesma)\b")
+OS_DOIS = re.compile(r"\b(os dois|as duas|ambos|ambas|dos dois|das duas|o dois)\b")
+_NUM = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6}
+QUANTIDADE = re.compile(
+    r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
+    r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
+    r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
+# Pergunta em inglês: palavras que não existem em português; duas ou mais, e nenhuma palavra comum do português.
+INGLES = {"the", "is", "what", "you", "ship", "shipping", "how", "much", "hi", "hello", "thanks", "thank", "open", "hours",
+          "where", "can", "your", "are", "have", "buy", "delivery", "deliver", "return", "refund", "does", "store",
+          "cost", "with", "for", "this", "that", "please", "price", "do", "time", "any", "guitar", "want", "need",
+          "help", "ok", "order"}
+INGLES_FORTE = INGLES - {"do", "ok", "order", "price", "time", "hi", "help", "any"}
+PORTUGUES_COMUM = {"os", "as", "de", "da", "que", "para", "pra", "uma", "um", "nao", "quero", "preco",
+                   "quanto", "voce", "voces", "vcs", "tem", "na", "por", "oi", "ola", "pedido", "obrigado",
+                   "obrigada", "qual", "como", "isso", "esse", "essa", "meu", "minha", "custa", "quanto"}
+TEMAS_INGLES = (
+    (re.compile(r"\b(ship\w*|deliver\w*|freight|postage)\b"), "frete e entrega"),
+    (re.compile(r"\b(price\w*|cost\w*|how much)\b"), "preço"),
+    (re.compile(r"\b(open|opens|hours|close|closing|schedule)\b|what time"), "horário"),
+    (re.compile(r"\b(return\w*|refund\w*|exchange|warranty)\b"), "troca, devolução ou garantia"),
+    (re.compile(r"\b(order|tracking|track)\b"), "pedido"),
+    (re.compile(r"\b(guitar\w*|bass|drum\w*|piano|keyboard|ukulele|violin|buy|product\w*)\b"), "produtos"),
+)
+AGRADECIMENTO_INGLES = re.compile(r"^\W*(?:ok\W+)?(?:thanks?|thank you|thx|bye|goodbye)\b")
+PALAVRAS_COMPARACAO = {"diferenca", "diferencas", "entre", "comparar", "comparacao", "compara", "versus", "vs", "melhor",
+                       "pior", "slap", "quero"}
+COMPARACAO = re.compile(r"\b(diferenca entre|diferencas entre|comparar|comparacao|compara\w*|versus|vs|"
+                        r"qual (?:e )?(?:o )?melhor entre|qual (?:a |o )?diferenca)\b")
+SEPARADOR_COMPARACAO = re.compile(r"\s+(?:e|vs|versus|ou|x|contra|com)\s+(?:o |a |os |as )?|,\s*")
+# Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
+CAMPANHA_CITADA = re.compile(
+    r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"
+    r"volta as aulas|aniversario da loja|semana do consumidor|liquida\w+ de \w+)\b")
+CUPOM = re.compile(r"\b(cupom|cupon|cupons|cupoes|voucher|codigo (?:promocional|de desconto|de cupom))\b")
+DESCONTO_CITADO = re.compile(r"\b(\d{1,2})\s*(?:%|por cento)")
+# "e agora?", "o que eu faço?": pede o próximo passo do assunto de pós-venda em andamento
+PROXIMO_PASSO = re.compile(r"\b(e agora|o que (eu )?faco|o que fazer|como (eu )?faco|e depois)\b")
+DESGASTE = re.compile(
+    r"\b(cordas?|palhetas?|trastes?|feltros?)\b.{0,25}\b(arrebent\w*|rebent\w*|estour\w*|romp\w*|partiu|gast\w*|desgast\w*|"
+    r"enferruj\w*)|\b(arrebent\w*|rebent\w*|estour\w*|romp\w*)\b.{0,20}\b(cordas?|palhetas?)\b")
+DIAS_DESDE_COMPRA =re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
 EMPRESA_CNPJ = re.compile(r"\b(cnpj)\b")
 EMPRESA_RAZAO = re.compile(r"\b(razao social)\b")
 EMPRESA_FUNDACAO = re.compile(r"\b(desde quando|fundad\w+|fundacao|quantos anos|ha quanto tempo|quando (a loja )?(foi )?criad\w+)\b")
@@ -215,7 +291,10 @@ DEBITO_BANDEIRA = re.compile(r"\bbandeiras?\b")
 COMPRA = re.compile(
     r"\b((quero|queria|vou|gostaria de|posso|pretendo|decidi|bora|vamos|preciso) (comprar|levar|fechar)|"
     r"comprar (o|a|esse|essa|ele|ela|este|esta)|adicion\w+ (ao|no|o) carrinho|fechar (a )?compra|quero levar|"
-    r"vou levar|levo (o|a|esse|essa|ele|ela))\b")
+    r"vou levar|levo (o|a|esse|essa|ele|ela)|"
+    r"(quero|queria|vou querer|pego|vou pegar|fico com) (esse|essa|este|esta|ele|ela|o mesmo|a mesma)|"
+    r"(quero|queria|vamos|bora|pode|posso|vou) fechar|fechar (o pedido|a venda)|"
+    r"(coloc\w+|poe|ponha|pon\w+|adicion\w+|joga|bota|mand\w+) (ele |ela |esse |essa |isso )?(no|ao|pro|para o) carrinho)\b")
 # Nível e orçamento ditos em palavras: qualificam a busca sem perguntar de novo.
 NIVEL_INICIANTE = re.compile(r"\b(iniciantes?|principiantes?|comecando|comecar|aprender|aprendendo|estudantes?|"
                              r"primeiro (violao|instrumento|teclado|baixo|ukulele|bateria|guitarra))\b")

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hmac
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from pydantic import field_validator
 
@@ -12,6 +12,8 @@ from ..dados import banco
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 
 MAX_TENTATIVAS = 3  # limite de segurança do sistema, por conversa
+MAX_TENTATIVAS_POR_PEDIDO = 6  # falhas no mesmo número de pedido, somando todas as conversas
+JANELA_PEDIDO_MINUTOS = 60
 ENCERRADOS = {"delivered", "cancelled"}
 MOTIVO_NEGADO = "nao_foi_possivel_validar"
 
@@ -48,6 +50,14 @@ def consultar_pedido(e: EntradaPedido) -> Resultado:
         falhas = conn.execute("SELECT COUNT(*) FROM tentativas_pedido WHERE conversa_id = ? AND sucesso = 0",
                               (e.conversa_id,)).fetchone()[0]
         if falhas >= MAX_TENTATIVAS:
+            return _negado()
+        # proteção compartilhada pela Lia e pelo site: força bruta do final de telefone de UM pedido, vinda de
+        # qualquer conversa, dentro de uma janela de tempo
+        desde = (config.agora() - timedelta(minutes=JANELA_PEDIDO_MINUTOS)).isoformat()
+        falhas_pedido = conn.execute(
+            "SELECT COUNT(*) FROM tentativas_pedido WHERE pedido_id = ? AND sucesso = 0 AND criado_em >= ?",
+            (e.pedido_id, desde)).fetchone()[0]
+        if falhas_pedido >= MAX_TENTATIVAS_POR_PEDIDO:
             return _negado()
         pedido = conn.execute(
             "SELECT p.*, c.telefone FROM pedidos p JOIN clientes c ON c.id = p.cliente_id WHERE p.id = ?",

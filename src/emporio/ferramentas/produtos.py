@@ -102,6 +102,17 @@ def buscar_produtos(e: EntradaBusca) -> Resultado:
         conn.close()
 
 
+def _especificacoes(bruto: str | None) -> dict[str, Any]:
+    """Ficha do catálogo (campo specs), só leitura; JSON inválido vira ficha vazia."""
+    import json
+
+    try:
+        dados = json.loads(bruto or "{}")
+    except ValueError:
+        return {}
+    return dados if isinstance(dados, dict) else {}
+
+
 class EntradaProduto(EntradaBase):
     referencia: str | int
 
@@ -131,7 +142,7 @@ def ver_produto(e: EntradaProduto) -> Resultado:
         categoria = conn.execute("SELECT nome FROM categorias WHERE id = ?", (r["categoria_id"],)).fetchone()
         dados = _item(conn, r)
         dados.update({"categoria": categoria["nome"] if categoria else None, "descricao": r["descricao"],
-                      "estoque_unidades": r["estoque"]})
+                      "estoque_unidades": r["estoque"], "especificacoes": _especificacoes(r["specs_json"])})
         return resultado("ok", dados, [FONTE_BANCO])
     finally:
         conn.close()

@@ -118,8 +118,8 @@ class RegrasDecisor:
         return responder("falha_ferramenta")
 
     def _registrar(self, estado: Estado, tipo: str, resumo: str) -> Acao:
-        if resultado_de(estado, "consultar_politica", temas=["horario"]) is None:
-            return ferramenta("consultar_politica", temas=["horario"])  # para informar o retorno fora do expediente
+        if resultado_de(estado, "consultar_politica", temas=["horario", "contato"]) is None:
+            return ferramenta("consultar_politica", temas=["horario", "contato"])  # retorno fora do expediente e canais
         r = resultado_de(estado, "registrar_encaminhamento")
         if r is None:
             n = sum(1 for a in estado.acoes_concluidas if a.startswith("chamado:"))
@@ -187,9 +187,12 @@ class RegrasDecisor:
 
     def _defeito_fora_do_prazo(self, estado: Estado, dias: int) -> Acao | None:
         """Defeito depois do prazo de troca (4.2): a garantia é com o fabricante e a loja pode intermediar."""
-        acao = self._info_regra(estado, "defeito") if self._prazo_defeito(estado) is None else None
-        if acao:
-            return acao
+        # a resposta cita o fabricante do manual: a consulta tem de estar neste turno, mesmo com a regra já guardada
+        r = resultado_de(estado, "consultar_politica", temas=["defeito"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["defeito"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
         if dias > (self._prazo_defeito(estado) or dias):
             return propor("defeito_apos_prazo", "atendente",
                           "Cliente com defeito depois do prazo de troca pediu orientacao; a equipe pode intermediar "
@@ -198,12 +201,15 @@ class RegrasDecisor:
 
     def _exclusao_garantia(self, estado: Estado) -> Acao | None:
         """Queda e mau uso (8.3) têm resposta própria, nunca a regra de troca por defeito ou preferência."""
-        if estado.objetivo not in ("defeito", "garantia") or not estado.slots.get("mau_uso"):
+        s = estado.slots
+        if estado.objetivo not in ("defeito", "garantia") or not (s.get("mau_uso") or s.get("desgaste")):
             return None
         r = resultado_de(estado, "consultar_politica", temas=["garantia"])
         if r is None:
             return ferramenta("consultar_politica", temas=["garantia"])
-        return responder("garantia_excluida") if r.estado == "ok" else self._erro(estado, r)
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("garantia_excluida", desgaste=bool(s.get("desgaste")), mau_uso=bool(s.get("mau_uso")))
 
     def _avaria(self, estado: Estado) -> Acao | None:
         """Avaria no recebimento (5.2): recusar o recebimento e falar com a loja, sem a regra de defeito."""
@@ -229,7 +235,28 @@ class RegrasDecisor:
             return ferramenta("consultar_politica", temas=["trocas"])
         return responder("devolucao_loja_fisica") if r.estado == "ok" else self._erro(estado, r)
 
+    def _reembolso_de_cancelado(self, estado: Estado) -> Acao | None:
+        """Pedido já consultado e cancelado, com pagamento: devolver o dinheiro é reembolso, não abertura de devolução."""
+        ped = estado.coletados.get("pedido")
+        if estado.objetivo != "devolucao" or not ped or ped.get("status") != "cancelled":
+            return None
+        r = resultado_de(estado, "consultar_politica", temas=["arrependimento"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["arrependimento"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("reembolso_cancelado")
+
+    def _i_motivo_cancelamento(self, estado: Estado) -> Acao:
+        """"Por que foi cancelado?": a observação gravada no pedido já consultado; sem pedido, pede os dados."""
+        if estado.coletados.get("pedido"):
+            return responder("motivo_cancelamento")
+        return self._i_status_pedido(estado)
+
     def _posvenda(self, estado: Estado) -> Acao:
+        acao = self._reembolso_de_cancelado(estado)
+        if acao:
+            return acao
         for exclusao in (self._exclusao_garantia, self._avaria, self._devolucao_na_loja):
             acao = exclusao(estado)
             if acao:
@@ -416,14 +443,48 @@ class RegrasDecisor:
             return responder("frete_cotacao_individual", produto=produto["nome"])
         return responder("frete_estimado", produto=produto["nome"])
 
-    def _grande_porte(self, estado: Estado) -> str | None:
+    def _frete_do_produto(self, estado: Estado, cidade: str) -> Acao | None:
+        """Cidade e produto conhecidos (citado ou em foco): o frete sai do preço do produto, sem pedir o valor do pedido.
+        Devolve None quando não há produto, e o fluxo antigo (cidade e valor do pedido) segue."""
+        s = estado.slots
+        if not (s.get("referencia") or s.get("produto_id") or estado.coletados.get("ultimo_produto")):
+            return None
+        acao, produto = self._produto(estado)
+        if acao:
+            # produto que não se resolve ("bateria acústica"): segue o fluxo da cidade, que cobre grande porte
+            return acao if acao.tipo == "ferramenta" else None
+        from ..politicas import manual
+
+        base = str(manual.valor("frete.cidade_base"))  # sem consulta extra: o laço tem no máximo 3 passos
+        estado.coletados["cidade"] = cidade
+        uf = s.get("uf") or estado.coletados.get("uf")
+        if normalizar(cidade) != normalizar(base):
+            r = resultado_de(estado, "consultar_politica", temas=["frete"])
+            if r is None:
+                return ferramenta("consultar_politica", temas=["frete"])
+            if r.estado != "ok":
+                return self._erro(estado, r)
+            grande = self._grande_porte(estado, f"{produto['nome']} {produto['categoria']}")
+            if grande:
+                return responder("frete_grande_porte", cidade=cidade, item=grande)
+            estado.coletados["referencia"] = produto["id"]  # o CEP que vier agora usa este produto
+            return perguntar("frete_outra_cidade", "cep", cidade=cidade, uf=uf, produto=produto["nome"])
+        args = {"produto_id": produto["id"], "forma": "boleto", "cidade": cidade, **({"uf": uf} if uf else {})}
+        c = resultado_de(estado, "calcular_condicoes", **args)
+        if c is None:
+            return ferramenta("calcular_condicoes", **args)
+        if c.estado != "ok":
+            return self._erro(estado, c)
+        return responder("frete_produto", cidade=cidade)
+
+    def _grande_porte(self, estado: Estado, extra: str = "") -> str | None:
         """Item de grande porte (5.2) citado pelo cliente, comparando as palavras da lista do manual com a mensagem."""
         from ..texto import radical, tokens
 
         r = resultado_de(estado, "consultar_politica", temas=["frete"])
         if r is None or r.estado != "ok":
             return None
-        msg = {radical(t) for t in tokens(estado.slots.get("texto_limpo", ""))}
+        msg = {radical(t) for t in tokens(estado.slots.get("texto_limpo", "") + " " + extra)}
         for item in _condicao(r, "frete.grande_porte_cotacao_individual") or []:
             chaves = {radical(t) for t in tokens(item)}
             if chaves and chaves <= msg:
@@ -438,8 +499,12 @@ class RegrasDecisor:
         if cep:
             estado.coletados["cep"] = cep
             return self._frete_por_cep(estado, cep)
-        cidade = s.get("cidade") or estado.coletados.get("cidade")
+        cidade = s.get("cidade") or estado.coletados.get("cidade") or estado.coletados.get("cidade_cliente")
         valor = s.get("valor") or estado.coletados.get("valor_pedido")
+        if cidade and not valor:
+            acao = self._frete_do_produto(estado, cidade)
+            if acao:
+                return acao
         if not cidade and (s.get("referencia") or s.get("produto_id")):  # produto sem destino: pede o CEP
             estado.coletados["referencia"] = s.get("produto_id") or s["referencia"]
             return perguntar("frete_pedir_cep", "cep")
@@ -552,6 +617,9 @@ class RegrasDecisor:
         """"Qual o mais barato?" sobre a lista mostrada: nova consulta com a mesma busca, um item."""
         busca = estado.coletados.get("ultima_busca")
         if not busca or not busca.get("args"):
+            if estado.coletados.get("ultimo_produto") and estado.slots.get("extremo") == "min":
+                estado.slots["mais_barato"] = True  # "tem algo mais barato?" com um produto em foco
+                return self._i_parecido(estado)
             return self._i_busca_produto(estado)
         extremo = estado.slots.get("extremo", "min")
         args = dict(busca["args"])
@@ -574,7 +642,9 @@ class RegrasDecisor:
             return perguntar("escolha_produto_curta", "escolha_produto"), None
         if ref is None and (s.get("compra") or estado.coletados.get("compra")) and not s.get("desconhecidas"):
             ref = estado.coletados.get("recomendado")  # "quero comprar" depois de uma sugestão da Lia
-        if ref is None and not s.get("desconhecidas") and not s.get("tem_modelo"):
+        # seguimento ("tá caro", "tem outro parecido?"): o produto em foco vale mesmo com palavras que o catálogo não conhece
+        seguimento = estado.intencao in ("parecido", "objecao_preco", "vou_pensar", "extremo_lista", "frete")
+        if ref is None and (seguimento or not s.get("desconhecidas")) and not s.get("tem_modelo"):
             # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
             busca = estado.coletados.get("ultima_busca") or {}
             ref = estado.coletados.get("ultimo_produto") or (busca.get("ids") or [None])[0]
@@ -629,6 +699,26 @@ class RegrasDecisor:
         estado.coletados.pop("parecidas", None)
         return responder("produto_indisponivel")
 
+    def _i_parecido(self, estado: Estado) -> Acao:
+        """"Tem outro parecido?": modelos da mesma categoria do produto em foco, em faixa próxima ou mais baratos."""
+        acao, produto = self._produto(estado)
+        if acao:
+            return acao
+        preco = produto["preco_centavos"]
+        mais_barato = bool(estado.slots.get("mais_barato"))
+        args = {"categoria": produto["categoria"], "preco_min": int(preco * 0.6),
+                "preco_max": preco - 1 if mais_barato else int(preco * 1.4), "limite": 4}
+        r = busca_exata(estado, args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        if r.estado == "falha":
+            return self._erro(estado, r)
+        return responder("parecidos", mais_barato=mais_barato)
+
+    def _i_caracteristica(self, estado: Estado) -> Acao:
+        """Característica técnica (captação, timbre, comparativo de som): o catálogo não traz ficha técnica."""
+        return propor("sem_dado", "sem_dado", "Cliente perguntou uma caracteristica tecnica que o catalogo nao traz.")
+
     def _i_promocao(self, estado: Estado) -> Acao:
         args = {"termo": estado.slots["termo_promocao"]} if estado.slots.get("termo_promocao") else {}
         r = resultado_de(estado, "listar_promocoes", **args)
@@ -636,7 +726,15 @@ class RegrasDecisor:
             return ferramenta("listar_promocoes", **args)
         if r.estado == "falha":
             return self._erro(estado, r)
-        return responder("promocoes")
+        return responder("promocoes", citado=estado.slots.get("desconto_citado"))
+
+    def _i_endereco_pedido(self, estado: Estado) -> Acao:
+        """Endereço de entrega é dado do cliente: não mostra e não responde com o endereço da loja."""
+        return self._info(estado, ["contato"], "endereco_pedido_privado")
+
+    def _i_cupom(self, estado: Estado) -> Acao:
+        """Cupom: a loja só tem as promoções ativas e o desconto do PIX; qualquer código citado não existe."""
+        return self._info(estado, ["pagamento"], "cupom_inexistente")
 
     def _i_tentativa_manipulacao(self, estado: Estado) -> Acao:
         return self._info(estado, ["pagamento"], "recusa_manipulacao")
@@ -644,12 +742,62 @@ class RegrasDecisor:
     def _i_dado_de_terceiro(self, estado: Estado) -> Acao:
         return responder("recusa_dado_de_terceiro")
 
+    def _combinacao_de_formas(self, estado: Estado, produto: dict[str, Any]) -> Acao:
+        """"Metade no PIX e metade no cartão": vale a regra do manual (compras acima de um valor), sem inventar exceção."""
+        r = resultado_de(estado, "consultar_politica", temas=["pagamento"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["pagamento"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("combinacao_formas", produto=produto["nome"], preco=produto["preco_centavos"])
+
+    def _pix_e_parcelas(self, estado: Estado, produto: dict[str, Any]) -> Acao:
+        """"No PIX e em 10x": as duas condições do mesmo produto, cada uma calculada pela ferramenta."""
+        parcelas = estado.slots.get("parcelas") or 1
+        for args in ({"produto_id": produto["id"], "forma": "pix", "parcelas": 1},
+                     {"produto_id": produto["id"], "forma": "credito", "parcelas": parcelas}):
+            r = resultado_de(estado, "calcular_condicoes", **args)
+            if r is None:
+                return ferramenta("calcular_condicoes", **args)
+            if r.estado == "ambiguo":
+                return propor("preco_promocao_conflitante", "duvida_politica",
+                              f"Produto {produto['id']} com mais de uma promocao ativa; cliente pediu PIX e parcelas.")
+            if r.estado != "ok":
+                return self._erro(estado, r)
+        return responder("preco_pix_e_parcelas")
+
+    def _soma_dos_dois(self, estado: Estado) -> Acao | None:
+        """"Quanto fica os dois?": soma as condições dos dois últimos produtos citados (None se não houver dois)."""
+        ids = estado.coletados.get("ultimos_produtos") or []
+        if not estado.slots.get("os_dois") or len(ids) < 2 or estado.slots.get("referencia"):
+            return None
+        forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
+        parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
+        for pid in ids:
+            args = {"produto_id": pid, "forma": forma, "parcelas": parcelas}
+            r = resultado_de(estado, "calcular_condicoes", **args)
+            if r is None:
+                return ferramenta("calcular_condicoes", **args)
+            if r.estado == "ambiguo":
+                return propor("preco_promocao_conflitante", "duvida_politica",
+                              f"Produto {pid} com mais de uma promocao ativa; cliente pediu a soma de dois produtos.")
+            if r.estado != "ok":
+                return self._erro(estado, r)
+        return responder("soma_dois", ids=ids, forma=forma, parcelas=parcelas)
+
     def _i_preco_produto(self, estado: Estado) -> Acao:
+        soma = self._soma_dos_dois(estado)
+        if soma:
+            return soma
         acao, produto = self._produto(estado)
         if acao:
             return acao
         if produto["situacao_venda"] != "disponivel":
             return self._indisponivel(estado, produto)
+        if estado.slots.get("combinar"):
+            return self._combinacao_de_formas(estado, produto)
+        if estado.slots.get("pix_e_parcelas"):
+            return self._pix_e_parcelas(estado, produto)
         forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
         parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
         args = {"produto_id": produto["id"], "forma": forma, "parcelas": parcelas}
@@ -673,11 +821,31 @@ class RegrasDecisor:
                           f"Cliente perguntou parcelamento em {parcelas}x do produto {produto['id']}; "
                           "as duas leituras da parcela minima do manual divergem.")
         extra: dict[str, Any] = {}
+        if estado.slots.get("quantidade"):
+            extra["quantidade"] = estado.slots["quantidade"]
+        if estado.slots.get("pergunta_promocao"):
+            extra["pergunta_promocao"] = True
+        nome_promo = estado.slots.get("promo_nome")
+        if nome_promo or estado.slots.get("desconto_citado"):
+            from ..texto import radical, tokens
+
+            promo = produto.get("promocao") or {}
+            chaves = [radical(t) for t in tokens(nome_promo or "")]
+            desc = normalizar(str(promo.get("descricao") or ""))
+            ativa = bool(promo) and not promo.get("ambigua") and (not chaves or all(c in desc for c in chaves))
+            if nome_promo and not ativa:
+                extra["promo_inativa"] = nome_promo
+            if estado.slots.get("desconto_citado") and promo.get("percentual") != estado.slots["desconto_citado"]:
+                extra["desconto_citado"] = estado.slots["desconto_citado"]
         if compra:
             extra["compra"] = True  # o próximo passo é o botão de carrinho, não outra pergunta
-        if (r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro":
+        if estado.slots.get("secundaria"):
+            extra["sem_oferta"] = True  # a resposta continua com a outra pergunta: nada de convite no meio
+        if ((r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro"
+                and not estado.slots.get("secundaria")):
             extra["valor_frete"] = args["cidade"]  # o fato é o mesmo para qualquer humor; só a oferta some
-        if forma != "credito" and not compra and not recusada(estado, f"parcelas:{produto['id']}"):
+        if (forma != "credito" and not compra and not recusada(estado, f"parcelas:{produto['id']}")
+                and not estado.slots.get("secundaria")):
             extra["oferta_parcelas"] = True  # próximo passo curto, de sim ou não: as parcelas do produto em foco
         return responder("preco", **extra)
 
@@ -767,8 +935,8 @@ class RegrasDecisor:
             return responder("negacao_atendente")
         protocolo = estado.chamados_assunto.get(estado.ultimo_assunto or "geral")
         if protocolo and resultado_de(estado, "registrar_encaminhamento") is None:  # mesmo assunto: não abre outro
-            if resultado_de(estado, "consultar_politica", temas=["horario"]) is None:
-                return ferramenta("consultar_politica", temas=["horario"])
+            if resultado_de(estado, "consultar_politica", temas=["horario", "contato"]) is None:
+                return ferramenta("consultar_politica", temas=["horario", "contato"])
             return responder("atendente_ja_registrado", protocolo=protocolo)
         resumo = "Cliente pediu atendimento humano."
         if estado.pendentes:
@@ -778,7 +946,29 @@ class RegrasDecisor:
             resumo += f" Pedido consultado: {pedido['pedido_id']}."
         return self._registrar(estado, "atendente", resumo)
 
+    def _i_comparar(self, estado: Estado) -> Acao:
+        """Dois produtos nomeados: preço e ficha do catálogo dos dois, sem escolher "o melhor"."""
+        dados = []
+        for ref in estado.slots["comparar_refs"]:
+            r = resultado_de(estado, "ver_produto", referencia=ref)
+            if r is None:
+                return ferramenta("ver_produto", referencia=ref)
+            if r.estado == "ok":
+                dados.append(r.dados)
+                continue
+            if r.estado in ("vazio", "ambiguo"):
+                return perguntar("produto_nao_encontrado", "referencia_produto")
+            return self._erro(estado, r)
+        estado.coletados["ultimo_produto"] = dados[-1]["id"]
+        return responder("comparacao")
+
+    def _i_ingles(self, estado: Estado) -> Acao:
+        return responder("so_portugues", tema=estado.slots.get("tema_ingles"))
+
     def _i_desconhecido(self, estado: Estado) -> Acao:
+        if estado.sentimento != "neutro":  # insulto ou queixa sem pedido concreto: acolhe e oferece atendente
+            return propor("acolhimento", "atendente",
+                          "Cliente demonstrou insatisfacao e aceitou atendimento humano.")
         if estado.incompreensoes >= 1:
             return propor("nao_entendi_de_novo", "sem_dado",
                           "Cliente fez uma pergunta que o assistente nao conseguiu entender.")

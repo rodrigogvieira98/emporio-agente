@@ -18,10 +18,11 @@ from .estado import Estado
 
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
-MANTER = ("pedido", "protocolo", "ultimo_produto", "ultima_busca", "ofertas_recusadas", "recomendado")
+MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_busca", "ofertas_recusadas",
+          "recomendado", "cidade_cliente")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
-    "status_pedido": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
+    "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
     "defeito": "posvenda", "garantia": "posvenda",
 }
 # esperando um dado: respostas curtas continuam o assunto
@@ -33,6 +34,10 @@ UFS = ("ac", "al", "ap", "am", "ba", "ce", "df", "es", "go", "ma", "mt", "ms", "
 
 _PRECO = r"(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(?:\s*(mil))?(?:\s*reais|\s*real)?"
 RE_MAX = re.compile(r"\b(?:ate|no maximo|maximo|abaixo de|menos de|por ate)\s*" + _PRECO)
+# "tenho 500 reais", "meu orçamento é 800": teto dito sem "até"; exige unidade para não confundir "tenho 2 filhos"
+RE_TETO_IMPLICITO = re.compile(
+    r"\b(?:so tenho|tenho|disponho de|orcamento (?:de|e|eh|seria|maximo de)|verba de|posso gastar|uns|cerca de|em torno de)\s*"
+    r"(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(?:\s*(mil))?(?:\s*reais|\s*real)?")
 RE_MIN = re.compile(r"\b(?:a partir de|acima de|mais de|no minimo|minimo)\s*" + _PRECO)
 RE_VALOR = re.compile(r"(?:r\$\s*(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?))|(?:\b(\d{1,3}(?:\.\d{3})+|\d+)\s*(?:reais|real)\b)")
 RE_PARCELAS = re.compile(r"\b(\d{1,2})\s*x\b|\bem (\d{1,2}) (?:vezes|parcelas)\b|\b(\d{1,2}) (?:vezes|parcelas)\b")
@@ -52,7 +57,17 @@ def _reais(texto: str, mil: str | None = None) -> int | None:
 
 LIMITE_DISTINTIVO = 4  # marca que aparece em até 4 produtos identifica o item
 NAO_E_CIDADE = {"compra", "pedido", "valor", "mim", "ele", "ela", "um", "uma", "o", "a", "os", "as", "meu", "minha",
-                "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes"}
+                "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes",
+                # pergunta de prazo, preço ou condição nunca é nome de cidade
+                "quantos", "quantas", "quanto", "quantidade", "que", "qual", "quais", "dias", "dia", "tempo", "prazo", "cada",
+                "pix", "boleto", "cartao", "frete", "preco", "parcela", "parcelas", "dois", "duas", "tres", "hoje", "amanha"}
+PALAVRAS_QUE_NAO_SAO_CIDADE = NAO_E_CIDADE | {"chega", "chegar", "demora", "demorar", "fica", "custa", "sai", "dela", "dele"}
+
+
+def _cidade_plausivel(candidata: str) -> bool:
+    """Nome de cidade tem poucas palavras e nenhuma de pergunta, prazo ou preço."""
+    palavras = candidata.split()
+    return 0 < len(palavras) <= 4 and not any(p in PALAVRAS_QUE_NAO_SAO_CIDADE for p in palavras)
 PARA_NA_CIDADE = {"com", "um", "uma", "pedido", "valor", "no", "e", "ou", "r", "se", "que", "por", "quanto"}
 
 
@@ -134,13 +149,24 @@ def _nome_de_produto(texto: str, m: re.Match[str], voc: catalogo.Vocabulario) ->
     """"2X" só é nome de produto ("Bass 2X") quando o catálogo o conhece e não vem depois de "em", "até" ou "de":
     "em 3x" é parcelamento e nunca entra na referência do produto."""
     antes = texto[:m.start()].split()
-    return m.group(0).replace(" ", "") in voc.df and (not antes or antes[-1] not in ("em", "ate", "de", "no", "a", "ser"))
+    # "3x" sozinho (sem marca ou modelo antes) é parcelamento; só "Bass 3X" é nome de produto
+    return m.group(0).replace(" ", "") in voc.df and bool(antes) and antes[-1] not in ("em", "ate", "de", "no", "a", "ser")
+
+
+# Números que não são produto: tempo desde a compra, número do pedido, final de telefone, percentual.
+RE_NUMERO_NAO_PRODUTO = re.compile(
+    r"\b\d+\s*(?:dias?|semanas?|mes(?:es)?|anos?|horas?|unidades?)\b"
+    r"|\b(?:pedido|numero|nro|num)\s*(?:no\s*|n\s*)?#?\s*\d+\b|#\s*\d+\b"
+    r"|\b(?:final|ultimos|terminad\w*|terminando)\s*(?:em|com|de|do telefone|e)?\s*\d{4}\b"
+    r"|\b\d+(?:,\d+)?\s*(?:%|por cento)")
 
 
 def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
-    s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b", " ", norm)  # o CEP não faz parte do nome do produto
+    s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b|\b\d{5}-?\d{3}\b", " ", norm)  # o CEP não faz parte do nome do produto
+    s = RE_NUMERO_NAO_PRODUTO.sub(" ", s)
     s = RE_MAX.sub(" ", s)
     s = RE_MIN.sub(" ", s)
+    s = RE_TETO_IMPLICITO.sub(lambda m: " " if re.search(r"\breais?\b|r\$|mil", m.group(0)) else m.group(0), s)
     s = RE_VALOR.sub(" ", s)
     s = RE_PARCELAS.sub(lambda m: m.group(0) if _nome_de_produto(s, m, voc) else " ", s)
     s = v.DATA.sub(" ", s)
@@ -149,10 +175,29 @@ def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     return s
 
 
+def _refs_de_comparacao(norm: str, voc: catalogo.Vocabulario) -> list[str]:
+    """Dois produtos citados numa comparação: parte a frase nos separadores e lê a referência de cada trecho.
+    O segundo trecho só com o modelo ("... e o C70") herda a marca do primeiro."""
+    limpo = _limpar_para_referencia(norm, voc)
+    refs: list[str] = []
+    for parte in v.SEPARADOR_COMPARACAO.split(limpo):
+        palavras = [t for t in tokens(parte) if t not in v.PALAVRAS_SOLTAS and t not in v.PALAVRAS_COMPARACAO
+                    and (t in voc.df or re.search(r"\d", t))]
+        if palavras and any(re.search(r"\d", t) or voc.df.get(t, 99) <= LIMITE_DISTINTIVO for t in palavras):
+            refs.append(" ".join(palavras))
+    if len(refs) >= 2 and len(refs[1].split()) == 1 and len(refs[0].split()) > 1:
+        refs[1] = f"{refs[0].split()[0]} {refs[1]}"  # "Yamaha C40 e o C70"
+    return refs[:2]
+
+
 def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots: dict[str, Any] = {"palavras": len(norm.split())}
     slots.update(_numeros_de_pedido(norm, estado))
     m = RE_MAX.search(norm)
+    if not m:
+        t = RE_TETO_IMPLICITO.search(norm)
+        # sem a unidade, "tenho 2 filhos" não é teto de preço
+        m = t if t and (t.group(2) or re.search(r"\breais?\b|r\$", t.group(0))) else None
     if m:
         slots["preco_max"] = _reais(m.group(1), m.group(2))
     m = RE_MIN.search(norm)
@@ -168,7 +213,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         antes = norm[:m.start()].split()
         token = m.group(0).replace(" ", "")
         # "Bass 2X" é nome de produto; "em 2x" é parcelamento
-        if not (token in voc.df and (not antes or antes[-1] not in ("em", "ate", "de", "no"))):
+        if not (token in voc.df and antes and antes[-1] not in ("em", "ate", "de", "no")):
             slots["parcelas"] = int(next(g for g in m.groups() if g))
     if re.search(r"\bpix\b", norm):
         slots["forma"] = "pix"
@@ -198,10 +243,12 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["termo"] = " ".join(nomes)
     # só vale como produto se algum termo identifica (modelo com número, ou marca rara no catálogo);
     # as demais palavras seguem junto, para que o que não existir resulte em "não encontrei"
-    if any(re.search(r"\d", t) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
+    # número puro ("8", "10") nunca identifica produto sozinho: precisa de marca ou modelo junto
+    com_letra = any(not t.isdigit() for t in conteudo)
+    if any((re.search(r"\d", t) and (not t.isdigit() or com_letra)) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
-    elif any(re.search(r"\d", t) for t in conteudo) and re.search(
+    elif any(re.search(r"\d", t) and (not t.isdigit() or com_letra) for t in conteudo) and re.search(
             r"\b(preco\w*|custa\w*|valor|quanto|vende\w*|tem|disponivel|estoque)\b", norm):
         # modelo com número que o catálogo não conhece ("Stradivarius 1715"): a ferramenta diz se existe
         slots["referencia"] = " ".join(conteudo)
@@ -221,6 +268,26 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         if chaves and all(t in palavras_da_msg for t in chaves):
             slots["termo_promocao"] = c
             break
+    palavras = tokens(norm)
+    fortes = sum(t in v.INGLES_FORTE for t in palavras)
+    todas = sum(t in v.INGLES for t in palavras)
+    slots["ingles"] = fortes >= 1 and todas >= 2 and not any(t in v.PORTUGUES_COMUM for t in palavras)
+    if slots["ingles"]:
+        slots["tema_ingles"] = next((tema for p, tema in v.TEMAS_INGLES if p.search(norm)), None)
+        slots["agradecimento_ingles"] = bool(v.AGRADECIMENTO_INGLES.search(norm))
+    if v.COMPARACAO.search(norm):
+        slots["comparar_refs"] = _refs_de_comparacao(norm, voc)
+    camp = v.CAMPANHA_CITADA.search(norm)
+    if camp:
+        slots["promo_nome"] = camp.group(1)
+        slots.setdefault("termo_promocao", camp.group(1))  # a ferramenta diz se há promoção ativa com esse nome
+    dc = v.DESCONTO_CITADO.search(norm)
+    if dc and re.search(r"\b(desconto|promocao|off|abatimento)\b", norm):
+        slots["desconto_citado"] = int(dc.group(1))
+    slots["pix_e_parcelas"] = slots.get("forma") == "pix" and (slots.get("parcelas") or 1) > 1
+    formas_citadas = sum(bool(re.search(p, norm)) for p in (r"\bpix\b", r"\b(cartao|credito|debito)\b", r"\bboleto\b"))
+    slots["combinar"] = bool(re.search(r"\b(metade|meio a meio|dividir|juntar|misturar|combin\w+|duas formas|dois cartoes|"
+                                       r"parte no|uma parte)\b", norm)) and (formas_citadas >= 2 or "combin" in norm)
     slots["datas"] = _datas(norm)
     if v.CANAL_ONLINE.search(norm):
         slots["canal_compra"] = "online"
@@ -235,6 +302,16 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
     slots["mau_uso"] = bool(v.MAU_USO.search(norm))
     slots["avaria"] = bool(v.AVARIA.search(norm))
+    slots["demonstrativo"] = bool(v.DEMONSTRATIVO.search(norm))
+    slots["os_dois"] = bool(v.OS_DOIS.search(norm))
+    mq = v.QUANTIDADE.search(norm)
+    if mq:
+        bruto = mq.group(1) or mq.group(2)
+        qtd = int(bruto) if bruto.isdigit() else v._NUM[bruto]
+        if 2 <= qtd <= 20:
+            slots["quantidade"] = qtd
+    slots["desgaste"] = bool(v.DESGASTE.search(norm))
+    slots["mais_barato"] = bool(v.EXTREMO_MIN.search(norm))
     dias = v.DIAS_DESDE_COMPRA.search(norm)
     if dias:  # "há 40 dias", "faz 2 meses": só o tempo desde a compra, para comparar com o prazo do manual
         unidade = {"d": 1, "s": 7, "m": 30}[dias.group(2)[0]]
@@ -257,7 +334,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     else:
         for m in RE_CIDADE.finditer(norm):
             cand = _cortar_cidade(m.group(1))
-            if cand and cand.split()[0] not in NAO_E_CIDADE:
+            if cand and cand.split()[0] not in NAO_E_CIDADE and _cidade_plausivel(cand):
                 slots["cidade"] = cand
                 break
     m_cep = RE_CEP.search(mensagem.lower())
@@ -265,13 +342,23 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["cep"] = f"{m_cep.group(1) or m_cep.group(3)}-{m_cep.group(2) or m_cep.group(4)}"
     elif estado.aguardando == "cep" and re.fullmatch(r"\d{8}", mensagem.strip()):
         slots["cep"] = f"{mensagem.strip()[:5]}-{mensagem.strip()[5:]}"
+    if slots.get("cidade") and slots.get("referencia"):
+        # a cidade do destino ("entregam em Dourados") não faz parte do nome do produto
+        fora = set(tokens(str(slots["cidade"]))) - set(voc.df)
+        ref = " ".join(t for t in slots["referencia"].split() if t not in fora)
+        if ref and ref != slots["referencia"]:
+            slots["referencia"] = ref
+            slots["desconhecidas"] = [t for t in slots.get("desconhecidas", []) if t not in fora]
     if slots.get("cidade"):
         ufs = "|".join(UFS)
         m_uf = re.search(rf"\b{re.escape(slots['cidade'])}\s*(?:/|-|,|\s)\s*({ufs})\b", norm)
         if m_uf:
             slots["uf"] = m_uf.group(1).upper()
     if estado.aguardando == "cidade" and "cidade" not in slots:
-        slots["cidade"] = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
+        resposta = re.sub(r"^(?:moro em|sou de|estou em|para|pra|em)\s+", "", norm).strip()
+        # a resposta à pergunta da cidade é só o nome; outra pergunta ("e o preço dela no pix?") não vira cidade
+        if _cidade_plausivel(resposta) and not any(p.search(norm) for n, p in v.PADROES_INTENCAO if n != "saudacao"):
+            slots["cidade"] = resposta
     if estado.aguardando == "valor_pedido" and "valor" not in slots:
         m = re.search(r"\b(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\b", norm)
         if m:
@@ -292,12 +379,24 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         outras = [n for n, p in v.PADROES_INTENCAO if n in v.SECUNDARIAS and n != nova and p.search(norm)]
         if outras:
             slots["secundaria"] = outras[0]
+    # preço de um produto citado + frete na mesma mensagem: responde o preço e depois o frete
+    tem_ref = bool(slots.get("referencia") or slots.get("produto_id"))
+    sem_preco_do_frete = re.sub(r"\b(?:quanto|valor|preco)\b(?:\s+\w+){0,3}?\s+(?:d[oae]s?\s+)?(?:frete|entrega|envio)\b", " ", norm)
+    pede_preco = any(n == "preco_produto" and p.search(sem_preco_do_frete) for n, p in v.PADROES_INTENCAO)
+    pede_frete = any(n == "frete" and p.search(norm) for n, p in v.PADROES_INTENCAO)
+    if tem_ref and pede_preco and pede_frete and nova in ("frete", "preco_produto") and not slots.get("cep"):
+        slots["secundaria"] = "frete"
+        return "preco_produto"
     return nova
 
 
 def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm):
         return "tentativa_manipulacao"
+    if slots.get("ingles"):
+        return "encerramento" if slots.get("agradecimento_ingles") else "ingles"
+    if len(slots.get("comparar_refs") or []) == 2:
+        return "comparar"
     if v.PEDIDO_INSTRUCOES.search(norm):
         return "pedido_instrucoes"
     if v.DADO_DE_TERCEIRO.search(norm):
@@ -307,10 +406,18 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         sobra = [n for n in achadas if n != intencao]
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale
             achadas = sobra
+    if slots.get("desgaste") and not any(n in ("devolucao", "troca_preferencia") for n in achadas):
+        # corda arrebentada: desgaste natural (8.3), não acessório nem defeito
+        achadas = ["garantia", *[n for n in achadas if n not in ("fora_escopo", "garantia", "defeito")]]
     if slots.get("modalidade") and "frete" not in achadas and not any(
             n in ("devolucao", "defeito", "troca_preferencia", "status_pedido") for n in achadas):
         achadas = ["frete", *achadas]  # "qual o prazo do PAC?": pergunta de envio, mesmo sem a palavra "frete"
+    if (slots.get("quantidade") or slots.get("os_dois")) and "preco_produto" not in achadas and not any(
+            n in ("devolucao", "defeito", "troca_preferencia", "status_pedido", "frete") for n in achadas):
+        achadas = ["preco_produto", *achadas]  # "e se eu comprar dois?", "e os dois?": conta sobre o produto em foco
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if categoria and not ref and slots.get("demonstrativo"):
+        categoria = None  # "essa guitarra no pix": a categoria só nomeia o produto em foco, não pede uma busca
     if slots.get("cep") and ("frete" in achadas or not achadas or achadas[0] in ("preco_produto", "disponibilidade")):
         return "frete"  # CEP na mensagem: o cliente quer o frete (estimativa com produto e CEP)
     extremo = "min" if v.EXTREMO_MIN.search(norm) else "max" if v.EXTREMO_MAX.search(norm) else None
@@ -359,6 +466,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "encerramento"
     if (slots.get("parcelas") or slots.get("forma")) and slots["palavras"] <= 6 and not v.PAGAMENTO_GERAL.search(norm):
         return "preco_produto"  # "e em 12x", "e no pix": pergunta de condição do produto em foco, ou pede o produto
+    if v.FINAL_EXPLICITO.search(norm) or slots.get("pedido_id") or slots.get("pedido_demo"):
+        return "status_pedido"  # número do pedido ou final do telefone sozinhos: é o dado da consulta, nunca despedida
     if slots["palavras"] <= 3 and slots.get("afirmativo"):
         return "confirmacao_solta"
     if slots["palavras"] <= 2 and slots.get("negativo"):
@@ -443,9 +552,31 @@ def perceber(estado: Estado, mensagem: str) -> None:
     # "se eu pagar no pix tem mais desconto?" com um produto em foco: recalcula o produto (e lembra que o PIX não soma)
     mais_desconto = s.get("forma") == "pix" and bool(re.search(r"\b(mais|outro|extra|adicional) desconto|desconto (a mais|extra|adicional)", norm))
     if (nova == "pagamento" and ultimo and "referencia" not in s and (s.get("forma") or s.get("parcelas"))
-            and (s["palavras"] <= 5 or mais_desconto) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
+            and (s["palavras"] <= 5 or mais_desconto or s.get("demonstrativo")) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
         s["produto_id"] = ultimo
+    if nova is None and s.get("pergunta_prazo") and estado.ultimo_assunto == "frete":
+        nova = "frete"  # "e quanto tempo demora?" depois de uma pergunta de frete
+    if nova is None and v.PROXIMO_PASSO.search(norm):
+        assunto = estado.objetivo or estado.ultimo_assunto
+        if assunto in POSVENDA | {"garantia"}:
+            nova = assunto  # "o que eu faço?" depois de uma orientação: o assunto de pós-venda continua
+    # busca em andamento: "até 600 reais" refina a lista; "qual você recomenda?" usa a categoria e o teto já ditos
+    ub = (estado.coletados.get("ultima_busca") or {}).get("args") or {}
+    so_faixa = ("preco_max" in s or "preco_min" in s) and "referencia" not in s and "categoria" not in s
+    pede_indicacao = bool(re.search(r"\b(recomend\w*|indic\w*|sugere\w*|sugest\w*|melhor opcao|qual (voce )?(escolheria|levaria))\b", norm))
+    if (ub.get("categoria") and "referencia" not in s and "categoria" not in s
+            and nova in (None, "preco_produto", "busca_produto", "disponibilidade", "confirmacao_solta")
+            and (so_faixa or (pede_indicacao and nova in (None, "busca_produto")))):
+        s["categoria"] = ub["categoria"]
+        for k in ("preco_min", "preco_max"):
+            if k not in s and ub.get(k) is not None:
+                s[k] = ub[k]
+        nova = "busca_produto"
+    if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
+        nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco
+        s["produto_id"] = ultimo
+        s["pergunta_promocao"] = True
     if nova is None and estado.ultimo_assunto == "frete" and s.get("cidade") and s["palavras"] <= 6:
         nova = "frete"  # "e em <outra cidade>?" depois de uma pergunta de frete
     estado.intencao = nova
@@ -491,7 +622,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
         return
     if ag == "parcelamento":  # "quer ver as parcelas?": o sim mostra, o não encerra, outra coisa segue o fluxo normal
         estado.aguardando = None
-        resposta_curta = nova in (None, "confirmacao_solta")  # outra intenção ("quero um atendente") não é o sim
+        resposta_curta = nova in (None, "confirmacao_solta") and not s["compra"]  # "quero esse" é compra, não o sim
         if resposta_curta and s["afirmativo"] and not s["negativo"] and estado.coletados.get("ultimo_produto"):
             estado.objetivo = estado.intencao = "parcelamento_produto"
             return
@@ -504,7 +635,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
     if ag == "condicoes":  # "quer ver as condições dele?": o sim mostra o preço da opção que a Lia destacou
         estado.aguardando = None
         alvo = estado.coletados.get("recomendado")
-        resposta_curta = nova in (None, "confirmacao_solta")
+        resposta_curta = nova in (None, "confirmacao_solta") and not s["compra"]
         if resposta_curta and alvo and s["afirmativo"] and not s["negativo"]:
             estado.objetivo = estado.intencao = "preco_produto"
             s["produto_id"] = alvo
@@ -558,6 +689,9 @@ def perceber(estado: Estado, mensagem: str) -> None:
             return
         estado.objetivo = None
         ag = None
+    if ag == "relato" and nova == "pedir_atendente" and not s["nega_atendente"]:
+        estado.aguardando = ag = None  # pedir um humano no meio do relato não é o relato: registra o pedido de atendente
+        estado.objetivo = None
     if ag == "relato":
         if s["negativo"] and s["palavras"] <= 4:
             estado.intencao = estado.objetivo

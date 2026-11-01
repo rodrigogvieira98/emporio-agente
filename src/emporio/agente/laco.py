@@ -74,6 +74,8 @@ class Agente:
         if estado.objetivo and estado.objetivo != "pedir_atendente":
             estado.ultimo_assunto = estado.objetivo
         completar_datas(estado)
+        if estado.slots.get("cidade"):
+            estado.coletados["cidade_cliente"] = estado.slots["cidade"]  # a cidade dita antes vale nos turnos seguintes
         if estado.slots.get("compra") and estado.intencao in INTENCOES_DE_COMPRA:
             estado.coletados["compra"] = True  # vale também depois da escolha numerada entre modelos parecidos
         contagens: Counter[str] = Counter()
@@ -90,7 +92,8 @@ class Agente:
         etapa_lead: str | None = None
 
         partes: list[str] = []  # respostas já prontas de perguntas anteriores da mesma mensagem
-        for numero in range(1, MAX_PASSOS * (2 if estado.slots.get("secundaria") else 1) + 1):
+        dupla = estado.slots.get("secundaria") or estado.slots.get("pix_e_parcelas")
+        for numero in range(1, MAX_PASSOS * (2 if dupla else 1) + 1):
             try:
                 acao = self.decisor.decidir(estado, mensagem)
             except Exception:  # noqa: BLE001 - decisor com defeito não derruba o atendimento
@@ -144,6 +147,7 @@ class Agente:
                 texto = chr(10).join([*partes, "", texto])
             texto, oferecer = ajustar_tom(estado, acao, chave_final, texto)
             if (self.redator is not None and chave_final not in SEM_REDACAO and not partes
+                    and not acao.parametros.get("compra")  # resposta de compra: sem texto livre do modelo
                     and estado.sentimento == "neutro"):
                 permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
                 texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,
@@ -299,6 +303,8 @@ def integrar(estado: Estado, passo: Passo) -> None:
     elif nome == "ver_produto":
         if r.estado == "ok":
             estado.coletados["ultimo_produto"] = r.dados["id"]
+            recentes = [i for i in estado.coletados.get("ultimos_produtos", []) if i != r.dados["id"]]
+            estado.coletados["ultimos_produtos"] = [*recentes, r.dados["id"]][-2:]  # base do "os dois"
             estado.coletados.pop("recomendado", None)  # o produto consultado agora é o foco
         if r.estado == "ambiguo":
             estado.coletados["opcoes"] = r.dados["opcoes"]
@@ -338,13 +344,14 @@ SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "rec
                "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta",
                # toda recusa fica sem texto livre do modelo: ele não pode abrir brecha nem suavizar o "não"
                "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",
-               "preco_promocao_conflitante", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
+               "preco_promocao_conflitante", "cupom_inexistente", "endereco_pedido_privado", "acolhimento", "so_portugues",
+               "comparacao", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
                "sem_dado", "dado_recusado",
                # lead: a resposta de objeção e a de "vou pensar" não ganham convite do modelo
                "objecao_preco", "vou_pensar"}
 
 # Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
-SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
+SEM_AJUSTE_DE_TOM = {"acolhimento", "so_portugues", "saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
                      "confirmar_registro", "registro_cancelado", "registro_falhou", "perguntas_repetidas",
                      "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao", "dado_recusado",
                      "encerramento", "identidade", "confirmacao_solta"}
@@ -393,7 +400,7 @@ def oferecer_humano(estado: Estado, texto: str) -> str:
 
 # Respostas que informam e encerram o assunto: ali o manual (7.2, passo 5) manda confirmar se o cliente precisa de
 # mais alguma coisa. Nunca em recusa, oferta, pergunta, encerramento do cliente ou cliente irritado.
-COM_FECHAMENTO = {"contato", "pagamento", "frete_calculado", "frete_prazo", "frete_estimado",
+COM_FECHAMENTO = {"contato", "pagamento", "frete_calculado", "frete_produto", "frete_prazo", "frete_estimado",
                   "frete_cidade_base", "frete_outra_cidade", "frete_modalidade", "frete_grande_porte", "garantia_info",
                   "reembolso_prazo", "previsao_entrega", "status_pedido", "status_pedido_demo", "devolucao_frete",
                   "devolucao_loja_fisica", "rain_check", "rastreio_como", "privacidade", "empresa_dados",
@@ -415,7 +422,10 @@ MAX_REPETICOES_PERGUNTA = 2  # a mesma pergunta de dado, no máximo 2 vezes segu
 
 
 def _assinatura(acao: Acao) -> dict[str, Any]:
-    return {"chave": acao.resposta, "campos": list(acao.parametros.get("campos", []))}
+    sig = {"chave": acao.resposta, "campos": list(acao.parametros.get("campos", []))}
+    if acao.resposta == "pedir_pedido":  # pedir só o que falta (número, depois o final) é avanço, não repetição
+        sig["tem"] = [bool(acao.parametros.get("tem_pedido")), bool(acao.parametros.get("tem_final"))]
+    return sig
 
 
 def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:

@@ -419,12 +419,11 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 Escolha do Rodrigo em 01/11/2026 (opção A), depois de comparar a home com Constelação, Teclacenter, Mercadão da Música, 4 Music e Fender. Prevalece sobre a identidade "balcão" e a composição "Loja acolhedora" no visual; conteúdo, regras e fluxos não mudam.
 
 - Paleta em tokens no `:root`: palco (quase preto com tom de madeira) para topo, abertura e rodapé; creme para áreas de leitura; amarelo-ipê como única cor de destaque (botões principais, preço em destaque, foco); verde só para "disponível". Todo par de texto passa AA, verificado pelo teste de contraste existente, que deve ser atualizado para os novos tokens.
-- Topo escuro: logotipo maior, busca, carrinho, e barra fixa de categorias visível (Guitarras, Baixos, Violões, Teclados, Baterias, Ukuleles), no lugar do menu escondido. No celular, a barra rola horizontalmente dentro dela mesma, sem rolagem da página.
-- Abertura de ponta a ponta: foto escura de instrumento com licença livre (das já usadas ou nova com crédito em `/creditos`), título grande em branco, subtítulo curto e botão ipê. Sem carrossel de banners e sem promoção inventada.
-- Faixa de confiança logo abaixo: 5% no PIX, até 12x sem juros, frete grátis em Campo Grande a partir de R$ 500,00. Valores derivados do manual.
+- **Só design, mesma arquitetura.** Decisão do Rodrigo: mantêm-se páginas, seções, ordem, carrosséis, menus, componentes, rotas, textos e comportamento. Nada de seção ou componente novo; muda só a camada visual (CSS, tokens, tamanhos, pesos, fundos e tratamento das imagens existentes). Mudança mínima de marcação só quando o CSS sozinho não alcança o visual, sem alterar conteúdo nem seletores usados pelos testes.
+- Topo escuro com logotipo maior; o menu de categorias segue como está, restilizado.
+- Abertura no mesmo bloco atual, restilizada: fundo palco, foto maior e de ponta a ponta dentro do bloco, título grande em branco, botão ipê.
 - Tipografia: títulos mais pesados, preço com mais peso; manter fontes locais.
-- Cards: foto protagonista em fundo claro, nome, preço, sem bolinha decorativa.
-- Bloco de história: "Desde 2008 em Campo Grande", com dados do manual e foto grande.
+- Cards e carrosséis: mesma estrutura, foto protagonista, sem bolinha decorativa.
 - Lia, faixa de contato, rodapé, checkout e demais páginas seguem a nova paleta.
 - Sem degradê roxo, vidro, emojis ou ícones em excesso; sem cookie banner.
 - Aceite: capturas em 1280 e 390 px da home, catálogo, produto, checkout e /fale-conosco em `docs/capturas`; sem rolagem horizontal; contraste AA; e2e verdes.

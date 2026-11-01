@@ -4,6 +4,7 @@ Voz: a da persona em persona.yaml (acolhedora, clara, informal mas profissional)
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Any, Callable
 
@@ -37,7 +38,11 @@ CAMPOS = {
     "estado_produto": "o estado do produto (se está na embalagem original e sem uso)",
     "descricao_defeito": "o que está acontecendo com o produto",
 }
-ROTULO_FORMA = {"pix": "PIX", "debito": "cartão de débito", "boleto": "boleto", "credit": "cartão de crédito"}
+ROTULO_FORMA = {"pix": "PIX", "debito": "cartão de débito", "debit": "cartão de débito", "boleto": "boleto",
+                "credit": "cartão de crédito", "credito": "cartão de crédito"}
+# Frase natural do andamento do pedido (o código do status nunca aparece cru)
+FRASE_STATUS = {"pending": "está pendente", "confirmed": "foi confirmado", "shipped": "foi enviado",
+                "delivered": "foi entregue", "cancelled": "foi cancelado"}
 CONFIRMA = "Responda sim ou não."
 
 
@@ -168,31 +173,47 @@ def contato(e: Estado, p: dict) -> str:
 
 
 def pagamento(e: Estado, p: dict) -> str:
+    """Responde o que foi perguntado: uma forma, só cartão ou parcelamento; a lista inteira só quando não há foco."""
     c = _condicoes(e)
     if "pagamento.pix_desconto_percentual" not in c:
         return sem_dado(e, p)
-    linhas = [f"- PIX: {c['pagamento.pix_desconto_percentual']}% de desconto sobre o preço de tabela"]
+    forma = e.slots.get("forma")
+    msg = normalizar(e.slots.get("texto_limpo", ""))
+    if re.search(r"\b(parte|partes|combin\w+|mistur\w+|dividir|juntar|metade)\b", msg) or re.match(r"e\b", msg):
+        forma = None  # combinar formas, ou "e no pix?" sem produto: a resposta é a lista inteira
+    linhas: dict[str, str] = {"pix": f"PIX: {c['pagamento.pix_desconto_percentual']}% de desconto sobre o preço de tabela"}
     if c.get("pagamento.debito_a_vista"):
-        linhas.append("- Cartão de débito: à vista")
+        linhas["debito"] = "Cartão de débito: à vista"
     if "pagamento.credito_parcelas_max" in c:
         sem = " sem juros" if c.get("pagamento.credito_sem_juros") else ""
-        linhas.append(f"- Cartão de crédito: até {c['pagamento.credito_parcelas_max']}x{sem}")
+        linhas["credito"] = f"Cartão de crédito: até {c['pagamento.credito_parcelas_max']}x{sem}"
     if c.get("pagamento.boleto_a_vista"):
         compensa = c.get("pagamento.boleto_compensacao_dias_uteis_max")
-        linhas.append("- Boleto: à vista" + (f", compensação em até {compensa} dias úteis" if compensa else ""))
-    txt = "Formas de pagamento:\n" + "\n".join(linhas)
-    if "pagamento.parcelamento_faixas" in c:
+        linhas["boleto"] = "Boleto: à vista" + (f", compensação em até {compensa} dias úteis" if compensa else "")
+    if forma == "credito" and e.slots.get("cartao_generico"):
+        escolhidas = [k for k in ("debito", "credito") if k in linhas]
+    elif forma in linhas:
+        escolhidas = [forma]
+    else:
+        forma, escolhidas = None, list(linhas)
+    if len(escolhidas) == 1:
+        txt = linhas[escolhidas[0]] + "."
+    else:
+        txt = "Formas de pagamento:\n" + "\n".join(f"- {linhas[k]}" for k in escolhidas)
+    if "credito" in escolhidas and "pagamento.parcelamento_faixas" in c:
         faixas = [f"{f['de']}x a {f['ate']}x: parcela mínima {formatar(f['parcela_minima_centavos'])}"
                   for f in c["pagamento.parcelamento_faixas"]]
         txt += "\nParcela mínima por faixa: " + "; ".join(faixas) + "."
-    if "parcela_minima" in _ambiguidades(e) and "pagamento.credito_parcela_minima_tabela_centavos" in c:
-        txt += aviso(e, "parcela_minima_duas_leituras",
-                     f" A tabela de pagamento fala em {formatar(c['pagamento.credito_parcela_minima_tabela_centavos'])} "
-                     "por parcela, então em casos de limite a equipe confirma.", proprio=True)
+        if "parcela_minima" in _ambiguidades(e) and "pagamento.credito_parcela_minima_tabela_centavos" in c:
+            txt += aviso(e, "parcela_minima_duas_leituras",
+                         f" A tabela de pagamento fala em {formatar(c['pagamento.credito_parcela_minima_tabela_centavos'])} "
+                         "por parcela, então em casos de limite a equipe confirma.", proprio=True)
     combinar = c.get("pagamento.combinacao_formas_acima_centavos")
-    if combinar:
+    if combinar and forma is None:
         txt += f"\nÉ possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de {formatar(combinar)}."
-    return txt + "\nSe quiser, me diga o produto e o número de parcelas que eu calculo."
+    if forma is None or "credito" in escolhidas:
+        return txt + "\nSe quiser, me diga o produto e o número de parcelas que eu calculo."
+    return txt + "\nSe quiser, me diga o produto que eu calculo o valor."
 
 
 def frete_info(e: Estado, p: dict) -> str:
@@ -243,8 +264,21 @@ def frete_calculado(e: Estado, p: dict) -> str:
         return f"Para {cidade}, o frete é uma taxa fixa de {formatar(f['taxa_centavos'])}.{prazo_txt}"
     mods = _condicoes(e).get("frete.outras_cidades_modalidades")
     extra = f" Os envios são por {_lista([m['nome'] for m in mods])}." if mods else ""
-    return (f"Para {cidade} o frete depende de cotação: ele é calculado pelo CEP, peso e dimensões do produto, "
-            f"e eu ainda não consigo informar o valor.{extra}")
+    return (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
+            f"dimensões do produto, e eu não consigo informar o valor por aqui.{extra}")
+
+
+def frete_outra_cidade(e: Estado, p: dict) -> str:
+    """Cidade fora da base do manual: a equipe calcula o frete; não pede o valor do pedido."""
+    c = _condicoes(e)
+    cidade = str(p.get("cidade", "")).title()
+    txt = (f"Para {cidade}, o frete depende de cotação e é calculado pela equipe, a partir do CEP, do peso e das "
+           "dimensões do produto, e eu não consigo informar o valor por aqui.")
+    mods = c.get("frete.outras_cidades_modalidades", [])
+    if mods:
+        itens = [f"{m['nome']} ({m['prazo_dias_uteis']['min']} a {m['prazo_dias_uteis']['max']} dias úteis)" for m in mods]
+        txt += " Os envios são por " + _lista(itens) + "."
+    return txt
 
 
 def fora_escopo(e: Estado, p: dict) -> str:
@@ -515,10 +549,11 @@ def pedido_negado_limite(e: Estado, p: dict) -> str:
 def status_pedido(e: Estado, p: dict) -> str:
     ped = e.coletados["pedido"]
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in ped["itens"])
-    status = STATUS_PEDIDO.get(ped["status"], ped["status"])
+    frase = FRASE_STATUS.get(ped["status"], f"está com o andamento {STATUS_PEDIDO.get(ped['status'], ped['status'])}")
     forma = _forma_pedido(ped["forma_pagamento"])
-    txt = (f"Pedido {ped['pedido_id']}: status {status}.\nItens: {itens}.\n"
-           f"Total do pedido: {formatar(ped['total_gravado_centavos'])} ({forma}).")
+    pago = f" ({forma})" if forma else ""
+    txt = (f"Pedido {ped['pedido_id']} {frase}.\nItens: {itens}.\n"
+           f"Total do pedido: {formatar(ped['total_gravado_centavos'])}{pago}.")
     if ped.get("rastreio"):
         txt += f"\nCódigo de rastreio: {ped['rastreio']}."
     if ped.get("previsao"):
@@ -545,9 +580,10 @@ def pedido_demo_negado(e: Estado, p: dict) -> str:
 
 
 def _forma_pedido(bruto: str) -> str:
+    """Forma de pagamento em português; código desconhecido não aparece cru."""
     if bruto.startswith("credit_"):
         return f"cartão de crédito em {bruto.split('_')[1]}"
-    return ROTULO_FORMA.get(bruto, bruto)
+    return ROTULO_FORMA.get(bruto, "")
 
 
 def pedir_dados_posvenda(e: Estado, p: dict) -> str:
@@ -643,6 +679,87 @@ def falha_ferramenta(e: Estado, p: dict) -> str:
     return base
 
 
+def identidade(e: Estado, p: dict) -> str:
+    nome = _condicoes(e).get("empresa.nome_fantasia")
+    de = f" da {nome}" if nome else ""
+    return (f"Sou a Lia, assistente virtual{de}. Não sou uma pessoa: respondo de forma automática, com as informações "
+            "da loja. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e "
+            "endereço. Se você quiser falar com a equipe, é só pedir.")
+
+
+def encerramento(e: Estado, p: dict) -> str:
+    return "Por nada! Foi um prazer ajudar. Até a próxima."
+
+
+def confirmacao_solta(e: Estado, p: dict) -> str:
+    """"sim" ou "não" sem pergunta pendente."""
+    if e.slots.get("negativo") and not e.slots.get("afirmativo"):
+        return "Tudo bem. Em que mais posso ajudar?"
+    if e.coletados.get("protocolo"):
+        return "Certo, o seu chamado já está registrado. Posso ajudar em mais alguma coisa?"
+    return ("Certo! Sobre o que você quer falar? Posso ajudar com produtos e preços, pedidos, pagamento, frete, "
+            "trocas e devoluções, horário e endereço.")
+
+
+def recusa_instrucoes(e: Estado, p: dict) -> str:
+    return ("Não consigo atender esse pedido, porque as minhas instruções internas não são compartilhadas. Posso "
+            "ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço.")
+
+
+def _linha_do_manual(e: Estado, palavra: str) -> str | None:
+    for passo in e.passos:
+        if passo.ferramenta == "consultar_politica" and passo.resultado.estado == "ok":
+            for sec in passo.resultado.dados["secoes"]:
+                for linha in (sec.get("texto") or "").splitlines():
+                    if palavra in normalizar(linha):
+                        return linha.strip(" •\t")
+    return None
+
+
+def reembolso_prazo(e: Estado, p: dict) -> str:
+    dias = _condicoes(e).get("devolucao.arrependimento_reembolso_dias_uteis_max")
+    if not dias:
+        return sem_dado(e, p)
+    linha = _linha_do_manual(e, "reembolso")
+    if linha:
+        corpo = linha[0].lower() + linha[1:].rstrip(".")
+        return f"Na devolução por arrependimento, {corpo}. A equipe confirma se o seu caso se enquadra."
+    return (f"Na devolução por arrependimento, o reembolso sai em até {dias} dias úteis. "
+            "A equipe confirma se o seu caso se enquadra.")
+
+
+def previsao_entrega(e: Estado, p: dict) -> str:
+    ped = e.coletados["pedido"]
+    numero = ped["pedido_id"]
+    if ped["status"] == "delivered":
+        txt = f"O pedido {numero} já consta como entregue."
+    elif ped["status"] == "cancelled":
+        txt = f"O pedido {numero} está cancelado, então não há entrega prevista."
+    elif ped.get("previsao"):
+        txt = f"A previsão de entrega do pedido {numero} é {_data_br(ped['previsao'])}."
+        if ped.get("previsao_vencida"):
+            txt += " Essa data já passou e o pedido ainda não consta como entregue."
+    else:
+        txt = f"O pedido {numero} ainda não tem previsão de entrega registrada."
+    if ped.get("rastreio") and ped["status"] not in ("delivered", "cancelled"):
+        txt += f"\nCódigo de rastreio: {ped['rastreio']}."
+    if p.get("oferta") == "previsao_vencida":
+        txt += f"\nQuer que eu registre para a equipe verificar o atraso? {CONFIRMA}"
+    return txt
+
+
+def extremo_lista(e: Estado, p: dict) -> str:
+    r = e.ultimo("buscar_produtos")
+    if r is None or r.estado != "ok":
+        return falha_ferramenta(e, p)
+    i = r.dados["itens"][0]
+    rotulo = "O mais barato" if p.get("extremo", "min") == "min" else "O mais caro"
+    promo = (f" (em promoção: {i['promocao']['percentual']}% de desconto)"
+             if i["promocao"] and not i["promocao"].get("ambigua") else "")
+    return (f"{rotulo} da busca é {i['nome']}: {formatar(i['preco_centavos'])}, preço de tabela{promo}. "
+            "Quer ver as condições dele?")
+
+
 def sem_dado(e: Estado, p: dict) -> str:
     return ("Não encontrei essa informação nos dados que eu tenho, e prefiro não inventar. "
             f"Quer que eu registre a dúvida para a equipe? {CONFIRMA}")
@@ -721,7 +838,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
-        item_nao_elegivel)
+        item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
+        previsao_entrega, extremo_lista, frete_outra_cidade)
 }
 
 

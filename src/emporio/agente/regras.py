@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..ferramentas.envelope import Resultado
+from ..texto import normalizar
 from .estado import Acao, Estado
 
 REGRA_POR_INTENCAO = {"devolucao": "arrependimento", "troca_preferencia": "preferencia", "defeito": "defeito"}
@@ -221,6 +222,35 @@ class RegrasDecisor:
     def _i_saudacao(self, estado: Estado) -> Acao:
         return self._info(estado, ["empresa", "horario"], "saudacao")
 
+    def _i_identidade(self, estado: Estado) -> Acao:
+        return self._info(estado, ["empresa"], "identidade")
+
+    def _i_encerramento(self, estado: Estado) -> Acao:
+        return responder("encerramento")
+
+    def _i_confirmacao_solta(self, estado: Estado) -> Acao:
+        """"sim" ou "não" sem pergunta pendente: resposta natural, nunca "não entendi"."""
+        return responder("confirmacao_solta")
+
+    def _i_pedido_instrucoes(self, estado: Estado) -> Acao:
+        return responder("recusa_instrucoes")
+
+    def _i_reembolso_prazo(self, estado: Estado) -> Acao:
+        return self._info(estado, ["arrependimento"], "reembolso_prazo")
+
+    def _i_previsao_entrega(self, estado: Estado) -> Acao:
+        """"Quando chega?": usa o pedido já consultado; sem pedido, segue o fluxo de status (ou de frete, se há cidade)."""
+        pedido = estado.coletados.get("pedido")
+        if pedido:
+            if pedido["status"] == "delivered" or not pedido.get("previsao_vencida"):
+                return responder("previsao_entrega")
+            return propor("previsao_entrega", "atendente",
+                          f"Cliente perguntou quando o pedido {pedido['pedido_id']} chega e a previsao ja passou.",
+                          oferta="previsao_vencida")
+        if estado.slots.get("cidade") and not estado.slots.get("pedido_id"):
+            return self._i_frete(estado)
+        return self._i_status_pedido(estado)
+
     def _i_horario(self, estado: Estado) -> Acao:
         return self._info(estado, ["horario"], "horario")
 
@@ -243,12 +273,28 @@ class RegrasDecisor:
     def _i_retomada_recusada(self, estado: Estado) -> Acao:
         return responder("ok_sem_retomar")
 
+    def _cidade_base(self, estado: Estado) -> str | None:
+        r = resultado_de(estado, "consultar_politica", temas=["frete"])
+        for sec in (r.dados["secoes"] if r is not None and r.estado == "ok" else []):
+            for c in sec["condicoes"]:
+                if c["chave"] == "frete.cidade_base":
+                    return str(c["valor"])
+        return None
+
     def _i_frete(self, estado: Estado) -> Acao:
         s = estado.slots
         cidade = s.get("cidade") or estado.coletados.get("cidade")
         valor = s.get("valor") or estado.coletados.get("valor_pedido")
         if cidade:
             estado.coletados["cidade"] = cidade
+            r = resultado_de(estado, "consultar_politica", temas=["frete"])
+            if r is None:
+                return ferramenta("consultar_politica", temas=["frete"])
+            if r.estado != "ok":
+                return self._erro(estado, r)
+            base = self._cidade_base(estado)
+            if base and normalizar(cidade) != normalizar(base):  # fora da base: a equipe calcula, sem pedir valor
+                return responder("frete_outra_cidade", cidade=cidade)
         if cidade and valor:
             estado.coletados["valor_pedido"] = valor
             r = resultado_de(estado, "calcular_condicoes", cidade=cidade)
@@ -294,9 +340,31 @@ class RegrasDecisor:
             return self._erro(estado, r)
         return responder("busca")
 
+    def _i_extremo_lista(self, estado: Estado) -> Acao:
+        """"Qual o mais barato?" sobre a lista mostrada: nova consulta com a mesma busca, um item."""
+        busca = estado.coletados.get("ultima_busca")
+        if not busca or not busca.get("args"):
+            return self._i_busca_produto(estado)
+        extremo = estado.slots.get("extremo", "min")
+        args = dict(busca["args"])
+        args["limite"] = 1
+        if extremo == "max":
+            args["deslocamento"] = max(int(busca.get("total", 1)) - 1, 0)
+        r = resultado_de(estado, "buscar_produtos", **args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        if r.estado != "ok":
+            return self._erro(estado, r) if r.estado == "falha" else self._i_busca_produto(estado)
+        estado.coletados["ultimo_produto"] = r.dados["itens"][0]["id"]
+        return responder("extremo_lista", extremo=extremo)
+
     def _produto(self, estado: Estado) -> tuple[Acao | None, dict[str, Any] | None]:
         s = estado.slots
         ref = s.get("produto_id") or s.get("referencia") or estado.coletados.get("referencia")
+        if ref is None and not s.get("desconhecidas") and not s.get("tem_modelo"):
+            # fala sem produto ("tem em estoque?", "quanto fica no pix?"): vale o produto em foco ou o primeiro da lista
+            busca = estado.coletados.get("ultima_busca") or {}
+            ref = estado.coletados.get("ultimo_produto") or (busca.get("ids") or [None])[0]
         if ref is None:
             return perguntar("pedir_produto", "referencia_produto"), None
         r = resultado_de(estado, "ver_produto", referencia=ref)

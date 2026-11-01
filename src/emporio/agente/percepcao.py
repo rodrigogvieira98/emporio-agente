@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from difflib import get_close_matches
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -16,6 +17,8 @@ from . import vocabulario as v
 from .estado import Estado
 
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
+# o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
+MANTER = ("pedido", "protocolo", "ultimo_produto", "ultima_busca")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto",
     "status_pedido": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
@@ -161,13 +164,21 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["forma"] = "boleto"
     elif re.search(r"\bdebito\b", norm):
         slots["forma"] = "debito"
-    elif re.search(r"\b(credito|cartao|parcel\w*)\b", norm) or "parcelas" in slots:
+    elif re.search(r"\b(credito|cartao|parcel\w*)\b", norm) or "parcelas" in slots or re.search(
+            r"\bquantas (vezes|parcelas)\b", norm):
         slots["forma"] = "credito"
+    slots["cartao_generico"] = bool(re.search(r"\bcartao\b|\bcartoes\b", norm)) and not re.search(r"\b(debito|credito)\b", norm)
     sobra = [t for t in tokens(_limpar_para_referencia(norm, voc)) if t not in v.PALAVRAS_SOLTAS]
+    corrigidos: dict[str, str] = {}
     for t in sobra:
         if t in v.CATEGORIAS:
             slots.setdefault("categoria", v.CATEGORIAS[t])
-    conteudo = [t for t in sobra if t not in v.CATEGORIAS
+        elif len(t) >= 5 and t not in voc.df and not t.isdigit():
+            parecida = get_close_matches(t, list(v.CATEGORIAS), n=1, cutoff=0.8)  # "gitarra", "violau", "bateira"
+            if parecida:
+                corrigidos[t] = parecida[0]
+                slots.setdefault("categoria", v.CATEGORIAS[parecida[0]])
+    conteudo = [t for t in sobra if t not in v.CATEGORIAS and t not in corrigidos
                 and not any(p.fullmatch(t) for _, p in v.PADROES_INTENCAO)
                 and not re.fullmatch(r"(comprar|comprei|gostei|interesse|interessado|interessada|fazer|quer)", t)]
     nomes = [t for t in conteudo if t in voc.df]
@@ -232,9 +243,26 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     return slots
 
 
+PRIMARIAS_COM_SECUNDARIA = {"busca_produto", "preco_produto", "disponibilidade", "horario", "endereco", "contato",
+                            "promocao", "garantia", "pagamento"}
+
+
 def classificar(norm: str, slots: dict[str, Any]) -> str | None:
+    """Intenção principal; se a mensagem traz uma segunda pergunta de informação simples, vai em `secundaria`."""
+    nova = _classificar(norm, slots)
+    slots["secundaria"] = None
+    if nova in PRIMARIAS_COM_SECUNDARIA:
+        outras = [n for n, p in v.PADROES_INTENCAO if n in v.SECUNDARIAS and n != nova and p.search(norm)]
+        if outras:
+            slots["secundaria"] = outras[0]
+    return nova
+
+
+def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm):
         return "tentativa_manipulacao"
+    if v.PEDIDO_INSTRUCOES.search(norm):
+        return "pedido_instrucoes"
     if v.DADO_DE_TERCEIRO.search(norm):
         return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
@@ -243,6 +271,11 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale
             achadas = sobra
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    extremo = "min" if v.EXTREMO_MIN.search(norm) else "max" if v.EXTREMO_MAX.search(norm) else None
+    if (extremo and not ref and not categoria
+            and all(n in ("preco_produto", "disponibilidade", "pagamento") for n in achadas)):
+        slots["extremo"] = extremo
+        return "extremo_lista"  # sem lista na conversa, a regra cai na pergunta de categoria
     if achadas and achadas[0] == "reclamacao" and not v.RECLAMACAO_EXPLICITA.search(norm):
         # desabafo ("que absurdo") com pedido concreto: segue o pedido; sem pedido concreto continua reclamação
         if any(n in v.CONCRETAS for n in achadas[1:]):
@@ -278,6 +311,14 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "fora_escopo"
     if re.search(v.PADROES_INTENCAO[-1][1].pattern, norm):
         return "saudacao"
+    if v.ENCERRAMENTO.search(norm):
+        return "encerramento"
+    if (slots.get("parcelas") or slots.get("forma")) and slots["palavras"] <= 6 and not v.PAGAMENTO_GERAL.search(norm):
+        return "preco_produto"  # "e em 12x", "e no pix": pergunta de condição do produto em foco, ou pede o produto
+    if slots["palavras"] <= 3 and slots.get("afirmativo"):
+        return "confirmacao_solta"
+    if slots["palavras"] <= 2 and slots.get("negativo"):
+        return "confirmacao_solta"
     return None
 
 
@@ -287,7 +328,7 @@ def _trocar_assunto(estado: Estado, novo: str) -> None:
         estado.pendentes.append({"objetivo": estado.objetivo, "coletados": estado.coletados,
                                  "declarados": estado.declarados, "aguardando": estado.aguardando})
         estado.pendentes = estado.pendentes[-3:]
-        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo", "ultimo_produto")}
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in MANTER}
         estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
     estado.objetivo = novo
     estado.aguardando = None
@@ -347,6 +388,8 @@ def perceber(estado: Estado, mensagem: str) -> None:
             and s["palavras"] <= 5 and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
         s["produto_id"] = ultimo
+    if nova is None and estado.ultimo_assunto == "frete" and s.get("cidade") and s["palavras"] <= 6:
+        nova = "frete"  # "e em <outra cidade>?" depois de uma pergunta de frete
     estado.intencao = nova
     s["nova"] = nova
 
@@ -420,10 +463,29 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.permissao_registro = bool(estado.coletados.get("registro_explicito"))
         return
 
+    if nova == "encerramento":  # agradecimento ou despedida: fecha a conversa, sem oferta e sem falha de entendimento
+        estado.objetivo = None
+        estado.aguardando = None
+        estado.pendentes = []
+        estado.falhas_seguidas = 0
+        estado.incompreensoes = 0
+        estado.ultima_pergunta = {}
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in MANTER}
+        estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
+        estado.intencao = "encerramento"
+        return
+
+    # categoria nova no meio de uma pergunta de produto ("violão barato" quando se esperava o modelo): busca nova
+    if nova == "busca_produto" and s.get("categoria") and "referencia" not in s and ag in ("escolha_produto", "referencia_produto"):
+        estado.objetivo = None
+        estado.aguardando = None
+        estado.coletados.pop("opcoes", None)
+        ag = ag_inicial = None
+
     # mensagem sem intenção própria, ou resposta a uma pergunta de dado: segue o assunto
     if estado.objetivo and ag in AGUARDA_DADO:
         familia_atual = FAMILIAS.get(estado.objetivo)
-        fraca = nova in (None, "saudacao") or (
+        fraca = nova in (None, "saudacao", "confirmacao_solta") or (
             estado.objetivo == "frete" and nova in ("preco_produto", "pagamento", "busca_produto"))
         mesma = nova in FAMILIAS and nova != "garantia" and FAMILIAS[nova] == familia_atual
         if fraca or mesma:
@@ -441,7 +503,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
     else:
         estado.objetivo = nova
         estado.aguardando = None
-        estado.coletados = {k: x for k, x in estado.coletados.items() if k in ("pedido", "protocolo", "ultimo_produto")}
+        estado.coletados = {k: x for k, x in estado.coletados.items() if k in MANTER}
         estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
     if nova == "reclamacao" and s["abrir_reclamacao"]:
         estado.coletados["registro_explicito"] = True

@@ -74,7 +74,8 @@ class Agente:
         motivo_saida = "ok"
         concluiu = False
 
-        for numero in range(1, MAX_PASSOS + 1):
+        partes: list[str] = []  # respostas já prontas de perguntas anteriores da mesma mensagem
+        for numero in range(1, MAX_PASSOS * (2 if estado.slots.get("secundaria") else 1) + 1):
             try:
                 acao = self.decisor.decidir(estado, mensagem)
             except Exception:  # noqa: BLE001 - decisor com defeito não derruba o atendimento
@@ -115,8 +116,20 @@ class Agente:
                 contagens["resposta_nao_renderiza"] += 1
                 chave_final, acao = "falha_ferramenta", Acao(tipo="responder", resposta="falha_ferramenta")
                 texto = respostas.renderizar(chave_final, estado, {})
+            segunda = estado.slots.get("secundaria")
+            if segunda and acao.tipo == "responder" and not acao.parametros.get("propor_registro"):
+                # duas perguntas na mesma mensagem: guarda esta resposta e segue para a outra intenção conhecida
+                partes.append(texto)
+                estado.slots["secundaria"] = None
+                estado.intencao = estado.objetivo = segunda
+                estado.aguardando = None
+                contagens["pergunta_secundaria"] += 1
+                continue
+            if partes:
+                texto = chr(10).join([*partes, "", texto])
             texto, oferecer = ajustar_tom(estado, acao, chave_final, texto)
-            if self.redator is not None and chave_final != "saudacao" and estado.sentimento == "neutro":
+            if (self.redator is not None and chave_final not in SEM_REDACAO and not partes
+                    and estado.sentimento == "neutro"):
                 permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
                 texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,
                                               respostas_anteriores(conversa_id) if self.concisao else [])
@@ -255,6 +268,11 @@ def integrar(estado: Estado, passo: Passo) -> None:
             estado.coletados["pedido_demo"] = r.dados
         elif r.estado == "negado":
             estado.declarados.pop("pedido_demo", None)
+    elif nome == "buscar_produtos" and r.estado == "ok" and passo.args.get("limite") != 1:
+        # a lista mostrada ao cliente: base do "qual o mais barato?" e do "tem em estoque?" sem produto
+        base = {k: v for k, v in passo.args.items() if k not in ("limite", "deslocamento")}
+        estado.coletados["ultima_busca"] = {"args": base, "ids": [i["id"] for i in r.dados["itens"]],
+                                            "total": r.dados["total_encontrado"]}
     elif nome == "ver_produto":
         if r.estado == "ok":
             estado.coletados["ultimo_produto"] = r.dados["id"]
@@ -291,10 +309,15 @@ def completar_datas(estado: Estado) -> None:
 
 # --- fechamento do turno --------------------------------------------------------------------
 
+# Sem redação do modelo: recusa e escopo (o texto livre não pode abrir brecha), e respostas curtas já completas.
+SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "recusa_instrucoes", "fora_escopo",
+               "fora_escopo_geral", "identidade", "encerramento", "confirmacao_solta"}
+
 # Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
 SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
                      "confirmar_registro", "registro_cancelado", "registro_falhou", "perguntas_repetidas",
-                     "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao", "dado_recusado"}
+                     "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao", "dado_recusado",
+                     "encerramento", "identidade", "confirmacao_solta"}
 FECHO_DISPENSAVEL = re.compile(r"^(Se quiser|Se precisar|Se estiver|Posso ajudar)")
 
 

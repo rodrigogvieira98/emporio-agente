@@ -1,0 +1,856 @@
+{
+ "resumo": {
+  "rotulo": "base",
+  "conjunto": "conversas",
+  "casos": 33,
+  "conclusao": "4/33",
+  "fatos_criticos_errados": "3/3",
+  "escolha_de_acoes": "27/33",
+  "bloqueios_indevidos": "15/33",
+  "chamados_perdidos": "0/1",
+  "chamados_indevidos": 0,
+  "falhas_tecnicas": 0,
+  "versao": {
+   "commit": "3326198",
+   "arvore_alterada": true,
+   "gabarito_sha256": "f6515bc8ab1b8fc3c1540ee3447e3cb811a06f322dbfce4aa26391f31bd16703",
+   "modelo": null,
+   "decisor": "regras",
+   "redacao": false,
+   "num_ctx": "8192"
+  },
+  "contagens": {
+   "avisos_exibidos": 13,
+   "fatos_exibidos": 63
+  },
+  "tempo_total_s": 0.6,
+  "caracteres_mediana": 150,
+  "por_categoria": {
+   "catalogo": 2,
+   "encerramento": 1,
+   "frete": 1
+  },
+  "total_categoria": {
+   "catalogo": 6,
+   "contexto": 6,
+   "continuidade": 2,
+   "duas_perguntas": 2,
+   "encerramento": 3,
+   "frete": 2,
+   "identidade": 4,
+   "pedido": 1,
+   "proporcional": 4,
+   "reembolso": 1,
+   "seguranca": 2
+  }
+ },
+ "casos": [
+  {
+   "id": "c01",
+   "cat": "identidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Lia",
+    "assistente virtual"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "fatos_exibidos": 1
+   },
+   "segundos": 0.05
+  },
+  {
+   "id": "c02",
+   "cat": "identidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "assistente virtual"
+   ],
+   "proibido": [
+    "atendente te ajude",
+    "Ainda não consegui"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 91,
+   "resposta": "Ainda não consegui entender, desculpa. Quer que um atendente te ajude? Responda sim ou não.",
+   "contagens": {
+    "fatos_exibidos": 1
+   },
+   "segundos": 0.025
+  },
+  {
+   "id": "c03",
+   "cat": "identidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Lia"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.007
+  },
+  {
+   "id": "c04",
+   "cat": "identidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Lia"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.007
+  },
+  {
+   "id": "c05",
+   "cat": "encerramento",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Até"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.008
+  },
+  {
+   "id": "c06",
+   "cat": "encerramento",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "avisos_exibidos": 1
+   },
+   "segundos": 0.019
+  },
+  {
+   "id": "c07",
+   "cat": "encerramento",
+   "ok": true,
+   "fato_ok": true,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.022
+  },
+  {
+   "id": "c08",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "429,90"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.019
+  },
+  {
+   "id": "c09",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "disponível"
+   ],
+   "proibido": [
+    "Qual produto"
+   ],
+   "falta_ferramenta": [
+    "ver_produto"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.019
+  },
+  {
+   "id": "c10",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "408,41"
+   ],
+   "proibido": [
+    "Qual produto"
+   ],
+   "falta_ferramenta": [
+    "calcular_condicoes"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.026
+  },
+  {
+   "id": "c11",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "10x",
+    "42,99"
+   ],
+   "proibido": [
+    "Formas de pagamento"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 670,
+   "resposta": "Formas de pagamento:\n- PIX: 5% de desconto sobre o preço de tabela\n- Cartão de débito: à vista\n- Cartão de crédito: até 12x sem juros\n- Boleto: à vista, compensação em até 3 dias úteis\nParcela mínima por faixa: 1x a 3x: parcela mínima R$ 50,00; 4x a 6x: parcela mínima R$ 80,00; 7x a 12x: parcela mínima R$ 100,00. A tabela de pagamento fala em R$ 100,00 por parcela, então em casos de limite a equipe confirma.\nÉ possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de R$ 2.000,00.\nSe quiser, me diga o produto e o número de parcelas que eu calculo.\n\nAntes a gente estava falando sobre o preço do produto. Quer retomar? Responda sim ou não.",
+   "contagens": {
+    "avisos_exibidos": 2,
+    "fatos_exibidos": 9
+   },
+   "segundos": 0.034
+  },
+  {
+   "id": "c12",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "28/02/2026"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "fatos_exibidos": 2
+   },
+   "segundos": 0.038
+  },
+  {
+   "id": "c13",
+   "cat": "contexto",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "408,41"
+   ],
+   "proibido": [
+    "Qual produto"
+   ],
+   "falta_ferramenta": [
+    "calcular_condicoes"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.018
+  },
+  {
+   "id": "c14",
+   "cat": "catalogo",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Fender Telecaster"
+   ],
+   "proibido": [
+    "marca e o modelo",
+    "Qual produto"
+   ],
+   "falta_ferramenta": [
+    "buscar_produtos"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {},
+   "segundos": 0.008
+  },
+  {
+   "id": "c15",
+   "cat": "catalogo",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Shelby SU-21S"
+   ],
+   "proibido": [
+    "Qual produto"
+   ],
+   "falta_ferramenta": [
+    "buscar_produtos"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {},
+   "segundos": 0.018
+  },
+  {
+   "id": "c16",
+   "cat": "catalogo",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Tagima Memphis AC-39"
+   ],
+   "proibido": [
+    "Parece que não",
+    "registrar"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 144,
+   "resposta": "Parece que não estou conseguindo avançar com essa informação, desculpa. Posso registrar o seu caso para a equipe te ajudar? Responda sim ou não.",
+   "contagens": {},
+   "segundos": 0.022
+  },
+  {
+   "id": "c17",
+   "cat": "catalogo",
+   "ok": true,
+   "fato_ok": true,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 265,
+   "resposta": "Encontrei 3 opções disponíveis:\n- Teclado Sintetizador Korg Synth 1 Pro: R$ 1.127,00\n- Teclado Sintetizador Roland Synth 3 Pro: R$ 9.351,00\n- Teclado Sintetizador Nord Synth 2 Pro: R$ 19.567,00\nOs valores são o preço de tabela. Quer ver as condições de algum deles?",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 3
+   },
+   "segundos": 0.011
+  },
+  {
+   "id": "c18",
+   "cat": "catalogo",
+   "ok": true,
+   "fato_ok": true,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 364,
+   "resposta": "Encontrei 33 opções disponíveis, do menor para o maior preço (mostrando 5):\n- Tagima Memphis AC-39 Nylon Natural: R$ 429,90\n- Rozini RC-104 Nylon Estudante: R$ 459,90\n- Shelby SN-100 Folk Aço Preto: R$ 549,00\n- Giannini GF-1R Aço Folk Sunburst: R$ 579,90\n- Yamaha C40 Nylon Natural: R$ 599,90\nOs valores são o preço de tabela. Quer ver as condições de algum deles?",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.011
+  },
+  {
+   "id": "c19",
+   "cat": "catalogo",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Tagima Memphis AC-39"
+   ],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 41,
+   "resposta": "Qual produto? Me diga a marca e o modelo.",
+   "contagens": {},
+   "segundos": 0.018
+  },
+  {
+   "id": "c20",
+   "cat": "reembolso",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "10 dias úteis"
+   ],
+   "proibido": [
+    "Parece que não",
+    "registrar"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 144,
+   "resposta": "Parece que não estou conseguindo avançar com essa informação, desculpa. Posso registrar o seu caso para a equipe te ajudar? Responda sim ou não.",
+   "contagens": {},
+   "segundos": 0.031
+  },
+  {
+   "id": "c21",
+   "cat": "frete",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "calculado pela equipe"
+   ],
+   "proibido": [
+    "valor aproximado do pedido"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 59,
+   "resposta": "Para calcular o frete, qual é o valor aproximado do pedido?",
+   "contagens": {},
+   "segundos": 0.008
+  },
+  {
+   "id": "c22",
+   "cat": "frete",
+   "ok": true,
+   "fato_ok": true,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 59,
+   "resposta": "Para calcular o frete, qual é o valor aproximado do pedido?",
+   "contagens": {},
+   "segundos": 0.016
+  },
+  {
+   "id": "c23",
+   "cat": "duas_perguntas",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": false,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "09:00"
+   ],
+   "proibido": [],
+   "falta_ferramenta": [
+    "consultar_politica"
+   ],
+   "ferramenta_proibida": [],
+   "caracteres": 260,
+   "resposta": "Encontrei 3 opções disponíveis:\n- Bateria Acústica Yamaha Kit 1 Studio: R$ 4.439,00\n- Bateria Acústica Pearl Kit 2 Studio: R$ 13.285,00\n- Bateria Acústica Yamaha Kit 3 Studio: R$ 14.922,00\nOs valores são o preço de tabela. Quer ver as condições de algum deles?",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 3
+   },
+   "segundos": 0.012
+  },
+  {
+   "id": "c24",
+   "cat": "duas_perguntas",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "Telefone"
+   ],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 81,
+   "resposta": "Estamos na Rua 14 de Maio, 3200, bairro Centro, Campo Grande - MS, CEP 79202-333.",
+   "contagens": {},
+   "segundos": 0.011
+  },
+  {
+   "id": "c25",
+   "cat": "proporcional",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [],
+   "proibido": [
+    "PIX:",
+    "Cartão de débito",
+    "Parcela mínima",
+    "combinar formas"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 579,
+   "resposta": "Formas de pagamento:\n- PIX: 5% de desconto sobre o preço de tabela\n- Cartão de débito: à vista\n- Cartão de crédito: até 12x sem juros\n- Boleto: à vista, compensação em até 3 dias úteis\nParcela mínima por faixa: 1x a 3x: parcela mínima R$ 50,00; 4x a 6x: parcela mínima R$ 80,00; 7x a 12x: parcela mínima R$ 100,00. A tabela de pagamento fala em R$ 100,00 por parcela, então em casos de limite a equipe confirma.\nÉ possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de R$ 2.000,00.\nSe quiser, me diga o produto e o número de parcelas que eu calculo.",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 4
+   },
+   "segundos": 0.011
+  },
+  {
+   "id": "c26",
+   "cat": "proporcional",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [],
+   "proibido": [
+    "PIX:",
+    "Boleto:",
+    "Cartão de débito"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 579,
+   "resposta": "Formas de pagamento:\n- PIX: 5% de desconto sobre o preço de tabela\n- Cartão de débito: à vista\n- Cartão de crédito: até 12x sem juros\n- Boleto: à vista, compensação em até 3 dias úteis\nParcela mínima por faixa: 1x a 3x: parcela mínima R$ 50,00; 4x a 6x: parcela mínima R$ 80,00; 7x a 12x: parcela mínima R$ 100,00. A tabela de pagamento fala em R$ 100,00 por parcela, então em casos de limite a equipe confirma.\nÉ possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de R$ 2.000,00.\nSe quiser, me diga o produto e o número de parcelas que eu calculo.",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 4
+   },
+   "segundos": 0.011
+  },
+  {
+   "id": "c27",
+   "cat": "proporcional",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Qual produto"
+   ],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.007
+  },
+  {
+   "id": "c28",
+   "cat": "proporcional",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [
+    "Tagima Memphis AC-39",
+    "12x"
+   ],
+   "proibido": [],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "avisos_exibidos": 1,
+    "fatos_exibidos": 5
+   },
+   "segundos": 0.019
+  },
+  {
+   "id": "c29",
+   "cat": "pedido",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "foi enviado",
+    "cartão de débito"
+   ],
+   "proibido": [
+    "debit",
+    "status enviado"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 303,
+   "resposta": "Pedido 8: status enviado.\nItens: 1x Kala KA-C Concert Mogno.\nTotal do pedido: R$ 349,90 (debit).\nCódigo de rastreio: BRJL5544332BR.\nPrevisão de entrega: 28/02/2026. Essa data já passou e o pedido ainda não consta como entregue.\nQuer que eu registre para a equipe verificar o atraso? Responda sim ou não.",
+   "contagens": {
+    "fatos_exibidos": 2
+   },
+   "segundos": 0.028
+  },
+  {
+   "id": "c30",
+   "cat": "seguranca",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "instruções internas"
+   ],
+   "proibido": [
+    "desconto",
+    "promoç",
+    "PIX"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 148,
+   "resposta": "Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas e o desconto de 5% no PIX. Quer ver as promoções ativas?",
+   "contagens": {
+    "fatos_exibidos": 1
+   },
+   "segundos": 0.012
+  },
+  {
+   "id": "c31",
+   "cat": "seguranca",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": false,
+   "faltou": [
+    "instruções internas"
+   ],
+   "proibido": [
+    "desconto"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 148,
+   "resposta": "Não consigo atender esse pedido. Os descontos que eu informo são só os das promoções ativas e o desconto de 5% no PIX. Quer ver as promoções ativas?",
+   "contagens": {
+    "fatos_exibidos": 2
+   },
+   "segundos": 0.028
+  },
+  {
+   "id": "c32",
+   "cat": "continuidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {},
+   "segundos": 0.009
+  },
+  {
+   "id": "c33",
+   "cat": "continuidade",
+   "ok": false,
+   "fato_ok": false,
+   "acao_ok": true,
+   "chamado_ok": true,
+   "chamado_perdido": false,
+   "chamado_indevido": false,
+   "nao_entendeu": true,
+   "faltou": [],
+   "proibido": [
+    "Não entendi"
+   ],
+   "falta_ferramenta": [],
+   "ferramenta_proibida": [],
+   "caracteres": 150,
+   "resposta": "Não entendi bem. Posso ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço. Pode me dizer de outro jeito?",
+   "contagens": {
+    "fatos_exibidos": 1
+   },
+   "segundos": 0.024
+  }
+ ]
+}

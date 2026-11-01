@@ -9,12 +9,27 @@ import re
 
 # Ordem importa: a primeira que casar vence (com ajustes em percepcao.py).
 PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
+    # quem é a Lia: vem antes de pedir_atendente, porque "você é humano?" não é pedido de atendente
+    ("identidade", re.compile(
+        r"\b(quem (e|eh|seria) (voce|vc|tu|ai|a lia)|quem (esta|ta) (falando|ai|me atendendo|atendendo)|"
+        r"(voce|vc|tu) (e|eh|seria) (um |uma |o |a )?(robo|bot|chatbot|humano|humana|pessoa|gente|real|ia|"
+        r"inteligencia artificial|maquina|atendente virtual|assistente)|"
+        r"^(e|eh) (um |uma )?(robo|bot|chatbot|ia|maquina|pessoa de verdade|gente de verdade|humano|humana)\b|"
+        r"(qual|como) (e )?(o )?(seu|teu) nome|como (voce )?(se chama|te chamo|posso te chamar)|seu nome|"
+        r"o que (voce|vc|a lia) (faz|sabe|pode|consegue)|o que (voces|vcs) (fazem|sabem|podem|conseguem)|"
+        r"(voce|vc) (faz|sabe fazer|serve para|serve pra) o que|para que (voce )?serve|"
+        r"(em|com) o que (voce|vc) (pode|consegue) (me )?ajudar|como (voce|vc) pode (me )?ajudar)\b")),
     ("pedir_atendente", re.compile(
         r"\b(atendente|atendimento humano|humano|pessoa de verdade|gerente|responsavel|"
         r"falar com (alguem|uma pessoa|um humano|gente)|passa (pra|para) (alguem|um))\b")),
     ("reclamacao", re.compile(
         r"\b(reclam\w*|insatisf\w*|pessim\w*|horrivel|absurdo|inadmissivel|descaso|decepcion\w*|"
         r"indignad\w*|revoltad\w*|mau atendimento|atendimento ruim)\b")),
+    # quanto tempo para o dinheiro voltar: informação do manual, antes de abrir fluxo de devolução
+    ("reembolso_prazo", re.compile(
+        r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
+        r"\b(dinheiro|reembols\w*|estorno|valor de volta|restitu\w*|receber de volta|pagamento de volta)|"
+        r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
     ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno)\b")),
     ("defeito", re.compile(
         r"\b(defeit\w*|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
@@ -22,6 +37,10 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
     ("garantia", re.compile(r"\bgarantia\b")),
     ("frete", re.compile(r"\b(frete|entregam|enviam|entrega (para|pra|em)|cep)\b")),
+    # quando o pedido chega: usa o pedido já consultado na conversa, se houver
+    ("previsao_entrega", re.compile(
+        r"\b(quando (chega|vai chegar|chegara|chegam|entrega|entregam|vou receber|recebo|sai|saiu)|"
+        r"(qual|e a) (a )?previsao( de entrega| de chegada)?|ja (saiu|foi enviado|foi despachado)|chega (quando|que dia|hoje|amanha))\b")),
     ("status_pedido", re.compile(r"\b(pedido|rastre\w*|encomenda|onde esta (meu|minha)|status)\b")),
     ("fora_escopo", re.compile(
         r"\b(cordas?(?! orquestrais?)|palhetas?|cabos?|cases?|capas?|pedais?|pedaleiras?|amplificador\w*|ampli|"
@@ -53,6 +72,25 @@ CASO_PROPRIO = re.compile(
 CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "horario", "endereco", "contato", "pagamento",
              "frete", "promocao", "garantia"}
 RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento ruim)\b")
+
+# Despedida e agradecimento: só valem quando a mensagem não traz outro pedido.
+ENCERRAMENTO = re.compile(
+    r"\b(obrigad[oa]s?|brigad[oa]|valeu|vlw|agradec\w*|grat[oa]|tchau|xau|ate (logo|mais|breve|amanha|a proxima|depois)|"
+    r"era so isso|e so isso|so isso mesmo|era isso|por hoje (e|eh) so|tudo certo|falou|flw|"
+    r"boa (tarde|noite) pra voce|ate mais)\b")
+# Pedido de instruções internas (sem tentativa de burlar regra): recusa própria, sem falar de desconto.
+PEDIDO_INSTRUCOES = re.compile(
+    r"\b(system prompt|prompt( de sistema| do sistema| inicial)?|suas instrucoes|tuas instrucoes|suas regras internas|"
+    r"instrucoes (internas|do sistema|que voce recebeu)|como (voce )?foi (programad[oa]|configurad[oa]|treinad[oa])|"
+    r"(mostre|mostra|me mostra|revele|revela|repita|repete|cole) .{0,25}(instrucoes|prompt|regras))\b")
+
+# "o mais barato" / "o mais caro": só tem sentido sobre uma lista já mostrada
+EXTREMO_MIN = re.compile(r"\b(mais barat\w+|mais em conta|menor preco|menor valor|mais economic\w+|mais acessiv\w+)\b")
+EXTREMO_MAX = re.compile(r"\b(mais car[oa]s?|maior preco|maior valor)\b")
+# Perguntas de informação simples que podem vir junto de outra na mesma mensagem
+SECUNDARIAS = ("horario", "endereco", "contato")
+# Palavras que indicam pergunta geral sobre pagamento (não é "e em 12x" de um produto)
+PAGAMENTO_GERAL = re.compile(r"\b(quais|formas|aceita\w*|aceitam|como|posso|voces|vcs|quantas|ate quanto|parcelam|trabalham)\b")
 
 PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|dias uteis|chega em)\b")
 
@@ -123,7 +161,7 @@ TELEFONE_COMPLETO = re.compile(r"\(?\b\d{2}\)?[\s.-]*9?\d{4}[\s.-]?\d{4}\b")
 # Pedidos que o agente recusa sem consultar nada.
 MANIPULACAO = re.compile(
     r"\b(ignor\w+|esquec\w+|desconsider\w+)\b.{0,40}\b(instruc\w*|regras?|prompt|anterior\w*|orientac\w*)\b"
-    r"|\b(system prompt|prompt|suas instrucoes|suas regras|modo desenvolvedor|jailbreak|finja que)\b")
+    r"|\b(modo desenvolvedor|jailbreak|finja que)\b")
 DADO_DE_TERCEIRO = re.compile(
     r"\b(telefone|celular|fone|e-?mail|endereco|cpf|nome|sobrenome|dados|contato)\b.{0,30}"
     r"\b(do cliente|da cliente|do comprador|do dono|do titular|de outro cliente|de outra pessoa|de quem comprou)\b"

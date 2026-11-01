@@ -36,6 +36,12 @@ MOEDA = re.compile(r"R\$|\breais?\b|\bcentavos?\b|%")
 # Rótulos do prompt (chaves do JSON de entrada e campos da saída) que o modelo às vezes devolve como texto.
 ECO_DE_ROTULO = re.compile(
     r"\b(texto[ _]da[ _]loja|mensagem[ _]do[ _]cliente)\b|(?:^|\n)\s*(?:abertura|fechamento)\s*[:=-]|[{}]", re.I)
+# Oferta genérica de ajuda: não diz nada que o bloco factual já não diga, e a Lia não fecha com fórmula pronta.
+OFERTA_GENERICA = re.compile(
+    r"\b(qualquer duvida|fique a vontade|estou (aqui|por aqui|a disposicao)|estamos a disposicao|"
+    r"a disposicao|caso (precise|queira|tenha)|se (precisar|quiser|tiver|houver)|conte comigo|conte com a gente|"
+    r"posso ajudar (em )?(mais|algo|alguma)|mais alguma coisa|mais alguma duvida|precisando|sempre que (precisar|quiser)|"
+    r"para o que precisar|no que precisar|foi um prazer)\b")
 LIMIAR_REPETE_BLOCO = 0.8
 MAX_FRASES = 2
 MAX_PERGUNTAS = 1
@@ -80,6 +86,12 @@ def validar(livre: str, bloco: str, estado: Estado) -> str | None:
         return "verbo_de_acao"
     if len(livre) > MAX_CARACTERES:
         return "longo"
+    for frase in _frases(livre):
+        primeira = next((c for c in frase if c.isalpha()), "")
+        if primeira and primeira.islower():
+            return "minuscula"  # frase que começa em minúscula é resto de eco ou de continuação do bloco
+    if OFERTA_GENERICA.search(norm):
+        return "oferta_generica"
     if len(_frases(livre)) > MAX_FRASES:
         return "frases"
     if livre.count("?") + bloco.count("?") > MAX_PERGUNTAS:

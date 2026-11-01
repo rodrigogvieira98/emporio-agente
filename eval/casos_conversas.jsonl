@@ -38,3 +38,7 @@
 {"id":"c38","cat":"qa_lia","turnos":["quanto ta o Martin D-28?","nossa, muito caro"],"contem":["Entendo"],"nao_contem":["Qual produto"],"chamado":false}
 {"id":"c39","cat":"qa_lia","turnos":["queria ver guitarras","qual a mais barata?","ah, e vocês abrem amanhã?","voltando, essa guitarra no pix fica quanto?"],"contem":["Telecaster","PIX"],"nao_contem":["Qual produto"],"chamado":false}
 {"id":"c40","cat":"qa_lia","turnos":["quanto custa o Yamaha C40?","e o Shelby SN-100?","quanto fica os dois?"],"contem":["Yamaha C40","Shelby SN-100","1.148,90"],"chamado":false}
+{"id":"c41","cat":"qa_lia","turnos":["quero saber do meu pedido","numero 4","final 3456"],"contem":["Pedido 4"],"nao_contem":["Por nada"],"chamado":false}
+{"id":"c42","cat":"qa_lia","turnos":["minha guitarra deu defeito","comprei faz 50 dias"],"contem":["30 dias","fabricante"],"nao_contem":["Não encontrei essa informação"]}
+{"id":"c43","cat":"qa_lia","turnos":["o entregador ta aqui e a caixa do violao ta toda amassada"],"contem":["recusar o recebimento"],"nao_contem":["Encontrei"]}
+{"id":"c44","cat":"qa_lia","turnos":["pedido 17 telefone final 8765","pq foi cancelado?"],"contem":["cancelado pelo cliente antes do processamento"],"nao_contem":["Não entendi"]}

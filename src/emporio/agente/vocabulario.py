@@ -52,11 +52,14 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("reembolso_prazo", re.compile(
         r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
         r"\b(dinheiro|reembols\w*|estorno|valor de volta|restitu\w*|receber de volta|pagamento de volta)|"
+        r"(reembols\w*|estorno|dinheiro de volta)\b.{0,30}\b(quanto tempo|quantos dias|quando|prazo|demora\w*)|"
         r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
-    ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno)\b")),
+    ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno|dinheiro de volta)\b")),
     ("defeito", re.compile(
         r"\b(defeit\w*|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
-        r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*)\b")),
+        r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*|"
+        r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
+        r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
     ("garantia", re.compile(r"\bgarantia\b")),
     ("frete", re.compile(r"\b(frete|entregam|enviam|entrega (para|pra|em)|cep)\b")),
@@ -64,6 +67,9 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("previsao_entrega", re.compile(
         r"\b(quando (chega|vai chegar|chegara|chegam|entrega|entregam|vou receber|recebo|sai|saiu)|"
         r"(qual|e a) (a )?previsao( de entrega| de chegada)?|ja (saiu|foi enviado|foi despachado)|chega (quando|que dia|hoje|amanha))\b")),
+    # por que o pedido foi cancelado: responde com a observação gravada no pedido
+    ("motivo_cancelamento", re.compile(
+        r"\b(pq|por ?que|porque|motivo|razao)\b.{0,30}\bcancel\w+|\bcancel\w+.{0,20}\b(motivo|porque|razao)\b")),
     ("status_pedido", re.compile(r"\b(pedido|rastre\w*|encomenda|onde esta (meu|minha)|status)\b")),
     # produto parecido com o que está em foco: a mesma categoria, sem acessório
     ("parecido", re.compile(r"\b(parecid\w+|similar\w*|semelhante\w*|alternativ\w+|outro (modelo|igual)|algo assim)\b")),
@@ -107,8 +113,8 @@ CASO_PROPRIO = re.compile(
     r"(quero|queria|gostaria de|vou|posso|consigo) (trocar|devolver)|pedido (n|no|numero)? ?\d+)\b")
 
 # Pedido concreto: se vier junto de um desabafo, a intenção concreta manda e o desabafo só muda o tom.
-CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "horario", "endereco", "contato", "pagamento",
-             "frete", "promocao", "garantia"}
+CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "previsao_entrega", "horario", "endereco", "contato",
+             "pagamento", "frete", "promocao", "garantia"}
 RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento ruim)\b")
 
 # Despedida e agradecimento: só valem quando a mensagem não traz outro pedido.
@@ -222,7 +228,9 @@ FORA_DO_ASSUNTO = re.compile(
 MAU_USO = re.compile(r"\b(caiu|cair|queda|derrub\w+|mau uso|molhou|molhad[oa]|umidade|chuva|bati|batida)\b")
 AVARIA = re.compile(
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
-    r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*")
+    r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*|"
+    r"\b(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
+    r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*)\b")
 # "esse", "essa guitarra", "ele": remetem ao produto em foco; "os dois" e a quantidade somam/multiplicam
 DEMONSTRATIVO = re.compile(r"\b(esse|essa|esses|essas|este|esta|desse|dessa|deste|desta|dele|dela|nele|nela|ele|ela|"
                            r"o mesmo|a mesma)\b")
@@ -232,6 +240,8 @@ QUANTIDADE = re.compile(
     r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
     r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
     r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
+# "e agora?", "o que eu faço?": pede o próximo passo do assunto de pós-venda em andamento
+PROXIMO_PASSO = re.compile(r"\b(e agora|o que (eu )?faco|o que fazer|como (eu )?faco|e depois)\b")
 DESGASTE = re.compile(
     r"\b(cordas?|palhetas?|trastes?|feltros?)\b.{0,25}\b(arrebent\w*|rebent\w*|estour\w*|romp\w*|partiu|gast\w*|desgast\w*|"
     r"enferruj\w*)|\b(arrebent\w*|rebent\w*|estour\w*|romp\w*)\b.{0,20}\b(cordas?|palhetas?)\b")

@@ -187,9 +187,12 @@ class RegrasDecisor:
 
     def _defeito_fora_do_prazo(self, estado: Estado, dias: int) -> Acao | None:
         """Defeito depois do prazo de troca (4.2): a garantia é com o fabricante e a loja pode intermediar."""
-        acao = self._info_regra(estado, "defeito") if self._prazo_defeito(estado) is None else None
-        if acao:
-            return acao
+        # a resposta cita o fabricante do manual: a consulta tem de estar neste turno, mesmo com a regra já guardada
+        r = resultado_de(estado, "consultar_politica", temas=["defeito"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["defeito"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
         if dias > (self._prazo_defeito(estado) or dias):
             return propor("defeito_apos_prazo", "atendente",
                           "Cliente com defeito depois do prazo de troca pediu orientacao; a equipe pode intermediar "
@@ -232,7 +235,28 @@ class RegrasDecisor:
             return ferramenta("consultar_politica", temas=["trocas"])
         return responder("devolucao_loja_fisica") if r.estado == "ok" else self._erro(estado, r)
 
+    def _reembolso_de_cancelado(self, estado: Estado) -> Acao | None:
+        """Pedido já consultado e cancelado, com pagamento: devolver o dinheiro é reembolso, não abertura de devolução."""
+        ped = estado.coletados.get("pedido")
+        if estado.objetivo != "devolucao" or not ped or ped.get("status") != "cancelled":
+            return None
+        r = resultado_de(estado, "consultar_politica", temas=["arrependimento"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["arrependimento"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("reembolso_cancelado")
+
+    def _i_motivo_cancelamento(self, estado: Estado) -> Acao:
+        """"Por que foi cancelado?": a observação gravada no pedido já consultado; sem pedido, pede os dados."""
+        if estado.coletados.get("pedido"):
+            return responder("motivo_cancelamento")
+        return self._i_status_pedido(estado)
+
     def _posvenda(self, estado: Estado) -> Acao:
+        acao = self._reembolso_de_cancelado(estado)
+        if acao:
+            return acao
         for exclusao in (self._exclusao_garantia, self._avaria, self._devolucao_na_loja):
             acao = exclusao(estado)
             if acao:

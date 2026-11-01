@@ -1118,6 +1118,27 @@ def frete_grande_porte(e: Estado, p: dict) -> str:
             "individual: a nossa equipe faz o cálculo, e eu não informo valor por aqui.")
 
 
+def motivo_cancelamento(e: Estado, p: dict) -> str:
+    ped = e.coletados["pedido"]
+    if ped["status"] != "cancelled":
+        return (f"O pedido {ped['pedido_id']} não está cancelado: ele {FRASE_STATUS.get(ped['status'], 'está em andamento')}.")
+    if ped.get("nota"):
+        return f"Pelo registro do pedido {ped['pedido_id']}: {ped['nota']}."
+    return (f"O registro do pedido {ped['pedido_id']} não traz o motivo do cancelamento, e eu não vou supor um. "
+            f"Quer que eu registre a dúvida para a equipe? {CONFIRMA}")
+
+
+def reembolso_cancelado(e: Estado, p: dict) -> str:
+    ped = e.coletados["pedido"]
+    dias = _condicoes(e).get("devolucao.arrependimento_reembolso_dias_uteis_max")
+    forma = _forma_pedido(ped.get("forma_pagamento") or "")
+    pago = f" no {forma}" if forma and forma.startswith("PIX") else (f" no {forma}" if forma else "")
+    if not dias:
+        return sem_dado(e, p)
+    return (f"O pedido {ped['pedido_id']} está cancelado e foi pago{pago}. Pela regra de reembolso da loja, o valor volta "
+            f"na mesma forma de pagamento em até {dias} dias úteis. Se o prazo passar, a equipe confirma o seu caso.")
+
+
 def soma_dois(e: Estado, p: dict) -> str:
     """Soma das condições dos dois últimos produtos citados, com os valores que a ferramenta devolveu."""
     calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"]
@@ -1166,7 +1187,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos, soma_dois)
+        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado)
 }
 
 

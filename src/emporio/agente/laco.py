@@ -417,7 +417,10 @@ MAX_REPETICOES_PERGUNTA = 2  # a mesma pergunta de dado, no máximo 2 vezes segu
 
 
 def _assinatura(acao: Acao) -> dict[str, Any]:
-    return {"chave": acao.resposta, "campos": list(acao.parametros.get("campos", []))}
+    sig = {"chave": acao.resposta, "campos": list(acao.parametros.get("campos", []))}
+    if acao.resposta == "pedir_pedido":  # pedir só o que falta (número, depois o final) é avanço, não repetição
+        sig["tem"] = [bool(acao.parametros.get("tem_pedido")), bool(acao.parametros.get("tem_final"))]
+    return sig
 
 
 def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:

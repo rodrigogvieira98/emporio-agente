@@ -135,6 +135,70 @@ def test_os_dois_soma_os_dois_ultimos_produtos_citados():
     assert "R$ 1.148,90" in t[2]  # 599,90 + 549,00 (preço de tabela)
 
 
+# 5. consulta de pedido em várias mensagens -------------------------------------------------------
+
+def test_numero_e_final_em_turnos_separados_consultam_o_pedido(sql):
+    t = textos("quero saber do meu pedido", "numero 4", "final 3456")
+    assert "4 últimos dígitos" in t[1]
+    assert "Por nada" not in t[2] and "Pedido 4" in t[2]
+
+
+def test_final_do_telefone_sozinho_nunca_e_despedida():
+    (t,) = textos("final 7821")
+    assert "Por nada" not in t and "número do pedido" in t
+
+
+def test_irritacao_no_meio_da_consulta_nao_abandona_a_consulta():
+    t = textos("meu pedido nao chegou ainda e ja to puto", "pedido 8, ana carolina ferreira",
+               "isso é um absurdo, quando chega?")
+    assert "4 últimos dígitos" in t[2] and "Me conta em poucas palavras" not in t[2]
+
+
+def test_depois_da_irritacao_o_final_conclui_a_consulta(sql):
+    t = textos("meu pedido nao chegou ainda e ja to puto", "pedido 4", "isso é um absurdo, quando chega?", "3456")
+    assert "Pedido 4" in t[3]
+
+
+# 6. pós-venda ----------------------------------------------------------------------------------------
+
+def test_dias_informados_pelo_cliente_aplicam_o_prazo_de_defeito():
+    t = textos("minha guitarra deu defeito", "comprei faz 50 dias")
+    assert "30 dias" in t[1] and "fabricante" in t[1] and "Não encontrei essa informação" not in t[1]
+
+
+def test_dentro_do_prazo_continua_pedindo_o_pedido():
+    t = textos("minha guitarra deu defeito", "comprei faz 10 dias")
+    assert "fabricante" not in t[1] and "pedido" in t[1].lower()
+
+
+@pytest.mark.parametrize("msg", ["o entregador ta aqui e a caixa do violao ta toda amassada",
+                                 "o tampo do violao chegou rachado"])
+def test_avaria_orienta_recusar_o_recebimento(msg):
+    (t,) = textos(msg)
+    assert "recusar o recebimento" in t and "Encontrei" not in t
+
+
+def test_o_que_eu_faco_depois_da_avaria_continua_o_assunto():
+    t = textos("o entregador ta aqui e a caixa do violao ta toda amassada", "o que eu faço??")
+    assert "Não entendi" not in t[1]
+
+
+def test_reembolso_em_quanto_tempo_responde_dez_dias_uteis():
+    (t,) = textos("e o reembolso em quanto tempo?")
+    assert "10 dias úteis" in t
+
+
+def test_pedido_cancelado_explica_o_motivo_pela_observacao_do_pedido(sql):
+    t = textos("pedido 17 telefone final 8765", "pq foi cancelado?")
+    assert "cancelado" in t[0] and "Não entendi" not in t[1]
+    assert "Pedido cancelado pelo cliente antes do processamento" in t[1]
+
+
+def test_pedido_cancelado_com_pagamento_responde_sobre_reembolso(sql):
+    t = textos("pedido 17 telefone final 8765", "quero meu dinheiro de volta")
+    assert "10 dias úteis" in t[1] and "cancelado" in t[1] and "Ainda não consegui entender" not in t[1]
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

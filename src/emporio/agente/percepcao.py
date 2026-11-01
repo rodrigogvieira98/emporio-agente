@@ -22,7 +22,7 @@ MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_b
           "recomendado")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
-    "status_pedido": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
+    "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
     "defeito": "posvenda", "garantia": "posvenda",
 }
 # esperando um dado: respostas curtas continuam o assunto
@@ -390,6 +390,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "encerramento"
     if (slots.get("parcelas") or slots.get("forma")) and slots["palavras"] <= 6 and not v.PAGAMENTO_GERAL.search(norm):
         return "preco_produto"  # "e em 12x", "e no pix": pergunta de condição do produto em foco, ou pede o produto
+    if v.FINAL_EXPLICITO.search(norm) or slots.get("pedido_id") or slots.get("pedido_demo"):
+        return "status_pedido"  # número do pedido ou final do telefone sozinhos: é o dado da consulta, nunca despedida
     if slots["palavras"] <= 3 and slots.get("afirmativo"):
         return "confirmacao_solta"
     if slots["palavras"] <= 2 and slots.get("negativo"):
@@ -477,6 +479,10 @@ def perceber(estado: Estado, mensagem: str) -> None:
             and (s["palavras"] <= 5 or mais_desconto or s.get("demonstrativo")) and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
         s["produto_id"] = ultimo
+    if nova is None and v.PROXIMO_PASSO.search(norm):
+        assunto = estado.objetivo or estado.ultimo_assunto
+        if assunto in POSVENDA | {"garantia"}:
+            nova = assunto  # "o que eu faço?" depois de uma orientação: o assunto de pós-venda continua
     if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
         nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco
         s["produto_id"] = ultimo

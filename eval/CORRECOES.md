@@ -12,3 +12,6 @@
 - 01/11/2026, correção de instrumento em caso novo, antes de qualquer relato: `c29` de `casos_conversas.jsonl` proibia "debit", que casava com "débito" normalizado. Passou a proibir "(debit)".
 
 - 01/11/2026, correção de instrumento, sem efeito nas métricas: `identificacao` em `eval/rodar.py` registrava `redacao: true` com a variável ausente. Com a redação desligada por padrão, passou a registrar o valor real.
+
+- 01/11/2026, 19h58, medição congelada em 735bb85, a primeira leitura de `casos_frescos.jsonl`: controle 16/18, A (regras e redação `qwen3:4b`) 16/18, B (A com reserva) 17/18, 0 fatos críticos errados e 0 chamados indevidos em todos. Pela barra de `PREREGISTRO_RESERVA.md`, B não passa no item 3 (pedia ao menos 2 "não entendi" a menos; teve 1), então a reserva fica desligada na entrega (`EMPORIO_RESERVA=0`).
+- 01/11/2026, 20h05, depois de ver os frescos e antes do holdout: o caso f02 ("isso aqui é uma pessoa de verdade?") abriu chamado de atendente, defeito real; e f01 ("com quem estou falando?") não era entendido. Corrigido o vocabulário de identidade. A partir daqui os frescos deixam de ser às cegas: os números acima, medidos antes da correção, são os que valem para eles.

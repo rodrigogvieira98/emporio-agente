@@ -12,6 +12,8 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     # quem é a Lia: vem antes de pedir_atendente, porque "você é humano?" não é pedido de atendente
     ("identidade", re.compile(
         r"\b(quem (e|eh|seria) (voce|vc|tu|ai|a lia)|quem (esta|ta) (falando|ai|me atendendo|atendendo)|"
+        r"com quem (eu )?(estou|to|tou|falo|converso)|"
+        r"(isso|isto|aqui|aqui e|isso aqui) (e|eh) (um |uma )?(robo|bot|ia|maquina|pessoa|humano|gente)|"
         r"(voce|vc|tu) (e|eh|seria) (um |uma |o |a )?(robo|bot|chatbot|humano|humana|pessoa|gente|real|ia|"
         r"inteligencia artificial|maquina|atendente virtual|assistente)|"
         r"^(e|eh) (um |uma )?(robo|bot|chatbot|ia|maquina|pessoa de verdade|gente de verdade|humano|humana)\b|"

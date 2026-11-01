@@ -1,13 +1,15 @@
 {% extends "base.html" %}
-{% block titulo %}Rastrear pedido{% endblock %}
+{% block titulo %}Rastrear pedido | {{ loja().nome }}{% endblock %}
 {% block conteudo %}
-<div class="contorno pagina">
+<div class="contorno pagina pagina-coluna">
 <h1>Rastrear pedido</h1>
-<p class="nota-valores">Pedido de demonstração (começa com DEMO-): informe só o número, sem o telefone.</p>
-<form class="filtros" action="/rastreio" method="post">
-  <label>Número do pedido <input name="pedido" value="{{ pedido }}" required></label>
-  <label>Final do telefone (4 dígitos) <input name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}"></label>
-  <button type="submit">Consultar</button>
+<form class="form-coluna" action="/rastreio" method="post">
+  <label for="r-pedido">Número do pedido</label>
+  <input id="r-pedido" name="pedido" value="{{ pedido }}" required>
+  <label for="r-final">Final do telefone (4 dígitos)</label>
+  <input id="r-final" name="final_telefone" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" aria-describedby="r-dica">
+  <p id="r-dica" class="nota-valores">Para pedidos feitos aqui no site (número começa com {{ prefixo_pedido }}), informe só o número, sem o telefone.</p>
+  <button type="submit" class="botao-cheio">Consultar</button>
 </form>
 {% if aviso %}<p class="aviso" role="alert">{{ aviso }}</p>{% endif %}
 {% if demo %}{% set d = demo %}{% include "_pedido_demo.html" %}{% endif %}

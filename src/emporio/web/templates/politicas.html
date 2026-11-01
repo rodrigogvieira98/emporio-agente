@@ -1,13 +1,22 @@
 {% extends "base.html" %}
-{% block titulo %}Políticas{% endblock %}
 {% block conteudo %}
 <div class="contorno pagina">
 <h1>Políticas da loja</h1>
-{% for s in secoes %}
-<section class="politica" id="secao-{{ s.id }}">
-  <h2>{{ s.titulo }}</h2>
-  <p class="texto-politica">{{ s.texto | quebras }}</p>
-</section>
-{% endfor %}
+<div class="politicas-layout">
+  <nav class="indice-lateral" aria-label="Temas das políticas">
+    <ul>{% for t in temas %}<li><a href="#{{ t.ancora }}">{{ t.titulo }}</a></li>{% endfor %}</ul>
+  </nav>
+  <div class="politicas-conteudo">
+  {% for t in temas %}
+  <section class="politica" id="{{ t.ancora }}" aria-labelledby="t-{{ t.ancora }}">
+    <h2 id="t-{{ t.ancora }}">{{ t.titulo }}</h2>
+    {% for s in t.secoes %}
+      {% if s.titulo != t.titulo %}<h3>{{ s.titulo }}</h3>{% endif %}
+      <p class="texto-politica">{{ s.texto | quebras }}</p>
+    {% endfor %}
+  </section>
+  {% endfor %}
+  </div>
+</div>
 </div>
 {% endblock %}

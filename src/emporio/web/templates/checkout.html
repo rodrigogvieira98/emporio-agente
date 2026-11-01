@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block titulo %}Checkout{% endblock %}
+{% block titulo %}Checkout | {{ loja().nome }}{% endblock %}
 {% block conteudo %}
 <div class="contorno pagina">
 <p class="migalha"><a href="/carrinho">Voltar ao carrinho</a></p>
-<h1>Checkout</h1>
-<p class="aviso aviso-demo"><strong>{{ aviso_demo }}</strong> Não peça nem informe dados de cartão, CPF ou endereço.</p>
+<h1>Finalizar pedido</h1>
+<p class="aviso aviso-demo"><strong>Antes de confirmar:</strong> este pedido não gera cobrança nem entrega. Não informe dados de cartão, CPF ou endereço.</p>
 {% if aviso %}<p class="aviso aviso-erro" role="alert">{{ aviso }}</p>{% endif %}
 {% if c.vazio %}
 <p class="vazio-msg">Seu carrinho está vazio.</p>
@@ -52,7 +52,7 @@
     <dl class="resumo-total">
       <div><dt>Produtos</dt><dd>{{ c.produtos_total | brl }}</dd></div>
       <div>
-        <dt>{% if c.frete %}{{ c.frete.rotulo }}{% else %}Frete{% endif %}</dt>
+        <dt>{% if c.frete %}{{ c.frete.regiao }}: {{ c.frete.rotulo }}{% else %}Frete{% endif %}</dt>
         <dd>
           {% if not c.frete %}informe a cidade
           {% elif c.frete.situacao == 'gratis' %}{{ 0 | brl }}
@@ -83,7 +83,7 @@
   </section>
 
   <p class="acoes-compra">
-    <button type="submit" class="botao-cheio" formmethod="post" formaction="/checkout"{% if not c.pode_finalizar %} disabled{% endif %}>Finalizar pedido de demonstração</button>
+    <button type="submit" class="botao-cheio" formmethod="post" formaction="/checkout"{% if not c.pode_finalizar %} disabled{% endif %}>Registrar pedido</button>
   </p>
 </form>
 {% endif %}

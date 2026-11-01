@@ -1,28 +1,19 @@
 """Dados da homepage. Tudo vem das ferramentas do agente; nada é calculado nem escrito aqui.
 
-Vitrine: produtos com promoção ativa e, para completar, os mais baratos vendáveis de categorias diferentes.
+Destaques (carrossel): produtos com promoção ativa. Grade: o mais barato vendável de cada categoria, sem repetir
+destaque. Categorias: só as que têm produto vendável.
 """
 from __future__ import annotations
 
 from typing import Any
 
 from ..ferramentas.condicoes import calcular_condicoes
-from ..ferramentas.politica import consultar_politica
 from ..ferramentas.produtos import buscar_produtos, ver_produto
 from ..ferramentas.promocoes import listar_promocoes
 from ..politicas.manual import fato
-from . import apresentacao, navegacao
+from . import apresentacao, fotos, navegacao
 
-TAMANHO_VITRINE = 8
-
-# Seções do manual que alimentam "Como funciona comprar aqui". Os ids são só endereços no manual:
-# o texto, as condições e as ressalvas vêm de consultar_politica.
-BLOCOS_COMO_FUNCIONA = (
-    ("Pagamento", "pagamento", (("3.1", 4),), "3"),
-    ("Frete", "frete", (("5.1", 4),), "5"),
-    ("Troca", "trocas", (("4.1", 2), ("4.2", 1)), "4"),
-    ("Garantia", "garantia", (("8.1", 1),), "8"),
-)
+TAMANHO_GRADE = 8
 
 
 def _promocoes_por_produto() -> dict[int, dict[str, Any]]:
@@ -51,87 +42,66 @@ def _condicao_pix(produto_id: int) -> dict[str, Any] | None:
     return {"valor": d["final_centavos"], "desconto": d.get("pix_percentual") if d.get("pix_aplicado") else None}
 
 
-def com_categoria(item: dict[str, Any]) -> dict[str, Any]:
-    """Liga o item de busca à categoria (a busca não a devolve) para escolher a ilustração."""
-    r = ver_produto(referencia=item["id"])
-    categoria = r.dados["categoria"] if r.estado == "ok" else None
+def com_foto(item: dict[str, Any], categoria: str | None) -> dict[str, Any]:
+    """Liga o item à categoria, à foto do seu tipo e à ilustração de reserva."""
     item["categoria"] = categoria
+    item["foto"] = fotos.foto_do_produto(item["id"], item["nome"], categoria)
     item["ilustracao"] = apresentacao.ilustracao(categoria)
     return item
 
 
+def com_categoria(item: dict[str, Any]) -> dict[str, Any]:
+    """Item de busca (que não traz a categoria) ligado a ela e à foto."""
+    r = ver_produto(referencia=item["id"])
+    categoria = r.dados["categoria"] if r.estado == "ok" else None
+    return _com_condicoes(item, categoria) if item.get("pode_comprar") else com_foto(item, categoria)
+
+
 def _com_condicoes(item: dict[str, Any], categoria: str | None) -> dict[str, Any]:
-    item["categoria"] = categoria
-    item["ilustracao"] = apresentacao.ilustracao(categoria)
+    com_foto(item, categoria)
     item["pix"] = _condicao_pix(item["id"])
     item["parcelamento"] = _parcelamento(item["id"])
     return item
 
 
-def vitrine() -> list[dict[str, Any]]:
+def destaques() -> list[dict[str, Any]]:
+    """Produtos vendáveis com promoção ativa e inequívoca."""
     promos = _promocoes_por_produto()
     saida: list[dict[str, Any]] = []
-    vistos: set[int] = set()
     for p in promos.values():
-        if p["conflito"] or p["situacao_venda"] != "disponivel" or p["produto_id"] in vistos:
+        if p["conflito"] or p["situacao_venda"] != "disponivel":
             continue
         r = ver_produto(referencia=p["produto_id"])
-        if r.estado != "ok":
-            continue
-        vistos.add(p["produto_id"])
-        saida.append(_com_condicoes(apresentacao.preparar_item(r.dados, promos), r.dados["categoria"]))
-    # completar: o mais barato vendável de cada categoria que ainda não tem produto na vitrine
-    candidatos = []
-    representadas = {s["categoria"] for s in saida}
-    for nome in navegacao.listar_categorias():
-        if nome in representadas:
-            continue
-        r = buscar_produtos(categoria=nome, limite=1)
         if r.estado == "ok":
-            candidatos.append((r.dados["itens"][0], nome))
-    candidatos.sort(key=lambda c: c[0]["preco_centavos"])
-    for item, nome in candidatos:
-        if len(saida) >= TAMANHO_VITRINE:
-            break
-        if item["id"] in vistos:
+            saida.append(_com_condicoes(apresentacao.preparar_item(r.dados, promos), r.dados["categoria"]))
+    return saida
+
+
+def grade(excluir: set[int]) -> list[dict[str, Any]]:
+    """O mais barato vendável de cada categoria, de preços variados, fora dos destaques."""
+    promos = _promocoes_por_produto()
+    candidatos = []
+    for c in categorias():
+        r = buscar_produtos(categoria=c["nome"], limite=3)
+        if r.estado == "ok":
+            candidatos += [(i, c["nome"]) for i in r.dados["itens"] if i["id"] not in excluir]
+    candidatos.sort(key=lambda x: x[0]["preco_centavos"])
+    saida, por_categoria = [], {}
+    for item, nome in candidatos:  # no máximo 2 por categoria, para a grade ter variedade
+        if por_categoria.get(nome, 0) >= 2 or len(saida) >= TAMANHO_GRADE:
             continue
+        por_categoria[nome] = por_categoria.get(nome, 0) + 1
         saida.append(_com_condicoes(apresentacao.preparar_item(item, promos), nome))
     return saida
 
 
 def categorias() -> list[dict[str, Any]]:
-    """Cada categoria com contagem e menor preço vendável; sem produto vendável, 'em breve' e sem link."""
+    """Categorias com produto vendável, com contagem e menor preço. Categoria vazia não aparece."""
     saida = []
     for nome in navegacao.listar_categorias():
         r = buscar_produtos(categoria=nome, limite=1)
-        entrada: dict[str, Any] = {"nome": nome, "ilustracao": apresentacao.ilustracao(nome), "total": 0,
-                                   "a_partir_de": None}
-        if r.estado == "ok":
-            entrada["total"] = r.dados["total_encontrado"]
-            entrada["a_partir_de"] = r.dados["itens"][0]["preco_centavos"]
-        saida.append(entrada)
-    return saida
-
-
-def como_funciona() -> list[dict[str, Any]]:
-    """Blocos curtos de pagamento, frete, troca e garantia, com as ressalvas do manual."""
-    saida = []
-    ja_ditas: set[str] = set()  # a mesma ressalva liga seções de blocos diferentes: aparece uma vez só
-    for titulo, tema, ids, ancora in BLOCOS_COMO_FUNCIONA:
-        r = consultar_politica(temas=[tema])
         if r.estado != "ok":
             continue
-        por_id = {s["id"]: s for s in r.dados["secoes"]}
-        linhas: list[str] = []
-        ressalvas: list[str] = []
-        for i, quantas in ids:
-            s = por_id.get(i)
-            if not s or not s["publico"] or not s["texto"]:
-                continue
-            texto = [ln.lstrip("• ").strip() for ln in s["texto"].splitlines() if ln.strip()]
-            linhas += texto[:quantas]
-            ressalvas += [a["descricao"] for a in s["ambiguidades"] if a["id"] not in ja_ditas]
-            ja_ditas.update(a["id"] for a in s["ambiguidades"])
-        if linhas:
-            saida.append({"titulo": titulo, "linhas": linhas, "ressalvas": ressalvas, "ancora": f"secao-{ancora}"})
+        saida.append({"nome": nome, "ilustracao": apresentacao.ilustracao(nome), "foto": fotos.foto_da_categoria(nome),
+                      "total": r.dados["total_encontrado"], "a_partir_de": r.dados["itens"][0]["preco_centavos"]})
     return saida

@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% block titulo %}Carrinho{% endblock %}
+{% block titulo %}Carrinho | {{ loja().nome }}{% endblock %}
 {% block conteudo %}
-<div class="contorno pagina">
+<div class="contorno pagina pagina-coluna">
 <h1>Carrinho</h1>
-<p class="aviso aviso-demo"><strong>{{ aviso_demo }}</strong> O estoque não é baixado.</p>
 {% if aviso %}<p class="aviso aviso-erro" role="alert">{{ aviso }}</p>{% endif %}
 {% if not linhas %}
 <p class="vazio-msg">Seu carrinho está vazio.</p>
@@ -14,7 +13,7 @@
   <li class="item-compra">
     {% if l.p %}
     {% set p = l.p %}
-    <div class="item-arte"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg></div>
+    <div class="item-arte">{% if p.foto %}<img src="{{ p.foto.src }}" width="{{ p.foto.largura }}" height="{{ p.foto.altura }}" alt="" loading="lazy">{% else %}<svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg>{% endif %}</div>
     <div class="item-dados">
       <h2 class="item-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h2>
       {% include "_preco.html" %}

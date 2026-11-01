@@ -51,11 +51,10 @@ def test_inicio_tem_categorias_busca_chat_e_dados_da_loja(cliente):
 
 def test_rodape_mostra_um_telefone_e_um_email_dos_dados_da_empresa_com_orientacao(cliente):
     html = cliente.get("/").text
-    assert str(fato("contato.telefone_whatsapp_dados_empresa").valor) in html
-    assert str(fato("contato.email_dados_empresa").valor) in html
-    assert "O manual traz outros canais; se não conseguir contato, fale com a Lia." in html
-    for chave in ("contato.whatsapp_secao_7", "contato.email_capa"):  # a capa repete o telefone dos dados
-        assert str(fato(chave).valor) not in html, chave  # as variantes ficam no registro de ambiguidades
+    assert str(fato("contato.telefone_capa").valor) in html  # 6c/6d: contatos de uma fonte só, sem grafia alternativa
+    assert str(fato("contato.email_capa").valor) in html
+    assert str(fato("contato.email_dados_empresa").valor) not in html  # a grafia com acento não aparece
+    assert "O manual" not in html  # nenhuma nota citando o manual ao cliente
 
 
 def test_catalogo_filtra_por_categoria_e_faixa_de_preco(cliente):
@@ -98,7 +97,7 @@ def test_produto_inexistente_devolve_404(cliente):
 
 def test_politicas_mostra_so_secoes_publicas(cliente):
     r = cliente.get("/politicas")
-    assert r.status_code == 200 and "secao-3" in r.text
+    assert r.status_code == 200 and 'id="pagamento"' in r.text
     assert "secao-7.1" not in r.text  # procedimento interno
 
 

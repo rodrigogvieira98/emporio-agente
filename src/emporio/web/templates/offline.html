@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Sem conexão{% endblock %}
+{% block titulo %}Sem conexão | {{ loja().nome }}{% endblock %}
 {# Esta página é guardada no aparelho na instalação. Por isso não traz estado da loja (aberta ou fechada) nem contagens: só o que o manual diz. #}
 {% block faixa %}{% endblock %}
 {% block menu_categorias %}{% endblock %}

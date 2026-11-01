@@ -9,6 +9,7 @@ from ..texto import normalizar, radical, tokens
 from .envelope import EntradaBase, Fonte, Resultado, ferramenta, resultado
 
 LIMITE_MAXIMO = 5  # limite de sistema, não é fato de loja
+LIMITE_SITE = 60  # teto da interface do site (para_site=True); a Lia continua com 5
 FONTE_BANCO = Fonte(tipo="banco", referencia="produtos")
 
 SITUACAO = {"active": "disponivel", "discontinued": "descontinuado", "coming_soon": "em_breve"}
@@ -52,18 +53,20 @@ class EntradaBusca(EntradaBase):
     preco_min: int | None = None
     preco_max: int | None = None
     limite: int = 5
+    deslocamento: int = 0
+    para_site: bool = False
     incluir_indisponiveis: bool = False
 
 
 @ferramenta(EntradaBusca)
 def buscar_produtos(e: EntradaBusca) -> Resultado:
-    if e.limite < 1:
+    if e.limite < 1 or e.deslocamento < 0:
         return resultado("falha", motivo="entrada_invalida")
     if (e.preco_min is not None and e.preco_min < 0) or (e.preco_max is not None and e.preco_max < 0):
         return resultado("falha", motivo="faixa_incoerente")
     if e.preco_min is not None and e.preco_max is not None and e.preco_min > e.preco_max:
         return resultado("falha", motivo="faixa_incoerente")
-    limite = min(e.limite, LIMITE_MAXIMO)
+    limite = min(e.limite, LIMITE_SITE if e.para_site else LIMITE_MAXIMO)
 
     conn = banco.conectar()
     try:
@@ -93,7 +96,7 @@ def buscar_produtos(e: EntradaBusca) -> Resultado:
                       if all(p in normalizar(r["nome"] + " " + (r["descricao"] or "")) for p in partes)]
         if not linhas:
             return resultado("vazio", {"total_encontrado": 0, "itens": []}, [FONTE_BANCO], "sem_produtos")
-        itens = [_item(conn, r) for r in linhas[:limite]]
+        itens = [_item(conn, r) for r in linhas[e.deslocamento:e.deslocamento + limite]]
         return resultado("ok", {"total_encontrado": len(linhas), "itens": itens}, [FONTE_BANCO])
     finally:
         conn.close()

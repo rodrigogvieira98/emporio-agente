@@ -1,0 +1,7 @@
+<ul class="canais">
+{% for c in canais() %}
+  <li>{% if c.link %}<a class="canal" href="{{ c.link }}"{% if c.chave == 'conversar' %} rel="noopener" target="_blank"{% endif %}>{% else %}<span class="canal">{% endif %}
+    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icones.svg#{{ c.icone }}"/></svg>
+    <span>{{ c.valor }}</span>{% if c.link %}</a>{% else %}</span>{% endif %}</li>
+{% endfor %}
+</ul>

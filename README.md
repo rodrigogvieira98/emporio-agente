@@ -2,6 +2,8 @@
 
 Lia, assistente virtual da Empório da Música (loja fictícia de instrumentos em Campo Grande/MS). Ela responde sobre catálogo, preços, condições de pagamento, status de pedidos e políticas da loja, registra reclamações e encaminha para a equipe. Junto vem um site da loja (catálogo, produto, políticas, rastreio) com a Lia em todas as páginas, instalável como PWA.
 
+Aviso do repositório: a loja é fictícia e os pedidos não são reais. Nenhum valor é cobrado e nada é entregue. O site não diz isso ao cliente, por decisão de produto. Canais de contato só viram link com `EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK`; o Fale Conosco só envia e-mail com `EMPORIO_SMTP_HOST` e `EMPORIO_SMTP_PARA` configurados. Fotos: ver `docs/CREDITOS_IMAGENS.md` (regeneram com `python -m emporio.web.gerar_fotos PASTA`, com Pillow de `requirements-e2e.txt`).
+
 ## Executar com Docker
 
 ```

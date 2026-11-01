@@ -1,28 +1,42 @@
 {% extends "base.html" %}
-{% block titulo %}Catálogo{% endblock %}
 {% block conteudo %}
 <div class="contorno pagina">
-<h1>Catálogo</h1>
-<form class="filtros" action="/catalogo" method="get">
-  <label>Categoria
-    <select name="categoria">
-      <option value="">Todas</option>
-      {% for c in categorias() %}<option value="{{ c }}"{% if c == filtros.categoria %} selected{% endif %}>{{ c }}</option>{% endfor %}
-    </select>
-  </label>
-  <label>Busca <input name="termo" type="search" value="{{ filtros.termo }}"></label>
-  <label>Preço mínimo (reais) <input name="preco_min" inputmode="decimal" value="{{ filtros.preco_min }}"></label>
-  <label>Preço máximo (reais) <input name="preco_max" inputmode="decimal" value="{{ filtros.preco_max }}"></label>
-  <label class="inline"><input type="checkbox" name="todos" value="1"{% if filtros.todos %} checked{% endif %}> Mostrar indisponíveis</label>
-  <button type="submit">Filtrar</button>
-</form>
+<p class="migalha"><a href="/">Início</a> / <span aria-current="page">{{ titulo_pagina }}</span></p>
+<h1>{{ titulo_pagina }}</h1>
+<div class="catalogo-layout">
+<details class="filtros-caixa" data-sobreposicao data-so-celular{% if filtros.preco_min or filtros.preco_max or filtros.todos %} data-filtrado{% endif %}>
+  <summary data-gatilho>Filtros</summary>
+  <form class="filtros" action="/catalogo" method="get" data-painel>
+    <label>Categoria
+      <select name="categoria">
+        <option value="">Todas</option>
+        {% for c in categorias() %}<option value="{{ c }}"{% if c == filtros.categoria %} selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Busca <input name="termo" type="search" value="{{ filtros.termo }}"></label>
+    <label>Preço mínimo (R$) <input name="preco_min" inputmode="decimal" value="{{ filtros.preco_min }}"></label>
+    <label>Preço máximo (R$) <input name="preco_max" inputmode="decimal" value="{{ filtros.preco_max }}"></label>
+    <label class="inline"><input type="checkbox" name="todos" value="1"{% if filtros.todos %} checked{% endif %}> Mostrar indisponíveis</label>
+    <button type="submit" class="botao-cheio">Aplicar filtros</button>
+  </form>
+</details>
+<div class="catalogo-lista">
 {% if erro %}
   <p class="aviso" role="status">{{ erro }}</p>
 {% else %}
-  <p class="contagem">Mostrando {{ itens | length }} de {{ total }} produtos, do menor para o maior preço. Refine os filtros para ver outros.</p>
-  <div class="grade">
+  <p class="contagem" data-total="{{ total }}">{{ total }} {{ 'produto' if total == 1 else 'produtos' }}, do menor para o maior preço. Página {{ pagina_atual }} de {{ paginas }}.</p>
+  <div class="grade grade-catalogo">
   {% for p in itens %}{% include "_card.html" %}{% endfor %}
   </div>
+  {% if paginas > 1 %}
+  <nav class="paginacao" aria-label="Páginas do catálogo">
+    {% if pagina_atual > 1 %}<a class="botao" rel="prev" href="/catalogo?{{ consulta | urlencode }}{{ '&' if consulta else '' }}pagina={{ pagina_atual - 1 }}">Página anterior</a>{% endif %}
+    <span class="paginacao-atual">{{ pagina_atual }} / {{ paginas }}</span>
+    {% if pagina_atual < paginas %}<a class="botao botao-cheio" rel="next" href="/catalogo?{{ consulta | urlencode }}{{ '&' if consulta else '' }}pagina={{ pagina_atual + 1 }}">Próxima página</a>{% endif %}
+  </nav>
+  {% endif %}
 {% endif %}
+</div>
+</div>
 </div>
 {% endblock %}

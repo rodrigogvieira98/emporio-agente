@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="whatsapp" viewBox="0 0 24 24"><path d="M4 20l1.3-4.2A8 8 0 1 1 8.4 18.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8.5c0 3.2 2.3 5.6 5.6 6.2l1.4-1.5-2-1-1 .8c-.9-.4-1.6-1.1-2-2l.8-1-1-2z" fill="currentColor"/></symbol>
+  <symbol id="telefone" viewBox="0 0 24 24"><path d="M6.5 3.5l3 .8.8 3.4-2 1.6c1 2 2.6 3.6 4.6 4.6l1.6-2 3.4.8.8 3-1.7 1.8c-.7.7-1.7 1-2.7.8C9.6 17.100 6.900 14.400 5.100 10.600c-.3-1 0-2 .7-2.700z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="email" viewBox="0 0 24 24"><rect x="3.500" y="5.500" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.800"/><path d="M4 7.500l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linejoin="round"/></symbol>
+  <symbol id="mensagem" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linejoin="round"/><path d="M8 9h8M8 12.500h5" stroke="currentColor" stroke-width="1.800" stroke-linecap="round"/></symbol>
+</svg>

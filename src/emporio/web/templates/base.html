@@ -9,13 +9,24 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="{{ loja().nome.split(' ', 1)[0] }}">
+{% set titulo_completo = ((titulo_pagina ~ ' | ') if titulo_pagina else '') ~ loja().nome %}
+{% set descricao_pagina = descricao or ('Instrumentos musicais, com preço e condição de pagamento: ' ~ loja().nome ~ '.') %}
+<title>{% block titulo %}{{ titulo_completo }}{% endblock %}</title>
+<meta name="description" content="{{ descricao_pagina }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ loja().nome }}">
+<meta property="og:title" content="{{ titulo_completo }}">
+<meta property="og:description" content="{{ descricao_pagina }}">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:image" content="{{ imagem or '/static/icones/icon-512.png' }}">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/static/icones/apple-touch-icon-180.png">
-<title>{% block titulo %}Início{% endblock %} | {{ loja().nome }}</title>
 <link rel="preload" href="/static/fontes/ZillaSlab-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="/static/marca.svg" type="image/svg+xml">
+<link rel="icon" href="/static/icones/icon-192.png" type="image/png" sizes="192x192">
 <link rel="stylesheet" href="/static/site.css">
 <script src="/static/htmx-2.0.4.min.js" defer></script>
+<script src="/static/sobreposicoes.js" defer></script>
 <script src="/static/chat.js" defer></script>
 <script src="/static/vitrine.js" defer></script>
 <script src="/static/pwa.js" defer></script>
@@ -24,18 +35,15 @@
 {% set L = loja() %}{% set S = situacao_loja() %}
 <a class="pular" href="#conteudo">Ir para o conteúdo</a>
 
-{% block faixa %}<div class="faixa">
+{% block faixa %}{% if S.conhecida %}<div class="faixa">
   <div class="contorno faixa-in">
-    {% if L.endereco_curto %}<p class="faixa-endereco">{{ L.endereco_curto }}</p>{% endif %}
-    {% if S.conhecida %}
     <p class="faixa-estado {{ 'aberta' if S.aberto else 'fechada' }}">
       <span class="ponto" aria-hidden="true"></span>
       {% if S.aberto %}<strong>Aberta agora</strong>{% if S.hoje %}<span class="faixa-detalhe">hoje até {{ S.hoje.fecha }}</span>{% endif %}
       {% else %}<strong>Fechada</strong>{% if S.retorno %}<span class="faixa-detalhe">abre {{ S.retorno.quando }} às {{ S.retorno.hora }}</span>{% endif %}{% endif %}
     </p>
-    {% endif %}
   </div>
-</div>{% endblock %}
+</div>{% endif %}{% endblock %}
 
 <header class="topo">
   <div class="contorno topo-in">
@@ -45,23 +53,23 @@
     </a>
     <form class="busca-topo" action="/catalogo" method="get" role="search">
       <label class="so-leitor" for="busca-termo">Buscar instrumento</label>
-      <input id="busca-termo" name="termo" type="search" placeholder="Buscar instrumento" autocomplete="off">
+      <input id="busca-termo" name="termo" type="search" placeholder="Buscar instrumento" autocomplete="off" value="{{ filtros.termo if filtros else '' }}">
       <button type="submit">Buscar</button>
     </form>
     <nav class="menu" aria-label="Principal">
-      {% block menu_categorias %}<details class="menu-categorias">
-        <summary>Categorias</summary>
-        <ul>
+      {% block menu_categorias %}<details class="menu-categorias" data-sobreposicao>
+        <summary data-gatilho>Categorias</summary>
+        <ul data-painel>
+          <li><a href="/catalogo">Todos os instrumentos</a></li>
         {% for c in menu_categorias() %}
-          {% if c.total %}<li><a href="/catalogo?categoria={{ c.nome | urlencode }}">{{ c.nome }}</a></li>
-          {% else %}<li class="em-breve"><span>{{ c.nome }}</span><small>em breve</small></li>{% endif %}
+          <li><a href="/catalogo?categoria={{ c.nome | urlencode }}">{{ c.nome }}</a></li>
         {% endfor %}
         </ul>
       </details>{% endblock %}
-      <a href="/politicas">Políticas</a>
+      <a href="/perguntas-frequentes">Perguntas frequentes</a>
+      <a href="/fale-conosco">Fale conosco</a>
       <a href="/rastreio">Rastrear pedido</a>
       {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
-      <a class="botao botao-lia" href="#chat" data-abrir-chat>Falar com a Lia</a>
     </nav>
   </div>
 </header>
@@ -73,49 +81,61 @@
     <div class="rodape-loja">
       <p class="rodape-marca">{{ L.nome }}</p>
       {% if L.endereco %}<p>{{ L.endereco }}</p>{% endif %}
-      {% if L.horario %}<p class="rodape-horario">Horário: {{ L.horario | join(" | ") }}</p>{% endif %}
     </div>
     <div>
-      <h2 class="rodape-titulo">Navegar</h2>
+      <h2 class="rodape-titulo">Comprar</h2>
       <ul class="rodape-lista">
         <li><a href="/catalogo">Catálogo</a></li>
+        <li><a href="/perguntas-frequentes">Perguntas frequentes</a></li>
         <li><a href="/politicas">Políticas</a></li>
         <li><a href="/rastreio">Rastrear pedido</a></li>
-        <li><a href="/#visite">Visite a loja</a></li>
       </ul>
     </div>
     <div>
-      <h2 class="rodape-titulo">Contato</h2>
-      {% if L.contatos %}<ul class="rodape-lista contatos">{% for c in L.contatos %}<li>{{ c.valor }}</li>{% endfor %}</ul>
-      <p class="rodape-nota">{{ L.contato_nota }}</p>{% endif %}
+      <h2 class="rodape-titulo">Atendimento</h2>
+      {% include "_canais.html" %}
+      <p><a href="/fale-conosco">Todos os canais</a></p>
     </div>
     <div>
-      <h2 class="rodape-titulo">Aceitamos</h2>
-      <p>{{ formas_pagamento() | capitalize }}.</p>
+      <h2 class="rodape-titulo">Informações</h2>
+      <ul class="rodape-lista">
+        <li><a href="/privacidade">Privacidade e cookies</a></li>
+        <li><a href="/creditos">Créditos das imagens</a></li>
+      </ul>
     </div>
-  </div>
-  <div class="contorno rodape-fim">
-    <p class="aviso-ficticia">Loja fictícia criada para um desafio técnico; dados de demonstração.</p>
   </div>
 </footer>
 
-<section id="chat" class="chat" aria-label="Chat com a Lia">
-  <button id="chat-alternar" class="chat-cabeca" type="button" aria-expanded="true" aria-controls="chat-corpo">
-    <span>Converse com a Lia</span><small class="chat-sub">assistente virtual</small><small class="chat-fechar">Fechar</small>
-  </button>
-  <div id="chat-corpo" class="chat-corpo">
-    <div id="chat-log" class="chat-log" role="log" aria-live="polite">
-      <p class="msg lia">Oi! Sou a Lia, assistente virtual. Posso ajudar com produtos, preços, prazos e pedidos.</p>
+<div id="lia" class="lia-flutuante" data-sobreposicao data-lia>
+  <section id="chat" class="chat" aria-label="Chat com a Lia" data-painel hidden>
+    <header class="chat-topo">
+      <img class="lia-retrato" src="/static/lia.svg" width="44" height="44" alt="">
+      <div class="chat-id"><strong>Lia</strong><small>assistente virtual da {{ L.nome }}</small></div>
+      <button id="chat-fechar" class="chat-fechar" type="button" aria-label="Fechar conversa com a Lia">Fechar</button>
+    </header>
+    <div id="chat-corpo" class="chat-corpo">
+      <div id="chat-log" class="chat-log" role="log" aria-live="polite">
+        <p class="msg lia">Oi! Sou a Lia, assistente virtual. Posso ajudar com produtos, preços, prazos e pedidos.</p>
+      </div>
+      <ul class="chat-sugestoes" aria-label="Sugestões">
+        <li><button type="button" data-pergunta="Quero ver violões">Encontrar instrumento</button></li>
+        <li><button type="button" data-pergunta="Quero consultar meu pedido">Consultar pedido</button></li>
+        <li><button type="button" data-pergunta="Como funcionam as trocas e devoluções?">Trocas e devoluções</button></li>
+      </ul>
+      <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
+            hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
+        <label class="so-leitor" for="chat-mensagem">Mensagem</label>
+        <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
+               placeholder="Escreva sua mensagem" required>
+        <button id="chat-enviar" type="submit">Enviar</button>
+      </form>
+      <p id="chat-espera" class="htmx-indicator chat-espera">A Lia está respondendo...</p>
     </div>
-    <form id="chat-form" class="chat-form" hx-post="/chat" hx-target="#chat-log" hx-swap="beforeend"
-          hx-disabled-elt="#chat-enviar" hx-indicator="#chat-espera">
-      <label class="so-leitor" for="chat-mensagem">Mensagem</label>
-      <input id="chat-mensagem" name="mensagem" type="text" maxlength="500" autocomplete="off" enterkeyhint="send"
-             placeholder="Escreva sua mensagem" required>
-      <button id="chat-enviar" type="submit">Enviar</button>
-    </form>
-    <p id="chat-espera" class="htmx-indicator chat-espera">A Lia está respondendo...</p>
-  </div>
-</section>
+  </section>
+  <button id="chat-alternar" class="lia-botao" type="button" aria-expanded="false" aria-controls="chat" data-gatilho>
+    <img class="lia-retrato" src="/static/lia.svg" width="44" height="44" alt="">
+    <span>Lia &middot; conversar</span>
+  </button>
+</div>
 </body>
 </html>

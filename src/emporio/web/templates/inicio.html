@@ -1,113 +1,73 @@
 {% extends "base.html" %}
-{% block titulo %}Início{% endblock %}
 {% block corpo_attr %} data-home{% endblock %}
 {% block conteudo %}
-<section class="abertura contorno">
-  <div class="abertura-texto">
-    <h1>Instrumentos musicais, com a etiqueta à vista.</h1>
-    <p class="abertura-linha">Veja o preço, a condição de pagamento e a situação de cada instrumento como estão no sistema agora. Na dúvida, a Lia responde com os dados da loja.</p>
-    <p class="abertura-acoes">
-      <a class="botao botao-cheio" href="#vitrine">Ver a vitrine</a>
-      <a class="botao" href="/catalogo">Catálogo completo</a>
-    </p>
-  </div>
-  <svg class="abertura-arte" viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#violoes"/></svg>
-</section>
-
-{% if vitrine %}
-<section class="secao contorno" id="vitrine" aria-labelledby="t-vitrine">
-  <div class="secao-cabeca">
-    <h2 id="t-vitrine">Na vitrine</h2>
-    <div class="setas" data-setas hidden>
-      <button type="button" data-seta="-1" aria-label="Produtos anteriores">&larr;</button>
-      <button type="button" data-seta="1" aria-label="Próximos produtos">&rarr;</button>
+<section class="abertura">
+  <div class="contorno abertura-grade">
+    <div class="abertura-texto">
+      <h1>Seu próximo som começa aqui.</h1>
+      <p class="abertura-linha">Violões, guitarras, baixos, teclados, baterias e ukuleles, com o preço e a condição de pagamento à vista.</p>
+      <p class="abertura-acoes"><a class="botao botao-cheio botao-grande" href="/catalogo">Explorar instrumentos</a></p>
     </div>
-  </div>
-  <div class="trilho" tabindex="0" role="region" aria-label="Vitrine de produtos. Use as setas do teclado para percorrer." data-trilho>
-  <ul class="trilho-lista">
-  {% for p in vitrine %}
-    <li class="vitrine-item" data-produto="{{ p.id }}">
-      <a class="vitrine-arte" href="/produto/{{ p.id }}" tabindex="-1" aria-hidden="true">
-        <svg viewBox="0 0 64 64"><use href="/static/ilustracoes.svg#{{ p.ilustracao }}"/></svg>
-      </a>
-      <div class="etiqueta">
-        {% if p.categoria %}<p class="et-categoria">{{ p.categoria }}</p>{% endif %}
-        <h3 class="et-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h3>
-        {% include "_preco.html" %}
-        <ul class="et-condicoes">
-          {% if p.pix %}<li>{% if p.pix.desconto %}PIX: <strong>{{ p.pix.valor | brl }}</strong> <span>(-{{ p.pix.desconto }}%)</span>{% else %}No PIX vale o preço acima{% endif %}</li>{% endif %}
-          {% if p.parcelamento %}<li>Ou {{ p.parcelamento.parcelas }}x de <strong>{{ p.parcelamento.parcela | brl }}</strong>{% if p.parcelamento.sem_juros %} sem juros{% endif %}</li>{% endif %}
-        </ul>
-      </div>
-    </li>
-  {% endfor %}
-  </ul>
+    {% if abertura %}<div class="abertura-foto"><img src="{{ abertura.src }}" width="{{ abertura.largura }}" height="{{ abertura.altura }}" alt="{{ abertura.alt }}" decoding="async"></div>{% endif %}
   </div>
 </section>
-{% endif %}
 
+{% if categorias_home %}
 <section class="secao contorno" id="categorias" aria-labelledby="t-categorias">
   <div class="secao-cabeca"><h2 id="t-categorias">Categorias</h2></div>
-  <ul class="indice">
+  <ul class="categorias">
   {% for c in categorias_home %}
-    {% if c.total %}
-    <li><a class="indice-item" href="/catalogo?categoria={{ c.nome | urlencode }}">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ c.ilustracao }}"/></svg>
-      <span class="indice-texto"><strong>{{ c.nome }}</strong>
+    <li><a class="categoria-item" href="/catalogo?categoria={{ c.nome | urlencode }}">
+      {% if c.foto %}<img src="{{ c.foto.src }}" width="{{ c.foto.largura }}" height="{{ c.foto.altura }}" alt="" loading="lazy" decoding="async">
+      {% else %}<svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ c.ilustracao }}"/></svg>{% endif %}
+      <span class="categoria-texto"><strong>{{ c.nome }}</strong>
         <small>{{ c.total }} {{ 'produto' if c.total == 1 else 'produtos' }} &middot; a partir de {{ c.a_partir_de | brl }}</small></span>
     </a></li>
-    {% else %}
-    <li><div class="indice-item vazio">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ c.ilustracao }}"/></svg>
-      <span class="indice-texto"><strong>{{ c.nome }}</strong><small>Em breve</small></span>
-    </div></li>
-    {% endif %}
   {% endfor %}
   </ul>
 </section>
+{% endif %}
 
-{% if como_funciona %}
-<section class="secao contorno" id="como-funciona" aria-labelledby="t-como">
-  <div class="secao-cabeca"><h2 id="t-como">Como funciona comprar aqui</h2><a href="/politicas">Ler as políticas completas</a></div>
-  <dl class="regras">
-  {% for b in como_funciona %}
-    <div class="regra">
-      <dt><a href="/politicas#{{ b.ancora }}">{{ b.titulo }}</a></dt>
-      <dd>
-        <ul>{% for l in b.linhas %}<li>{{ l }}</li>{% endfor %}</ul>
-        {% if b.ressalvas %}<div class="ressalva"><p class="ressalva-titulo">A confirmar com a equipe</p>
-          <ul>{% for r in b.ressalvas %}<li>{{ r }}</li>{% endfor %}</ul></div>{% endif %}
-      </dd>
+{% if destaques %}
+<section class="secao contorno" id="destaques" aria-labelledby="t-destaques">
+  <div class="secao-cabeca"><h2 id="t-destaques">Em destaque</h2><a href="/catalogo">Ver o catálogo completo</a></div>
+  <div class="carrossel" data-carrossel role="region" aria-roledescription="carrossel" aria-label="Produtos em destaque" tabindex="0">
+    <ul class="carrossel-lista">
+    {% for p in destaques %}
+      <li class="carrossel-item" data-produto="{{ p.id }}" data-nome="{{ p.nome }}">{% set carrossel = true %}{% include "_card.html" %}</li>
+    {% endfor %}
+    </ul>
+    <div class="carrossel-controles" data-controles hidden>
+      <button type="button" data-seta="-1" aria-label="Destaque anterior">&larr;</button>
+      <ul class="carrossel-pontos">{% for p in destaques %}<li><button type="button" data-ponto="{{ loop.index0 }}" aria-label="Ver {{ p.nome }}"></button></li>{% endfor %}</ul>
+      <button type="button" data-seta="1" aria-label="Próximo destaque">&rarr;</button>
     </div>
-  {% endfor %}
-  </dl>
+    <p class="so-leitor" aria-live="polite" data-anuncio></p>
+  </div>
 </section>
 {% endif %}
 
-<section class="lia-chamada" aria-labelledby="t-lia">
-  <div class="contorno lia-grade">
-    <div>
-      <h2 id="t-lia">Pergunte para a Lia</h2>
-      <p>Ela consulta os mesmos dados desta página. Toque em uma pergunta para começar a conversa.</p>
-    </div>
-    <ul class="perguntas">
-      <li><button type="button" data-pergunta="Qual violão você indica para quem está começando?">Qual violão você indica para quem está começando?</button></li>
-      {% if vitrine %}<li><button type="button" data-pergunta="Quanto fica {{ vitrine[0].nome }} no PIX?">Quanto fica {{ vitrine[0].nome }} no PIX?</button></li>{% endif %}
-      <li><button type="button" data-pergunta="Qual o prazo de entrega para a minha cidade?">Qual o prazo de entrega para a minha cidade?</button></li>
-      <li><button type="button" data-pergunta="Quero saber como funciona a troca e a garantia.">Quero saber como funciona a troca e a garantia.</button></li>
-    </ul>
+{% if grade %}
+<section class="secao contorno" id="mais" aria-labelledby="t-mais">
+  <div class="secao-cabeca"><h2 id="t-mais">Para começar</h2><a href="/catalogo">Ver todos os instrumentos</a></div>
+  <div class="grade">{% for p in grade %}{% include "_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="secao contorno" id="ajuda" aria-labelledby="t-ajuda">
+  <div class="secao-cabeca"><h2 id="t-ajuda">Perguntas frequentes</h2><a href="/perguntas-frequentes">Ver todas as perguntas</a></div>
+  <div class="faq">
+  {% for f in faq %}
+    <details class="faq-item"><summary>{{ f.pergunta }}</summary><p>{{ f.resposta }}</p></details>
+  {% endfor %}
   </div>
 </section>
 
 <section class="secao contorno visite" id="visite" aria-labelledby="t-visite">
-  <div class="secao-cabeca"><h2 id="t-visite">Visite a loja</h2></div>
+  <div class="secao-cabeca"><h2 id="t-visite">Visite a loja</h2><a href="/fale-conosco">Falar com a loja</a></div>
   {% set L = loja() %}
   <div class="visite-grade">
-    <address class="visite-endereco">
-      <p class="visite-rua">{{ L.endereco }}</p>
-      <ul class="visite-contatos">{% for c in L.contatos %}<li>{{ c.valor }}</li>{% endfor %}</ul>
-      <p class="visite-nota">{{ L.contato_nota }}</p>
-    </address>
+    <address class="visite-endereco"><p class="visite-rua">{{ L.endereco }}</p></address>
     <table class="horario">
       <caption class="so-leitor">Horário de funcionamento</caption>
       <tbody>

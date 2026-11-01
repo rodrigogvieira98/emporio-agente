@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="contorno pagina">
+<h1>Créditos das imagens</h1>
+<p class="lead">As fotografias de instrumentos vêm do Wikimedia Commons, com licença livre. Cada imagem pode ter sido recortada e redimensionada para o site.</p>
+<ul class="creditos">
+{% for f in fotos %}
+  <li class="credito">
+    <img src="/static/fotos/{{ f.arquivo }}" width="{{ f.largura }}" height="{{ f.altura }}" alt="{{ f.alt }}" loading="lazy" decoding="async">
+    <p><strong>{{ f.titulo }}</strong><br>Autor: {{ f.autor }}<br>Licença: <a href="{{ f.link_licenca }}" rel="noopener">{{ f.licenca }}</a><br><a href="{{ f.link_origem }}" rel="noopener">Página de origem</a>{% if f.alteracoes %}<br>{{ f.alteracoes }}{% endif %}</p>
+  </li>
+{% endfor %}
+</ul>
+</div>
+{% endblock %}

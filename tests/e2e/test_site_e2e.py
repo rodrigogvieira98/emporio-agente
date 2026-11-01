@@ -56,9 +56,11 @@ def test_catalogo_produto_rastreio_e_chat(url_site, pagina):
     pagina.click("button:has-text('Consultar')")
     assert "BRJL5544332BR" in pagina.inner_text("main")
 
+    pagina.click("#chat-alternar")
     pagina.fill("#chat-mensagem", "quero falar com um atendente")
     pagina.click("#chat-enviar")
     pagina.wait_for_selector("#chat-log .msg.lia:has-text('EM-')", timeout=20000)
 
-    pagina.goto(url_site + "/politicas")  # o painel e o histórico sobrevivem à troca de página
+    pagina.goto(url_site + "/politicas")  # o histórico sobrevive à troca de página (o painel volta fechado)
+    pagina.click("#chat-alternar")
     assert "EM-" in pagina.inner_text("#chat-log")

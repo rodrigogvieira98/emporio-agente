@@ -156,7 +156,8 @@ def loja() -> dict[str, Any]:
     info["contato_nota"] = "O manual traz outros canais; se não conseguir contato, fale com a Lia."
     f = fato("horario.funcionamento")
     if f and isinstance(f.valor, list):
-        info["horario_linhas"] = _faixas_horario(f.valor)
+        # dia fechado (domingo) fica fora do site; a informação segue em Políticas e na Lia, que vêm do manual
+        info["horario_linhas"] = [(d, h) for d, h in _faixas_horario(f.valor) if h != "fechado"]
         info["horario"] = [f"{dias}, {horas}" for dias, horas in info["horario_linhas"]]
     return info
 

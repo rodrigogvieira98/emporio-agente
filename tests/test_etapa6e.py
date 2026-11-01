@@ -270,7 +270,7 @@ def test_endereco_completo_no_rodape_uma_vez_nas_paginas_com_rodape(cliente, cam
 def test_endereco_aparece_uma_vez_em_fale_conosco_e_no_rodape(cliente):
     html = cliente.get("/fale-conosco").text
     assert html.count(fato("empresa.endereco").valor["logradouro"]) == 1 and "Horário de atendimento" in html
-    assert fato("empresa.endereco").valor["logradouro"] in _rodape(html) and "Horário de atendimento" in _rodape(html)
+    assert fato("empresa.endereco").valor["logradouro"] in _rodape(html) and "Horário de atendimento" not in _rodape(html)
 
 
 def test_endereco_continua_na_pagina_offline(cliente):

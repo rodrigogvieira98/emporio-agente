@@ -321,11 +321,12 @@ def test_toda_imagem_tem_credito_licenca_livre_e_ate_200kb():
         raise AssertionError(f"imagem solta sem crédito: {pasta_img}")
 
 
-def test_creditos_lista_todas_as_fotos_e_esta_no_rodape(cliente):
+def test_creditos_lista_todas_as_fotos_e_abre_pelo_aviso_do_produto(cliente):
     html = cliente.get("/creditos").text
     for c in fotos.creditos().values():
         assert c["arquivo"] in html and c["link_origem"] in html
-    assert 'href="/creditos"' in cliente.get("/").text
+    assert 'href="/creditos"' not in cliente.get("/").text  # fora do rodapé
+    assert 'href="/creditos">Imagem ilustrativa</a>' in cliente.get("/produto/90").text
 
 
 def test_imagens_tem_alt_dimensoes_e_lazy(cliente):
@@ -397,7 +398,8 @@ def test_paginas_novas_existem_e_estao_no_menu_e_rodape(cliente):
     home = cliente.get("/").text
     for caminho in ("/fale-conosco", "/perguntas-frequentes", "/privacidade", "/creditos"):
         assert cliente.get(caminho).status_code == 200
-        assert f'href="{caminho}"' in home
+        if caminho != "/creditos":  # Créditos abre pelo aviso "Imagem ilustrativa" do produto
+            assert f'href="{caminho}"' in home
     assert cliente.get("/favicon.ico", follow_redirects=False).status_code in (301, 302, 307)
 
 

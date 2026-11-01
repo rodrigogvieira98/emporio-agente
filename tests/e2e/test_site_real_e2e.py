@@ -91,7 +91,7 @@ def _rotulo_esperado(rotulo: str) -> str | None:
                  "Ver todos os instrumentos": "Catálogo", "Catálogo": "Catálogo", "Voltar ao catálogo": "Catálogo",
                  "Ver todas as perguntas": "Perguntas frequentes",
                  "Fale conosco": "Fale conosco", "Rastrear pedido": "Rastrear pedido", "Carrinho": "Carrinho", "Início": "",
-                 "Voltar ao início": "", "Políticas": "Políticas", "Privacidade e cookies": "Privacidade", "Créditos das imagens": "Créditos",
+                 "Voltar ao início": "", "Políticas da Loja": "Políticas", "Imagem ilustrativa": "Créditos", "Privacidade e cookies": "Privacidade", "Créditos das imagens": "Créditos",
                  "Perguntas frequentes": "Perguntas frequentes", "política de privacidade": "Privacidade",
                  "Ir para o conteúdo": None, "Página anterior": None, "Próxima página": None}
     if r in genericos:
@@ -238,7 +238,7 @@ def test_menu_de_categorias_fecha_fora_e_com_esc_devolvendo_o_foco(url_site, nav
     assert menu.get_attribute("open") is not None
     pagina.click(".menu-categorias ul", position={"x": 2, "y": 2})  # dentro (na moldura da lista) não fecha
     assert menu.get_attribute("open") is not None
-    pagina.mouse.click(600, 600)  # fora
+    pagina.mouse.click(900, 12)  # fora (faixa de estado da loja; com a abertura compacta, (600, 600) cai em um card)
     assert menu.get_attribute("open") is None and pagina.evaluate("document.activeElement.tagName") == "SUMMARY"
     pagina.click(".menu-categorias summary")
     pagina.keyboard.press("Escape")

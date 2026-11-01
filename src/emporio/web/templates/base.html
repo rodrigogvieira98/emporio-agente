@@ -66,6 +66,7 @@
         {% endfor %}
         </ul>
       </details>{% endblock %}
+      <a href="/catalogo">Catálogo</a>
       <a href="/perguntas-frequentes">Perguntas frequentes</a>
       <a href="/rastreio">Rastrear pedido</a>
       {% set qtd = itens_no_carrinho(request) %}<a class="link-carrinho" href="/carrinho">Carrinho{% if qtd %} <span class="contagem-carrinho" aria-label="{{ qtd }} no carrinho">{{ qtd }}</span>{% endif %}</a>
@@ -103,18 +104,11 @@
       <p class="rodape-rotulo">Onde estamos</p>
       <address class="rodape-endereco">{{ L.endereco }}</address>
     </div>
-    <div class="rodape-horario">
-      <p class="rodape-rotulo">Horário de atendimento</p>
-      <ul class="rodape-horas">{% for h in L.horario %}<li>{{ h }}</li>{% endfor %}</ul>
-    </div>
     <nav class="rodape-links" aria-label="Links do rodapé">
       <ul class="rodape-lista">
-        <li><a href="/catalogo">Catálogo</a></li>
         <li><a href="/perguntas-frequentes">Perguntas frequentes</a></li>
-        <li><a href="/politicas">Políticas</a></li>
-        <li><a href="/rastreio">Rastrear pedido</a></li>
+        <li><a href="/politicas">Políticas da Loja</a></li>
         <li><a href="/privacidade">Privacidade e cookies</a></li>
-        <li><a href="/creditos">Créditos das imagens</a></li>
       </ul>
     </nav>
   </div>

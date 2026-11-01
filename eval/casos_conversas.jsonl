@@ -52,3 +52,6 @@
 {"id":"c52","cat":"qa_lia","turnos":["vcs sao uns lixos, porra","sim"],"contem":["EM-"],"nao_contem":["Não entendi"],"chamado":true}
 {"id":"c53","cat":"qa_lia","turnos":["hi, do you ship to Portugal?"],"contem":["em português","frete"],"nao_contem":["Nosso horário"],"chamado":false}
 {"id":"c54","cat":"qa_lia","turnos":["qual a diferença entre o Yamaha C40 e o Yamaha C70?"],"contem":["Yamaha C40","Yamaha C70","599,90","849,00"],"nao_contem":["Não encontrei"],"chamado":false}
+{"id":"c55","cat":"qa_lia","turnos":["qual o preço do Yamaha C40 e vcs entregam em Dourados?"],"contem":["599,90","Dourados"],"chamado":false}
+{"id":"c56","cat":"qa_lia","turnos":["quanto fica o Yamaha APX600 no pix e em 10x?"],"contem":["PIX","10x"],"nao_contem":["Tive um problema"],"chamado":false}
+{"id":"c57","cat":"qa_lia","turnos":["posso pagar metade no pix e metade no cartao o Yamaha FG800?"],"contem":["2.000,00"],"chamado":false}

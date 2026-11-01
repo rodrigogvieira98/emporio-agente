@@ -92,7 +92,8 @@ class Agente:
         etapa_lead: str | None = None
 
         partes: list[str] = []  # respostas já prontas de perguntas anteriores da mesma mensagem
-        for numero in range(1, MAX_PASSOS * (2 if estado.slots.get("secundaria") else 1) + 1):
+        dupla = estado.slots.get("secundaria") or estado.slots.get("pix_e_parcelas")
+        for numero in range(1, MAX_PASSOS * (2 if dupla else 1) + 1):
             try:
                 acao = self.decisor.decidir(estado, mensagem)
             except Exception:  # noqa: BLE001 - decisor com defeito não derruba o atendimento

@@ -652,6 +652,44 @@ def comparacao(e: Estado, p: dict) -> str:
     return txt + "\nNão consigo dizer qual é melhor para o seu uso, só mostrar o que o catálogo informa. Quer ver as condições de algum deles?"
 
 
+def preco_pix_e_parcelas(e: Estado, p: dict) -> str:
+    """PIX e parcelas do mesmo produto, uma frase para cada, com os valores devolvidos pela ferramenta."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"]
+    pix = next(d for d in reversed(calc) if d["forma"] == "pix")
+    cred = next(d for d in reversed(calc) if d["forma"] == "credito")
+    nome = pix["produto_nome"]
+    if pix.get("percentual"):
+        a = aviso(e, "pix_nao_soma", "O desconto do PIX não soma com promoção.")
+        p1 = (f"{nome}: preço de tabela {formatar(pix['original_centavos'])}, promoção de {pix['percentual']}% e preço "
+              f"final {formatar(pix['final_centavos'])}." + (" " + a if a else ""))
+    else:
+        p1 = (f"{nome}: no PIX ({pix.get('pix_percentual')}% de desconto) fica {formatar(pix['final_centavos'])} "
+              f"(preço de tabela {formatar(pix['original_centavos'])}).")
+    p2 = f"No crédito em {cred['parcelas']}x, cada parcela fica em {formatar(cred['parcela_centavos'])}."
+    if cred["permitido"] == "sim":
+        p2 += " Esse parcelamento atende a parcela mínima da loja."
+    elif cred["permitido"] == "nao":
+        p2 += " Esse parcelamento não atende a parcela mínima da loja."
+    else:
+        p2 += (f" Esse parcelamento precisa de confirmação da nossa equipe: a parcela mínima é "
+               f"{formatar(cred['minimo_tabela_centavos'])} em uma regra e {formatar(cred['minimo_faixa_centavos'])} "
+               f"na faixa de {cred['parcelas']}x.")
+    return f"{p1} {p2}"
+
+
+def combinacao_formas(e: Estado, p: dict) -> str:
+    """Combinar formas de pagamento: a regra do manual (acima de um valor) aplicada ao preço de tabela do produto."""
+    limite = _condicoes(e).get("pagamento.combinacao_formas_acima_centavos")
+    if not limite:
+        return sem_dado(e, p)
+    if p["preco"] > limite:
+        return (f"Pode, sim: é possível combinar formas de pagamento (por exemplo PIX e cartão) em compras acima de "
+                f"{formatar(limite)}, e o {p['produto']} custa {formatar(p['preco'])} (preço de tabela). "
+                "Para calcular os valores de cada parte, me diga quanto vai no PIX e quanto no cartão.")
+    return (f"A combinação de formas de pagamento vale para compras acima de {formatar(limite)}, e o {p['produto']} custa "
+            f"{formatar(p['preco'])} (preço de tabela). Então, só com esse produto, não dá para dividir entre PIX e cartão.")
+
+
 def acolhimento(e: Estado, p: dict) -> str:
     return f"Sinto muito por isso. Quer que um atendente da equipe te ajude? {CONFIRMA}"
 
@@ -1269,7 +1307,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
-        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao)
+        cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
+        preco_pix_e_parcelas, combinacao_formas)
 }
 
 

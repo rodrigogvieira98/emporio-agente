@@ -453,6 +453,37 @@ def test_comparacao_com_produto_inexistente_nao_inventa():
     assert "R$" not in r.texto.split("Zebra")[-1] or "não encontrei" in r.texto.lower()
 
 
+# 16. pergunta dupla ------------------------------------------------------------------------------------------
+
+def test_preco_e_frete_na_mesma_mensagem_respondem_as_duas():
+    (r,) = conversar("qual o preço do Yamaha C40 e vcs entregam em Dourados?")
+    assert "R$ 599,90" in r.texto and "Dourados" in r.texto
+    assert "cotação" in r.texto or "CEP" in r.texto
+
+
+def test_frete_primeiro_e_preco_depois_tambem_respondem_as_duas():
+    (r,) = conversar("vcs entregam em Dourados? quanto custa o Yamaha C40?")
+    assert "R$ 599,90" in r.texto and "Dourados" in r.texto
+
+
+def test_pix_e_parcelas_respondem_as_duas():
+    (r,) = conversar("quanto fica o Yamaha APX600 no pix e em 10x?")
+    assert "PIX" in r.texto and "10x" in r.texto
+    assert "R$ 1.804,05" in r.texto and "R$ 189,90" in r.texto  # 1899 -5% e 1899/10
+    assert "Tive um problema" not in r.texto
+
+
+def test_combinar_formas_abaixo_de_dois_mil_responde_pela_regra():
+    (r,) = conversar("posso pagar metade no pix e metade no cartao o Yamaha FG800?")
+    assert "R$ 2.000,00" in r.texto and "Yamaha FG800" in r.texto
+    assert "não" in r.texto.lower()
+
+
+def test_combinar_formas_acima_de_dois_mil_pode():
+    (r,) = conversar("posso pagar metade no pix e metade no cartao o Takamine GD20?")
+    assert "R$ 2.000,00" in r.texto and "pode" in r.texto.lower()
+
+
 @pytest.mark.parametrize("msg", ["caro", "tem algo mais barato?"])
 def test_caro_e_mais_barato_usam_o_produto_em_foco(msg):
     t = textos("quanto custa o Yamaha C40?", msg)

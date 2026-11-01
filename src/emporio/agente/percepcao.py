@@ -284,6 +284,10 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     dc = v.DESCONTO_CITADO.search(norm)
     if dc and re.search(r"\b(desconto|promocao|off|abatimento)\b", norm):
         slots["desconto_citado"] = int(dc.group(1))
+    slots["pix_e_parcelas"] = slots.get("forma") == "pix" and (slots.get("parcelas") or 1) > 1
+    formas_citadas = sum(bool(re.search(p, norm)) for p in (r"\bpix\b", r"\b(cartao|credito|debito)\b", r"\bboleto\b"))
+    slots["combinar"] = bool(re.search(r"\b(metade|meio a meio|dividir|juntar|misturar|combin\w+|duas formas|dois cartoes|"
+                                       r"parte no|uma parte)\b", norm)) and (formas_citadas >= 2 or "combin" in norm)
     slots["datas"] = _datas(norm)
     if v.CANAL_ONLINE.search(norm):
         slots["canal_compra"] = "online"
@@ -338,6 +342,13 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["cep"] = f"{m_cep.group(1) or m_cep.group(3)}-{m_cep.group(2) or m_cep.group(4)}"
     elif estado.aguardando == "cep" and re.fullmatch(r"\d{8}", mensagem.strip()):
         slots["cep"] = f"{mensagem.strip()[:5]}-{mensagem.strip()[5:]}"
+    if slots.get("cidade") and slots.get("referencia"):
+        # a cidade do destino ("entregam em Dourados") não faz parte do nome do produto
+        fora = set(tokens(str(slots["cidade"]))) - set(voc.df)
+        ref = " ".join(t for t in slots["referencia"].split() if t not in fora)
+        if ref and ref != slots["referencia"]:
+            slots["referencia"] = ref
+            slots["desconhecidas"] = [t for t in slots.get("desconhecidas", []) if t not in fora]
     if slots.get("cidade"):
         ufs = "|".join(UFS)
         m_uf = re.search(rf"\b{re.escape(slots['cidade'])}\s*(?:/|-|,|\s)\s*({ufs})\b", norm)
@@ -368,6 +379,14 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         outras = [n for n, p in v.PADROES_INTENCAO if n in v.SECUNDARIAS and n != nova and p.search(norm)]
         if outras:
             slots["secundaria"] = outras[0]
+    # preço de um produto citado + frete na mesma mensagem: responde o preço e depois o frete
+    tem_ref = bool(slots.get("referencia") or slots.get("produto_id"))
+    sem_preco_do_frete = re.sub(r"\b(?:quanto|valor|preco)\b(?:\s+\w+){0,3}?\s+(?:d[oae]s?\s+)?(?:frete|entrega|envio)\b", " ", norm)
+    pede_preco = any(n == "preco_produto" and p.search(sem_preco_do_frete) for n, p in v.PADROES_INTENCAO)
+    pede_frete = any(n == "frete" and p.search(norm) for n, p in v.PADROES_INTENCAO)
+    if tem_ref and pede_preco and pede_frete and nova in ("frete", "preco_produto") and not slots.get("cep"):
+        slots["secundaria"] = "frete"
+        return "preco_produto"
     return nova
 
 

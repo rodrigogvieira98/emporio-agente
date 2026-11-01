@@ -742,6 +742,30 @@ class RegrasDecisor:
     def _i_dado_de_terceiro(self, estado: Estado) -> Acao:
         return responder("recusa_dado_de_terceiro")
 
+    def _combinacao_de_formas(self, estado: Estado, produto: dict[str, Any]) -> Acao:
+        """"Metade no PIX e metade no cartão": vale a regra do manual (compras acima de um valor), sem inventar exceção."""
+        r = resultado_de(estado, "consultar_politica", temas=["pagamento"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["pagamento"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return responder("combinacao_formas", produto=produto["nome"], preco=produto["preco_centavos"])
+
+    def _pix_e_parcelas(self, estado: Estado, produto: dict[str, Any]) -> Acao:
+        """"No PIX e em 10x": as duas condições do mesmo produto, cada uma calculada pela ferramenta."""
+        parcelas = estado.slots.get("parcelas") or 1
+        for args in ({"produto_id": produto["id"], "forma": "pix", "parcelas": 1},
+                     {"produto_id": produto["id"], "forma": "credito", "parcelas": parcelas}):
+            r = resultado_de(estado, "calcular_condicoes", **args)
+            if r is None:
+                return ferramenta("calcular_condicoes", **args)
+            if r.estado == "ambiguo":
+                return propor("preco_promocao_conflitante", "duvida_politica",
+                              f"Produto {produto['id']} com mais de uma promocao ativa; cliente pediu PIX e parcelas.")
+            if r.estado != "ok":
+                return self._erro(estado, r)
+        return responder("preco_pix_e_parcelas")
+
     def _soma_dos_dois(self, estado: Estado) -> Acao | None:
         """"Quanto fica os dois?": soma as condições dos dois últimos produtos citados (None se não houver dois)."""
         ids = estado.coletados.get("ultimos_produtos") or []
@@ -770,6 +794,10 @@ class RegrasDecisor:
             return acao
         if produto["situacao_venda"] != "disponivel":
             return self._indisponivel(estado, produto)
+        if estado.slots.get("combinar"):
+            return self._combinacao_de_formas(estado, produto)
+        if estado.slots.get("pix_e_parcelas"):
+            return self._pix_e_parcelas(estado, produto)
         forma = estado.slots.get("forma") or estado.coletados.get("forma") or "pix"
         parcelas = estado.slots.get("parcelas") or estado.coletados.get("parcelas") or 1
         args = {"produto_id": produto["id"], "forma": forma, "parcelas": parcelas}
@@ -811,9 +839,13 @@ class RegrasDecisor:
                 extra["desconto_citado"] = estado.slots["desconto_citado"]
         if compra:
             extra["compra"] = True  # o próximo passo é o botão de carrinho, não outra pergunta
-        if (r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro":
+        if estado.slots.get("secundaria"):
+            extra["sem_oferta"] = True  # a resposta continua com a outra pergunta: nada de convite no meio
+        if ((r.dados.get("frete") or {}).get("situacao") == "gratis" and estado.sentimento == "neutro"
+                and not estado.slots.get("secundaria")):
             extra["valor_frete"] = args["cidade"]  # o fato é o mesmo para qualquer humor; só a oferta some
-        if forma != "credito" and not compra and not recusada(estado, f"parcelas:{produto['id']}"):
+        if (forma != "credito" and not compra and not recusada(estado, f"parcelas:{produto['id']}")
+                and not estado.slots.get("secundaria")):
             extra["oferta_parcelas"] = True  # próximo passo curto, de sim ou não: as parcelas do produto em foco
         return responder("preco", **extra)
 

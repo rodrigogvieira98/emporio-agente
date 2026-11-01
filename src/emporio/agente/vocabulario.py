@@ -181,7 +181,7 @@ vende vendem vendo vender existe existem trabalha trabalham confirma confirmar c
 so apenas somente fala falar fale diga diz dizer estou estava sou nao nem pergunta perguntar duvida
 ser seria sai comprar levar levo fechar carrinho adicionar adicione adiciona vou
 pro faz ha so semana semanas dia dias mes meses ano anos
-coloca coloque colocar poe ponha joga bota manda mande pego pegar fechou
+entregam entregar entrega enviam enviar envio frete envia entregamos coloca coloque colocar poe ponha joga bota manda mande pego pegar fechou
 outro outra outros outras nossa nossa entao tambem ele ela dele dela deles delas dois duas ambos ambas cada mas ne hmm
 ah poxa puxa caramba putz gostei legal otimo show beleza pois certo entendi tipo assim uns volta voltando ok
 agora ainda talvez ja eu nos gente tambem outra vez fico ficar fica ficaria dar da dou

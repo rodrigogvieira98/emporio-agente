@@ -13,7 +13,7 @@ secoes:
   - id: capa
     titulo: Capa
     pagina: 1
-    temas: [manual]
+    temas: [manual, contato]
     publico: false
     texto: |
       EMPÓRIO DA MÚSICA

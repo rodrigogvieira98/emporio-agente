@@ -119,7 +119,7 @@ def test_recusar_a_proposta_nao_registra(sql):
 
 def test_pedido_de_atendente_registra_e_negacao_nao_encaminha(sql):
     (r,) = conversar("quero falar com um atendente")
-    assert "Registrei o seu chamado" in r.texto and "24 horas" not in r.texto
+    assert "Registrei o seu chamado" in r.texto and "24 horas úteis" in r.texto and "WhatsApp" in r.texto
     assert sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "atendente"
     (n,) = conversar("não quero falar com atendente", conversa="c2")
     assert protocolos(sql) == ["EM-000001"] and "sigo te ajudando" in n.texto

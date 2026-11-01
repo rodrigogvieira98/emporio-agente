@@ -197,7 +197,7 @@ def test_dado_pessoal_de_cliente_e_recusado_direto_sem_consulta(frase, sql):
 
 def test_chamado_so_diz_registrado_e_protocolo_exceto_reclamacao():
     (a,) = dizer("quero falar com um atendente", conversa="a")
-    assert a.texto == "Registrei o seu chamado. Protocolo: EM-000001."
+    assert a.texto.startswith("Registrei o seu chamado. Protocolo: EM-000001.") and "24 horas úteis" in a.texto and "WhatsApp" in a.texto
     assert "contato" not in a.texto.lower()
     (rec,) = dizer("quero abrir uma reclamação porque o pedido 8 atrasou muito e ninguém avisou", conversa="b")
     assert rec.texto == "Registrei o seu chamado. Protocolo: EM-000002. Você recebe o retorno de um atendente em até 24 horas úteis."

@@ -950,8 +950,27 @@ def chamado_registrado(e: Estado, p: dict) -> str:
         txt += " Esse chamado já estava registrado com esse protocolo."
     if d.get("prazo_retorno_horas_uteis"):
         txt += f" Você recebe o retorno de um atendente em até {d['prazo_retorno_horas_uteis']} horas úteis."
+    if p.get("explicito"):  # pediu um atendente: prazo de retorno e canais, não só o protocolo
+        txt += _retorno_e_canais(e, txt)
     aviso = _aviso_expediente(e)
     return f"{txt} {aviso}".strip()
+
+
+def _retorno_e_canais(e: Estado, ja_dito: str) -> str:
+    c = _condicoes(e)
+    partes = []
+    prazo = c.get("atendimento.prazo_retorno_reclamacao_horas_uteis")
+    if prazo and "horas úteis" not in ja_dito:
+        partes.append(f" O retorno de um atendente é em até {prazo} horas úteis.")
+    canais = [f"WhatsApp {c['contato.whatsapp_secao_7']}"] if "contato.whatsapp_secao_7" in c else []
+    if "contato.telefone_capa" in c:
+        canais.append(f"telefone {c['contato.telefone_capa']}")
+    if canais:
+        faixas = [f"{expediente.descrever_dias(f['dias'])}, das {expediente.hora_br(f['abre'])} às {expediente.hora_br(f['fecha'])}"
+                  for f in c.get("horario.funcionamento", []) if not f.get("fechado")]
+        horario = f" ({'; '.join(faixas)})" if faixas else ""
+        partes.append(f" Se preferir falar agora, os canais são {' e '.join(canais)}{horario}.")
+    return "".join(partes)
 
 
 def registro_falhou(e: Estado, p: dict) -> str:

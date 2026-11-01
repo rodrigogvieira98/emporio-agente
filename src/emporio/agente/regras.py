@@ -118,16 +118,17 @@ class RegrasDecisor:
                           f"Falhas repetidas ao consultar o sistema durante {estado.objetivo}.")
         return responder("falha_ferramenta")
 
-    def _registrar(self, estado: Estado, tipo: str, resumo: str) -> Acao:
-        if resultado_de(estado, "consultar_politica", temas=["horario", "contato"]) is None:
-            return ferramenta("consultar_politica", temas=["horario", "contato"])  # retorno fora do expediente e canais
+    def _registrar(self, estado: Estado, tipo: str, resumo: str, explicito: bool = False) -> Acao:
+        temas = ["horario", "contato", "reclamacao"] if explicito else ["horario", "contato"]  # + prazo de retorno
+        if resultado_de(estado, "consultar_politica", temas=temas) is None:
+            return ferramenta("consultar_politica", temas=temas)  # retorno fora do expediente e canais
         r = resultado_de(estado, "registrar_encaminhamento")
         if r is None:
             n = sum(1 for a in estado.acoes_concluidas if a.startswith("chamado:"))
             return Acao(tipo="encaminhar", ferramenta="registrar_encaminhamento",
                         args={"tipo": tipo, "resumo": resumo, "chave_idempotencia": f"{estado.objetivo}:{n}"})
         if r.estado == "ok":
-            return responder("chamado_registrado")
+            return responder("chamado_registrado", explicito=explicito)
         return responder("registro_falhou")
 
     # --- pedido ----------------------------------------------------------------------
@@ -969,7 +970,7 @@ class RegrasDecisor:
         pedido = estado.coletados.get("pedido")
         if pedido:
             resumo += f" Pedido consultado: {pedido['pedido_id']}."
-        return self._registrar(estado, "atendente", resumo)
+        return self._registrar(estado, "atendente", resumo, explicito=True)
 
     def _i_comparar(self, estado: Estado) -> Acao:
         """Dois produtos nomeados: preço e ficha do catálogo dos dois, sem escolher "o melhor"."""

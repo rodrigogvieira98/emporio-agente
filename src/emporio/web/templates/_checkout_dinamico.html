@@ -56,4 +56,4 @@
     <button type="submit" class="botao-cheio" formmethod="post" formaction="/checkout"{% if not c.pode_finalizar %} disabled{% endif %}>Registrar pedido</button>
   </p>
 </div>
-{% if oob %}{% include "_checkout_parcelas.html" %}{% endif %}
+{% if oob %}{% include "_checkout_parcelas.html" %}{% include "_cep_endereco.html" %}{% endif %}

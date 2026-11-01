@@ -79,7 +79,7 @@ REQUISITOS = {
     "endereco": lambda e: _ok(e, "consultar_politica"), "contato": lambda e: _ok(e, "consultar_politica"),
     "pagamento": lambda e: _ok(e, "consultar_politica"), "garantia_info": lambda e: _ok(e, "consultar_politica"),
     "fora_escopo": lambda e: _ok(e, "consultar_politica"), "fora_escopo_geral": lambda e: _ok(e, "consultar_politica"),
-    "recusa_manipulacao": lambda e: _ok(e, "consultar_politica"), "frete_info": lambda e: _ok(e, "consultar_politica"),
+    "frete_info": lambda e: _ok(e, "consultar_politica"),
     "busca": lambda e: _ok(e, "buscar_produtos", "ok", "vazio"),
     "preco": lambda e: _ok(e, "calcular_condicoes"),
     "disponibilidade": lambda e: _ok(e, "ver_produto"),
@@ -198,7 +198,7 @@ class LlmDecisor:
         entrada = json.dumps(resumir(estado, mensagem), ensure_ascii=False)
         conversa = llm.mensagens_do_modelo(self.modelo, sistema, entrada)
         ultimo_motivo = ""
-        for tentativa in (1, 2, 3):  # cada nova tentativa recebe o motivo da recusa anterior
+        for tentativa in (1, 2):  # cada nova tentativa recebe o motivo da recusa anterior
             reg: dict[str, Any] = {"componente": "decisor", "modelo": self.modelo, "prompt_hash": hash_prompt,
                                    "tentativa": tentativa}
             try:

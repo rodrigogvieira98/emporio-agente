@@ -129,7 +129,8 @@ def test_mesmo_pedido_repetido_nao_duplica_chamado(sql):
     conversar("quero falar com um atendente", "quero falar com um atendente")
     assert len(protocolos(sql)) == 1  # mesma conversa, chamado em aberto: o segundo pedido informa o protocolo
     r = conversar("sim", conversa="c9")[0]
-    assert len(protocolos(sql)) == 1 and "Não entendi" in r.texto
+    # "sim" solto tem resposta natural (pergunta o assunto) e continua sem abrir novo chamado
+    assert len(protocolos(sql)) == 1 and "Sobre o que você quer falar" in r.texto
 
 
 def test_fora_do_expediente_informa_horario_de_retorno(monkeypatch):
@@ -266,9 +267,10 @@ def test_frete_campo_grande_e_outra_cidade():
     assert "grátis" in g.texto
 
 
-def test_frete_de_exatamente_500_pede_confirmacao_da_equipe():
+def test_frete_de_exatamente_500_e_gratis_sem_chamado(sql):
     (r,) = conversar("frete para Campo Grande de um pedido de R$ 500")
-    assert "exatamente o limite" in r.texto and r.estado == "aguardando:confirmacao_registro"
+    assert "grátis" in r.texto and "exatamente o limite" not in r.texto
+    assert r.estado == "concluido" and protocolos(sql) == []
 
 
 def test_troca_de_assunto_guarda_o_anterior_e_oferece_retomar():

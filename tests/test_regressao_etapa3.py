@@ -123,16 +123,14 @@ def test_pergunta_de_preco_de_produto_em_promocao_continua_indo_para_o_produto()
 
 # 5. frete -------------------------------------------------------------------------------------
 
-def test_frete_de_exatamente_500_em_campo_grande_pede_confirmacao_e_registra(sql):
+def test_frete_de_exatamente_500_em_campo_grande_e_gratis_sem_chamado(sql):
     agente = Agente()
     r = agente.responder("f1", "qual o frete pra compra de R$ 500 em Campo Grande?", "eval")
-    assert ferramentas(r) == ["calcular_condicoes"] and "cotação" not in r.texto
-    assert "exatamente o limite" in r.texto and "nossa equipe precisa confirmar" in r.texto
-    assert "registre a dúvida" in r.texto and r.estado == "aguardando:confirmacao_registro"
-    assert protocolos(sql) == []
-    r2 = agente.responder("f1", "sim", "eval")
-    assert protocolos(sql) == ["EM-000001"] and sql.execute("SELECT tipo FROM chamados").fetchone()[0] == "duvida_politica"
-    assert "Chamado registrado" in r2.texto
+    assert "calcular_condicoes" in ferramentas(r) and "cotação" not in r.texto
+    assert "frete é grátis" in r.texto and "exatamente o limite" not in r.texto
+    assert r.estado == "concluido" and protocolos(sql) == []
+    agente.responder("f1", "sim", "eval")
+    assert protocolos(sql) == []  # nada a confirmar: o valor exato já é grátis
 
 
 @pytest.mark.parametrize("frase,esperado", [

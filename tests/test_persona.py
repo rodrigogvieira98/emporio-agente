@@ -125,7 +125,7 @@ def test_persona_vai_nas_instrucoes_em_todo_turno_redigido():
     agente = Agente(redator=Redator("falso:1b", cliente), concisao=True)
     conversar("qual o endereço?", "qual o horário?", "quanto custa o Crafter HT-100?", "vocês vendem cordas?",
               agente=agente)
-    assert len(cliente.sistemas) == 4
+    assert len(cliente.sistemas) == 3  # a resposta de escopo ("cordas") não passa pela redação
     p = persona.carregar()
     for sistema in cliente.sistemas:
         assert sistema.startswith(persona.instrucoes()) and p["nome"] in sistema

@@ -153,7 +153,8 @@ def test_pagina_sem_recurso_externo_sem_travessao_e_sem_emoji(cliente):
         html = cliente.get(caminho).text
         if caminho not in ("/politicas", "/privacidade"):  # ali o texto é a transcrição fiel do manual, que traz travessão
             assert "—" not in html and "–" not in html, caminho
-        assert not re.search(r'(?:src|href)="https?://', html), caminho
+        # única exceção: o host do WhatsApp (wa.me); qualquer outro recurso externo segue proibido
+        assert not re.search(r'(?:src|href)="https?://(?!wa\.me/)', html), caminho
         assert not re.search("[\U0001F300-\U0001FAFF☀-➿]", html), caminho
 
 

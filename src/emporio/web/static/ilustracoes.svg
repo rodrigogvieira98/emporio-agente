@@ -95,8 +95,10 @@
 
   <!-- Marca: palheta com furo e barbante, ligada a etiqueta de preco -->
   <symbol id="marca" viewBox="0 0 32 32">
-    <path d="M16 29.500C8 22.500 4.500 14.500 6 9.500 7 6 9.500 4 13 4h6c3.500 0 6 2 7 5.500 1.500 5-2 13-10 20z" fill="currentColor"/>
-    <circle cx="16" cy="12" r="2.500" fill="var(--furo, #F4EEE3)"/>
+    <path d="M16 29C9.500 25 3.500 17 5.500 12.500 7 9 10.500 8 16 8s9 1 10.500 4.500C28.500 17 22.500 25 16 29z" fill="currentColor"/>
+    <path d="M16 15C16.500 10.500 19 7 22.500 5.500" fill="none" stroke="currentColor" stroke-width="1.600" stroke-linecap="round"/>
+    <circle cx="25" cy="4.500" r="2.300" fill="none" stroke="currentColor" stroke-width="1.600"/>
+    <circle cx="16" cy="15" r="2.400" fill="var(--furo, #F4EEE3)"/>
   </symbol>
 
   <symbol id="instrumento" viewBox="0 0 64 64">

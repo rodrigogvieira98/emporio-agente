@@ -6,6 +6,7 @@ EMPORIO_COOKIE_SEGURO=1 (cookie só por HTTPS).
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import secrets
@@ -15,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, URLSafeSerializer
@@ -34,6 +35,8 @@ from . import apresentacao, home, navegacao
 log = logging.getLogger("emporio.web")
 
 AQUI = Path(__file__).resolve().parent
+VERSAO_SW = "1"  # sobe a cada mudança do service worker ou da lista de estáticos que exija renovar o cache
+SEM_SESSAO = ("/static", "/saude", "/sw.js", "/manifest.webmanifest", "/offline")
 COOKIE = "emporio_sessao"
 MAX_MENSAGEM = 500  # limite de entrada do sistema, não é regra de loja
 MSG_FALHA = "Não consegui consultar isso agora. Tente de novo em instantes."
@@ -79,7 +82,7 @@ def criar_app(agente: Any = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=AQUI / "static"), name="static")
     modelos = Jinja2Templates(directory=AQUI / "templates")
     modelos.env.globals.update(loja=apresentacao.loja, categorias=navegacao.listar_categorias,
-                               situacao_loja=apresentacao.situacao_loja, ilustracao=apresentacao.ilustracao,
+                               situacao_loja=apresentacao.situacao_loja, cores=apresentacao.cores, ilustracao=apresentacao.ilustracao,
                                menu_categorias=home.categorias, formas_pagamento=apresentacao.formas_de_pagamento)
     modelos.env.filters.update(brl=apresentacao.brl, data_br=apresentacao.data_br,
                                pagamento=apresentacao.forma_pagamento, quebras=apresentacao.quebras)
@@ -95,7 +98,7 @@ def criar_app(agente: Any = None) -> FastAPI:
 
     @app.middleware("http")
     async def sessao(request: Request, call_next):
-        if request.url.path.startswith("/static") or request.url.path == "/saude":
+        if request.url.path.startswith(SEM_SESSAO):
             return await call_next(request)
         conversa = None
         bruto = request.cookies.get(COOKIE)
@@ -131,6 +134,40 @@ def criar_app(agente: Any = None) -> FastAPI:
         corpo = {"status": "ok" if banco_ok else "falha", "banco": "ok" if banco_ok else "indisponivel",
                  "modelo": estado_modelo, "nome_modelo": modelo}
         return JSONResponse(corpo, status_code=200 if banco_ok else 503)
+
+    @app.get("/manifest.webmanifest")
+    def manifesto() -> JSONResponse:
+        info = apresentacao.loja()
+        c = apresentacao.cores()
+        corpo = {
+            "name": info["nome"], "short_name": info["nome"].split(" ", 1)[0],
+            "description": "Catálogo, condições e a assistente Lia, com os dados da loja.",
+            "lang": "pt-BR", "dir": "ltr", "start_url": "/", "scope": "/", "id": "/", "display": "standalone",
+            "background_color": c.get("papel"), "theme_color": c.get("tinta"), "categories": ["shopping", "music"],
+            "icons": [
+                {"src": "/static/icones/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/static/icones/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/static/icones/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+                {"src": "/static/icones/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+            ],
+        }
+        return JSONResponse(corpo, media_type="application/manifest+json")
+
+    @app.get("/sw.js")
+    def service_worker() -> Response:
+        estaticos = sorted("/static/" + p.relative_to(AQUI / "static").as_posix()
+                           for p in (AQUI / "static").rglob("*")
+                           if p.is_file() and p.suffix != ".txt")  # licenças não vão para o cache
+        corpo = ((AQUI / "sw.js").read_text(encoding="utf-8")
+                 .replace('"/*VERSAO*/"', json.dumps(VERSAO_SW))
+                 .replace("/*ESTATICOS*/[]", json.dumps(estaticos, indent=2)))
+        # Service-Worker-Allowed deixa o escopo na raiz; sem cache para a atualização chegar na hora
+        return Response(corpo, media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache, max-age=0", "Service-Worker-Allowed": "/"})
+
+    @app.get("/offline", response_class=HTMLResponse)
+    def offline(request: Request):
+        return pagina(request, "offline.html")
 
     @app.get("/", response_class=HTMLResponse)
     def inicio(request: Request):

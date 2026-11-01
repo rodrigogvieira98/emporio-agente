@@ -193,3 +193,17 @@ def formas_de_pagamento() -> str:
     if fato("pagamento.boleto_a_vista"):
         partes.append("boleto bancário")
     return ", ".join(partes)
+
+
+# ---- cores dos tokens do CSS (manifest e meta theme-color usam as mesmas) ---------------------------
+
+CSS_SITE = Path(__file__).resolve().parent / "static" / "site.css"
+
+
+def cores() -> dict[str, str]:
+    """Tokens de cor de :root em site.css, para o manifest e o theme-color não repetirem hexadecimais."""
+    try:
+        css = CSS_SITE.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    return {nome.replace("-", "_"): valor for nome, valor in re.findall(r"--([a-z-]+):\s*(#[0-9A-Fa-f]{6})", css)}

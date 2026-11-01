@@ -424,6 +424,7 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .bloco-texto { display: grid; gap: var(--s2); justify-items: start; min-width: 0; }
 .bloco-titulo { margin: 0; font: 600 1rem/1.35 var(--texto); }
 .bloco-fone { margin: 0; max-width: 100%; overflow-wrap: anywhere; font: 700 1.5rem/1.2 var(--titulo); color: var(--tinta); text-decoration: none; font-variant-numeric: tabular-nums; }
+.bloco-email { overflow-wrap: normal; font-size: .9rem; letter-spacing: 0; }
 .bloco-nota { margin: 0; color: var(--cinza-texto); font-size: .875rem; }
 @media (min-width: 900px) {
   .cartao-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -436,5 +437,5 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .contato-form input, .contato-form textarea { width: 100%; }
 .fc-horario { display: flex; flex-direction: column; }
 .fc-endereco { font-style: normal; font-weight: 600; margin-bottom: var(--s3); }
-.fc-rastreio { margin-top: auto; padding-top: var(--s6); display: grid; gap: var(--s2); justify-items: start; }
+.fc-rastreio { margin-top: var(--s6); display: grid; gap: var(--s2); justify-items: start; }
 @media (min-width: 900px) { .fc-colunas { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }

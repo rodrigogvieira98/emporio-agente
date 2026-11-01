@@ -316,3 +316,9 @@ def test_aviso_do_checkout_fala_de_cep(cliente):
 def test_codigo_do_chat_nao_envia_ao_clicar_na_sugestao():
     js = (WEB / "static" / "chat.js").read_text(encoding="utf-8")
     assert 'htmx.trigger(form, "submit")' not in js and "function preencher" in js
+
+
+def test_resumo_do_checkout_sem_frete_pede_o_cep_e_nao_a_cidade(cliente):
+    comprar(cliente)
+    html = checkout(cliente)
+    assert "informe o CEP" in html and "informe a cidade" not in html

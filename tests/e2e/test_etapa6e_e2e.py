@@ -209,3 +209,26 @@ def test_quero_comprar_com_a_lia_nao_envia(url_site, navegador):
     pagina.wait_for_timeout(500)
     assert pagina.locator("#chat").is_visible() and pagina.locator("#chat-log .msg.voce").count() == antes
     assert pagina.input_value("#chat-mensagem").strip() != "" and pagina.evaluate("document.activeElement.id") == "chat-mensagem"
+
+
+# ---- ajustes de layout de /fale-conosco ----------------------------------------------------------------
+
+@pytest.mark.parametrize("largura", [390, 1280])
+def test_email_do_fale_conosco_cabe_em_uma_linha(url_site, navegador, largura):
+    pagina = pagina_de(navegador, largura, 900)
+    pagina.goto(url_site + "/fale-conosco")
+    email = pagina.locator(".bloco-email")
+    altura_linha = pagina.evaluate("el => parseFloat(getComputedStyle(el).lineHeight)", email.element_handle())
+    assert email.bounding_box()["height"] <= altura_linha * 1.5
+    assert sem_rolagem_horizontal(pagina)
+
+
+def test_sem_vao_entre_tabela_e_rastreio_com_colunas_de_mesma_altura(url_site, navegador):
+    pagina = pagina_de(navegador, 1280, 900)
+    pagina.goto(url_site + "/fale-conosco")
+    tabela = pagina.locator(".fc-horario table.horario").bounding_box()
+    rastreio = pagina.locator(".fc-rastreio").bounding_box()
+    assert rastreio["y"] - (tabela["y"] + tabela["height"]) <= 40
+    form = pagina.locator("#mensagem").bounding_box()
+    horario = pagina.locator(".fc-horario").bounding_box()
+    assert abs(form["height"] - horario["height"]) < 1.5

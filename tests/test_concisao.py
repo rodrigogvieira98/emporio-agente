@@ -45,7 +45,7 @@ def test_o_controle_sem_concisao_repete_e_a_metrica_enxerga(monkeypatch):
 
 def test_ao_perguntar_de_novo_o_cliente_recebe_o_fato_e_o_aviso_do_assunto():
     a, b = rodar(["qual o horário de vocês?", "qual o horário de vocês?"], concisao=True)
-    assert "09:00 às 18:00" in b.texto and "calendário de feriados" in b.texto and a.texto == b.texto
+    assert "09:00 às 18:00" in b.texto and "calendário de feriados" in b.texto and b.texto.endswith(a.texto)  # repetir a pergunta é sinal de frustração: só ganha a frase de reconhecimento antes do mesmo bloco
 
 
 def test_fato_pedido_de_novo_aparece_inteiro():

@@ -621,6 +621,24 @@ def atendente_ja_registrado(e: Estado, p: dict) -> str:
     return f"{txt} {_aviso_expediente(e)}".strip()
 
 
+# Tom: poucas formas, nunca repetidas na mesma conversa, sem desculpa por fato correto e sem prometer prazo.
+RECONHECIMENTOS = {
+    "frustrado": ("Entendo, vou direto ao ponto.", "Certo, sem enrolação.", "Dá para ver que isso está incomodando."),
+    "irritado": ("Entendo a sua irritação e quero ajudar.", "Sinto muito que a situação esteja assim.",
+                 "Percebo que está sendo difícil, vamos resolver."),
+}
+OFERTA_HUMANO = "Quer que um atendente te ajude? " + CONFIRMA
+
+
+def reconhecimento(e: Estado) -> str:
+    """Frase curta de reconhecimento para o sentimento do turno; vazia se neutro ou se as formas acabaram."""
+    for frase in RECONHECIMENTOS.get(e.sentimento, ()):
+        if frase not in e.reconhecimentos_usados:
+            e.reconhecimentos_usados.append(frase)
+            return frase
+    return ""
+
+
 def confirmar_registro(e: Estado, p: dict) -> str:
     return f"Posso registrar isso para a equipe? {CONFIRMA}"
 

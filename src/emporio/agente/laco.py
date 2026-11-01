@@ -111,11 +111,14 @@ class Agente:
                 contagens["resposta_nao_renderiza"] += 1
                 chave_final, acao = "falha_ferramenta", Acao(tipo="responder", resposta="falha_ferramenta")
                 texto = respostas.renderizar(chave_final, estado, {})
-            if self.redator is not None and chave_final != "saudacao":
+            texto, oferecer = ajustar_tom(estado, acao, chave_final, texto)
+            if self.redator is not None and chave_final != "saudacao" and estado.sentimento == "neutro":
                 permitir = acao.tipo == "responder" and not acao.parametros.get("propor_registro")
                 texto = self.redator.envolver(estado, mensagem_limpa, texto, permitir,
                                               respostas_anteriores(conversa_id) if self.concisao else [])
             texto, concluiu = fechar_turno(estado, acao, texto)
+            if oferecer and estado.aguardando is None:  # no máximo uma pergunta por turno
+                texto, concluiu = oferecer_humano(estado, texto), False
             if chave_final == "saudacao":
                 estado.ja_saudou = True
             if self.concisao:
@@ -147,7 +150,7 @@ class Agente:
         try:
             trace.registrar_turno({
                 "ts": config.agora().isoformat(), "conversa": conversa_id, "turno": estado.turno, "origem": origem,
-                "intencao": estado.intencao, "resposta": chave_final, "motivo_saida": motivo_saida,
+                "intencao": estado.intencao, "sentimento": estado.sentimento, "resposta": chave_final, "motivo_saida": motivo_saida,
                 "estado_antes": antes, "estado_depois": estado.resumo_curto(), "passos": passos_trace,
                 "acoes": acoes, "estado_resposta": estado_resposta, "latencia_ms": latencia,
                 "modelo": getattr(self.decisor, "modelo", None), "concisao": self.concisao,
@@ -274,6 +277,53 @@ def completar_datas(estado: Estado) -> None:
 
 
 # --- fechamento do turno --------------------------------------------------------------------
+
+# Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
+SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
+                     "confirmar_registro", "registro_cancelado", "registro_falhou", "perguntas_repetidas",
+                     "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao"}
+FECHO_DISPENSAVEL = re.compile(r"^(Se quiser|Se precisar|Se estiver|Posso ajudar)")
+
+
+def _encurtar(texto: str) -> str:
+    """Tira só o fecho de cortesia sem pergunta, no fim; fato, número e pergunta ficam."""
+    linhas = texto.split("\n")
+    if len(linhas) > 1 and FECHO_DISPENSAVEL.match(linhas[-1]) and "?" not in linhas[-1]:
+        linhas.pop()
+    return "\n".join(linhas)
+
+
+def _deve_oferecer(estado: Estado, acao: Acao) -> bool:
+    s = estado.sentimentos
+    insistente = estado.sentimento == "irritado" or (
+        estado.sentimento == "frustrado" and len(s) >= 2 and s[-2] == "frustrado")
+    espacada = estado.turno_oferta == 0 or estado.turno - estado.turno_oferta > 1
+    ja_ha_chamado = any(a.startswith("chamado:") for a in estado.acoes_concluidas)
+    return (insistente and espacada and acao.tipo == "responder" and not acao.parametros.get("propor_registro")
+            and not estado.pendentes and estado.oferta_humano != "recusada" and not ja_ha_chamado)
+
+
+def ajustar_tom(estado: Estado, acao: Acao, chave: str, texto: str) -> tuple[str, bool]:
+    """Sentimento muda só o tom: reconhecimento curto antes do bloco, fecho de cortesia a menos e, se couber,
+    oferta de atendente. O bloco factual não é alterado."""
+    if estado.sentimento == "neutro" or chave in SEM_AJUSTE_DE_TOM:
+        return texto, False
+    texto = _encurtar(texto)
+    frase = respostas.reconhecimento(estado)
+    if frase:
+        texto = f"{frase}\n{texto}"
+    return texto, _deve_oferecer(estado, acao)
+
+
+def oferecer_humano(estado: Estado, texto: str) -> str:
+    """Pergunta de sim ou não; o chamado só nasce com o 'sim' explícito, pelo caminho de sempre."""
+    estado.coletados["proposta"] = {"tipo": "atendente", "origem": "sentimento",
+                                    "resumo": "Cliente demonstrou frustracao e aceitou atendimento humano."}
+    estado.aguardando = "confirmacao_registro"
+    estado.oferta_humano = "feita"
+    estado.turno_oferta = estado.turno
+    return f"{texto}\n{respostas.OFERTA_HUMANO}"
+
 
 MAX_REPETICOES_PERGUNTA = 2  # a mesma pergunta de dado, no máximo 2 vezes seguidas
 

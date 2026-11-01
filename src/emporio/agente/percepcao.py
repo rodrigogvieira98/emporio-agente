@@ -10,7 +10,7 @@ from .. import config
 from ..dinheiro import para_centavos
 from ..ferramentas.encaminhamento import mascarar_dado_pessoal
 from ..texto import normalizar, tokens
-from . import catalogo
+from . import catalogo, sentimento
 from . import vocabulario as v
 from .estado import Estado
 
@@ -124,6 +124,8 @@ def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     s = RE_VALOR.sub(" ", s)
     s = RE_PARCELAS.sub(lambda m: m.group(0) if m.group(0).replace(" ", "") in voc.df else " ", s)
     s = v.DATA.sub(" ", s)
+    s = sentimento.FORTE.sub(" ", s)  # desabafo não é parte do nome do produto
+    s = sentimento.MEDIO.sub(" ", s)
     return s
 
 
@@ -298,6 +300,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
     """Atualiza o estado com a mensagem do turno e define `estado.intencao`."""
     norm = normalizar(mensagem)
     estado.turno += 1
+    sentimento.registrar(estado, mensagem)  # rótulo do turno; só o tom depende dele
     estado.passos = []
     estado.permissao_registro = False
     estado.slots = extrair_slots(norm, mensagem, estado)
@@ -331,6 +334,8 @@ def perceber(estado: Estado, mensagem: str) -> None:
             estado.intencao = estado.objetivo
             return
         if s["negativo"]:
+            if (estado.coletados.get("proposta") or {}).get("origem") == "sentimento":
+                estado.oferta_humano = "recusada"  # oferta de atendente recusada não volta na conversa
             estado.intencao = estado.objetivo
             s["cancelou"] = True
             return

@@ -41,6 +41,13 @@ class Estado(BaseModel):
     turno: int = 0
     # Última pergunta de dado feita ao cliente: {"chave", "campos", "vezes"}. Vazio se o último turno não perguntou.
     ultima_pergunta: dict[str, Any] = {}
+    # Sentimento (só o rótulo por turno, nunca o texto), assinatura da última mensagem, oferta de humano e frases
+    # de reconhecimento já usadas na conversa.
+    sentimentos: list[str] = []
+    assinatura_ultima_mensagem: str = ""
+    oferta_humano: str = ""  # "", "feita" ou "recusada"
+    turno_oferta: int = 0
+    reconhecimentos_usados: list[str] = []
 
     # Transitórios do turno: nunca persistidos (inclui o final de telefone digitado).
     intencao: str | None = Field(default=None, exclude=True)
@@ -53,6 +60,10 @@ class Estado(BaseModel):
     # Concisão: o que já foi entregue na conversa. chave -> {"valor": ..., "intencao": ...}
     ja_informados: dict[str, dict[str, str]] = {}
     ja_saudou: bool = False
+
+    @property
+    def sentimento(self) -> str:
+        return self.sentimentos[-1] if self.sentimentos else "neutro"
 
     def declarar(self, campo: str, valor: Any) -> None:
         self.declarados[campo] = {"valor": valor, "origem": "declarado"}

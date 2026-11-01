@@ -69,7 +69,7 @@ def test_estado_guarda_o_rotulo_por_turno_e_o_trace_nao_guarda_o_texto():
 
 def test_reconhecimento_nao_altera_fatos():
     neutro = conversar("quanto custa o Crafter HT-100 no pix?", conversa="a")[0]
-    frustrado = conversar("já falei, quanto custa o Crafter HT-100 no pix?", conversa="b")[0]
+    frustrado = conversar("de novo, quanto custa o Crafter HT-100 no pix?", conversa="b")[0]
     assert tem_empatia(frustrado.texto) and not tem_empatia(neutro.texto)
     assert frustrado.texto.split("\n", 1)[1].startswith(neutro.texto.split("\n")[0][:30])
     assert sorted((f.entidade_id, f.atributo, str(f.valor)) for f in frustrado.fatos) == \
@@ -93,21 +93,21 @@ def test_neutro_nunca_tem_frase_de_empatia():
 
 
 def test_irritado_reconhece_e_oferece_atendente_com_pergunta_de_sim_ou_nao():
-    (r,) = conversar("ridículo, ninguém responde! qual o horário de funcionamento?")
+    (r,) = conversar("que absurdo, ninguém responde! qual o horário de funcionamento?")
     assert tem_empatia(r.texto) and respostas.OFERTA_HUMANO in r.texto
     assert r.texto.count("?") == 1 and r.estado == "aguardando:confirmacao_registro"
     assert "Nosso horário de funcionamento" in r.texto  # o fato continua na resposta
 
 
 def test_oferta_so_vira_chamado_com_sim_explicito(sql):
-    r = conversar("ridículo, ninguém responde! qual o horário de funcionamento?", "sim")
+    r = conversar("que absurdo, ninguém responde! qual o horário de funcionamento?", "sim")
     assert protocolos(sql) != [] and "EM-" in r[1].texto and len(protocolos(sql)) == 1
-    conversar("ridículo, ninguém responde! qual o horário de funcionamento?", conversa="s2")
+    conversar("que absurdo, ninguém responde! qual o horário de funcionamento?", conversa="s2")
     assert len(protocolos(sql)) == 1  # a oferta sozinha não registra nada
 
 
 def test_oferta_recusada_nao_volta_na_conversa(sql):
-    r = conversar("ridículo, ninguém responde! qual o horário de funcionamento?", "não",
+    r = conversar("que absurdo, ninguém responde! qual o horário de funcionamento?", "não",
                   "isso é uma palhaçada!! qual o endereço da loja?", "VOCÊS SÃO INCOMPETENTES!! qual o horário?")
     assert "Quer que um atendente" in r[0].texto and "não registrei nada" in r[1].texto
     assert "Quer que um atendente" not in r[2].texto and "Quer que um atendente" not in r[3].texto
@@ -138,3 +138,46 @@ def test_pedido_de_atendente_irritado_nao_empilha_oferta_nem_empatia(sql):
 def test_reclamacao_nao_ganha_segunda_frase_de_empatia():
     (r,) = conversar("o violão chegou riscado e ninguém me responde, que absurdo")
     assert not tem_empatia(r.texto) and r.texto.count("?") == 1
+
+
+# 3. desabafo com pedido concreto segue o pedido; sem pedido, continua reclamação ------------------
+
+def test_desabafo_com_preco_responde_o_preco_sem_oferta_de_reclamacao():
+    neutro = conversar("quanto custa o Crafter HT-100??", conversa="n")[0]
+    (r,) = conversar("que absurdo, quanto custa o Crafter HT-100??")
+    assert "1.967,18" in r.texto and "2.399,00" in r.texto and "reclamação" not in r.texto
+    assert tem_empatia(r.texto) and "Posso registrar uma reclamação" not in r.texto
+    assert sorted((f.entidade_id, f.atributo, str(f.valor)) for f in r.fatos) == \
+        sorted((f.entidade_id, f.atributo, str(f.valor)) for f in neutro.fatos)
+
+
+def test_desabafo_com_pedido_pede_numero_e_final():
+    (r,) = conversar("que absurdo, cadê meu pedido?")
+    assert "número do pedido" in r.texto and r.estado == "aguardando:pedido"
+
+
+def test_desabafo_com_horario_responde_o_horario():
+    (r,) = conversar("que absurdo, qual o horário?")
+    assert "09:00 às 18:00" in r.texto and "Posso registrar uma reclamação" not in r.texto
+
+
+def test_reclamacao_sobre_produto_continua_reclamacao():
+    (r,) = conversar("o violão chegou riscado, que absurdo")
+    assert "Me conta em poucas palavras" in r.texto and r.estado == "aguardando:relato"
+
+
+# 4. "não" a um pedido de dados -----------------------------------------------------------------
+
+def test_nao_ao_pedido_de_dados_encerra_sem_repetir_o_pedido():
+    r = conversar("quero devolver", "não")
+    assert "número do pedido" in r[0].texto
+    assert "número do pedido" not in r[1].texto and "retomar" in r[1].texto
+    assert r[1].estado == "concluido"
+    r2 = conversar("qual o endereço?", conversa="x")  # a conversa segue normal depois
+    assert "CEP" in r2[0].texto
+
+
+def test_nao_ao_pedido_de_dados_nao_conta_como_pergunta_repetida():
+    r = conversar("quero devolver", "não", "quero devolver", "pedido 4, final 3456")
+    assert "número do pedido" in r[2].texto and "Posso registrar o seu caso" not in r[2].texto
+    assert "Encontrei o pedido 4" in r[3].texto

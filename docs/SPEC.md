@@ -77,7 +77,7 @@ CLI `python -m emporio.cli --origem demo`.
 Complemento aprovado pelo Rodrigo em 31/10/2026, aplicado na etapa 5, quando o modelo entra. Não altera as etapas 1 a 3.
 
 - O estado guarda `ja_informados`: chaves dos fatos e avisos já entregues na conversa, por entidade, atributo e valor.
-- Fato ou aviso já entregue não reaparece sem pedido do cliente. Exceções: o valor mudou, ou o cliente perguntou de novo.
+- Evitar repetições que não acrescentem informação, preservando condições necessárias para interpretar a resposta e decidir o próximo passo. Fato ou aviso reaparece quando muda o produto, a condição ou a ação solicitada, quando o valor mudou ou quando o cliente pergunta de novo. Revisão do Rodrigo em 01/11/2026.
 - Saudação no máximo uma vez por conversa.
 - Texto livre do modelo: no máximo 2 frases curtas e no máximo 1 pergunta por turno.
 - Antes de exibir, o código remove frase repetida ou quase igual dentro do turno e em relação às respostas anteriores, sem nunca remover bloco factual necessário à resposta atual.

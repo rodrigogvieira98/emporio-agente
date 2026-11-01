@@ -405,6 +405,12 @@ class RegrasDecisor:
         chave = "fora_escopo_geral" if estado.slots.get("assunto_geral") else "fora_escopo"
         return self._info(estado, ["escopo"], chave)
 
+    def _i_sem_info(self, estado: Estado) -> Acao:
+        """Tema que os dados não cobrem: diz que não tem a informação e oferece atendente, sem afirmar nada."""
+        tema = estado.slots.get("tema_sem_info") or "esse assunto"
+        return propor("sem_info", "sem_dado", f"Cliente perguntou sobre {tema} e o sistema nao tem a informacao.",
+                      tema=tema)
+
     def _i_dado_recusado(self, estado: Estado) -> Acao:
         return responder("dado_recusado")
 

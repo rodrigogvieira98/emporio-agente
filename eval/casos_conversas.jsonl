@@ -55,3 +55,5 @@
 {"id":"c55","cat":"qa_lia","turnos":["qual o preço do Yamaha C40 e vcs entregam em Dourados?"],"contem":["599,90","Dourados"],"chamado":false}
 {"id":"c56","cat":"qa_lia","turnos":["quanto fica o Yamaha APX600 no pix e em 10x?"],"contem":["PIX","10x"],"nao_contem":["Tive um problema"],"chamado":false}
 {"id":"c57","cat":"qa_lia","turnos":["posso pagar metade no pix e metade no cartao o Yamaha FG800?"],"contem":["2.000,00"],"chamado":false}
+{"id":"c58","cat":"qa2","turnos":["tem estacionamento na loja?"],"contem":["não tenho essa informação","atendente"],"nao_contem":["R$"],"chamado":false}
+{"id":"c59","cat":"qa2","turnos":["vocês compram instrumento usado?"],"contem":["não tenho essa informação"],"chamado":false}

@@ -1,6 +1,8 @@
 """QA 2 da Lia, etapa A."""
 from __future__ import annotations
 
+import pytest
+
 from emporio.agente.fabrica import criar_agente
 
 
@@ -19,3 +21,31 @@ def test_redacao_desligada_por_padrao(monkeypatch):
     assert criar_agente("falso:1b", _Dubla()).redator is not None
     monkeypatch.setenv("EMPORIO_REDACAO", "0")
     assert criar_agente("falso:1b", _Dubla()).redator is None
+
+
+from emporio.agente.laco import Agente
+
+
+def conversar(*mensagens, agente=None, conversa="qa2"):
+    agente = agente or Agente()
+    return [agente.responder(conversa, m, "eval") for m in mensagens]
+
+
+def textos(*mensagens, **kw):
+    return [r.texto for r in conversar(*mensagens, **kw)]
+
+
+# 2. o que não existe nos dados ------------------------------------------------------------------
+
+@pytest.mark.parametrize("pergunta", [
+    "tem estacionamento na loja?", "dá pra retirar na loja?", "vocês compram instrumento usado?",
+    "emitem nota fiscal no CNPJ da minha banda?", "tem seguro contra queda?", "preciso levar na loja ou vcs buscam?"])
+def test_assunto_fora_dos_dados_recebe_nao_tenho_a_informacao(pergunta):
+    (t,) = textos(pergunta)
+    assert "não tenho essa informação" in t.lower() and "atendente" in t.lower() and "Responda sim ou não" in t
+    assert "R$" not in t and "CNPJ" not in t
+
+
+def test_estacionamento_junto_do_endereco_responde_as_duas():
+    (t,) = textos("onde fica a loja? tem estacionamento?")
+    assert "Rua 14 de Maio" in t and "não tenho essa informação" in t.lower()

@@ -367,7 +367,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     return slots
 
 
-PRIMARIAS_COM_SECUNDARIA = {"busca_produto", "preco_produto", "disponibilidade", "horario", "endereco", "contato",
+PRIMARIAS_COM_SECUNDARIA = {"sem_info", "busca_produto", "preco_produto", "disponibilidade", "horario", "endereco", "contato",
                             "promocao", "garantia", "pagamento"}
 
 
@@ -375,6 +375,12 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
     """Intenção principal; se a mensagem traz uma segunda pergunta de informação simples, vai em `secundaria`."""
     nova = _classificar(norm, slots)
     slots["secundaria"] = None
+    if nova == "sem_info":  # "onde fica e tem estacionamento?": responde o que sabe e depois a falta de dado
+        info = [n for n, p in v.PADROES_INTENCAO if n in v.SECUNDARIAS and p.search(norm)]
+        if info:
+            slots["secundaria"] = "sem_info"
+            return info[0]
+        return nova
     if nova in PRIMARIAS_COM_SECUNDARIA:
         outras = [n for n, p in v.PADROES_INTENCAO if n in v.SECUNDARIAS and n != nova and p.search(norm)]
         if outras:
@@ -390,9 +396,18 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
     return nova
 
 
+def _tema_sem_info(norm: str) -> str | None:
+    """Tema que os dados da loja não cobrem (estacionamento, retirada, usados, nota fiscal, seguro)."""
+    return next((tema for tema, p in v.SEM_INFO if p.search(norm)), None)
+
+
 def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm):
         return "tentativa_manipulacao"
+    tema = _tema_sem_info(norm)
+    if tema and not slots.get("ingles") and not v.DADO_DE_TERCEIRO.search(norm):
+        slots["tema_sem_info"] = tema
+        return "sem_info"
     if slots.get("ingles"):
         return "encerramento" if slots.get("agradecimento_ingles") else "ingles"
     if len(slots.get("comparar_refs") or []) == 2:

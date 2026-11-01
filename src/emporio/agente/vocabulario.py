@@ -108,6 +108,21 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("saudacao", re.compile(r"\b(oi|ola|bom dia|boa tarde|boa noite|e ai|opa|tudo bem|eai)\b")),
 ]
 
+# Assunto que a loja não registra nos dados (QA 2): a Lia diz que não tem a informação e oferece atendente.
+# Cada tema é lido por intenção ("tem onde estacionar"), nunca por frase inteira.
+SEM_INFO = (
+    ("estacionamento", re.compile(r"\b(estacionamento\w*|estacionar|onde estaciono|vagas? (de|pra|para) (carro|moto|estacion\w+))\b")),
+    ("retirada na loja", re.compile(
+        r"\b(retirada|retirar|retiro|retira\w*|(buscar|pegar|busco|pego|buscam|buscamos) (na|a) (loja|compra|encomenda)|"
+        r"vcs buscam|voces buscam|(preciso|tenho que|tem que) levar na loja|levar na loja)\b")),
+    ("instrumento usado", re.compile(
+        r"\b((compr\w+|aceit\w+|vend\w+|troc\w+|recebem|pegam|negoci\w+)\b.{0,30}\b(usad[oa]s?|seminov[oa]s?|segunda mao)|"
+        r"(usad[oa]s?|seminov[oa]s?|segunda mao)\b.{0,25}\b(voces|vcs|a loja)\b.{0,15}\b(compr\w+|aceit\w+|vend\w+))\b")),
+    ("nota fiscal", re.compile(r"\b(nota fiscal|notas fiscais|nf-?e|nfe|danfe|nota no cnpj|nota em nome)\b")),
+    ("seguro", re.compile(
+        r"\b(seguro (cobre|cobrem|contra|do produto|do instrumento|de roubo|de queda)|(tem|ha|existe|contrat\w+|fazer|faz) (um )?seguro|o seguro)\b")),
+)
+
 # Pergunta de informação geral sobre troca, devolução ou garantia (sem caso próprio do cliente)
 PERGUNTA_GERAL_TROCAS = re.compile(
     r"\b(como funciona\w*|qual (e )?a (politica|regra)\w*|quais (sao )?as (politicas|regras)|politica\w* (de|da|do|para)|"

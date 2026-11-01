@@ -346,7 +346,7 @@ SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_dado_de_terceiro", "rec
                "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",
                "preco_promocao_conflitante", "cupom_inexistente", "endereco_pedido_privado", "acolhimento", "so_portugues",
                "comparacao", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
-               "sem_dado", "dado_recusado",
+               "sem_dado", "sem_info", "dado_recusado",
                # lead: a resposta de objeção e a de "vou pensar" não ganham convite do modelo
                "objecao_preco", "vou_pensar"}
 

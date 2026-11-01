@@ -125,15 +125,36 @@ import pytest  # noqa: E402
     "Quero saber como funciona a troca e a garantia.", "como funciona a troca?", "qual a política de devolução?",
     "como funciona a troca e a garantia?", "vocês trocam produto?",
 ])
-def test_pergunta_geral_de_troca_responde_a_politica_sem_pedir_pedido(frase):
+def test_pergunta_geral_de_troca_e_curta_completa_e_sem_pedir_pedido(frase):
     (r,) = conversar(frase)
     assert "consultar_pedido" not in [a.get("ferramenta") for a in r.acoes]
-    assert "número do pedido" not in r.texto.split("Se quiser")[0]
-    assert "Devolução por arrependimento" in r.texto and "Troca por defeito" in r.texto
-    assert "Troca por preferência" in r.texto and "Garantia legal" in r.texto
-    assert "Se quiser, posso verificar um pedido" in r.texto
-    assert "o manual não diz se a contagem parte da compra" in r.texto  # a ambiguidade do manual aparece
-    assert r.estado == "concluido"
+    assert len(r.texto) <= 600, len(r.texto)
+    for prazo in ("Arrependimento: 7 dias corridos", "Defeito: 30 dias corridos", "Preferência: 7 dias",
+                  "Garantia legal: 90 dias"):
+        assert prazo in r.texto, prazo
+    assert "o manual não diz de quando a contagem parte" in r.texto  # ressalva da preferência
+    assert "a equipe confirma" in r.texto and "30 dias do defeito" in r.texto  # ressalva 30 x 90
+    assert r.texto.count("?") == 1 and "verificar um pedido seu" in r.texto
+    assert "Não entram em troca" not in r.texto and "não cobre:" not in r.texto  # listas ficam para o "sim"
+    assert r.texto.count("30 dias") == 2  # sem repetir o prazo do defeito além da ressalva
+    assert r.estado == "aguardando:detalhe_trocas"
+
+
+def test_sim_depois_da_pergunta_geral_mostra_exclusoes_e_o_que_a_garantia_nao_cobre():
+    r = conversar("como funciona a troca e a garantia?", "sim")
+    assert "Não entram em troca" in r[1].texto and "boquilhas" in r[1].texto
+    assert "A garantia não cobre" in r[1].texto and "desgaste natural" in r[1].texto
+    assert "garantia própria" in r[1].texto and r[1].estado == "concluido"
+
+
+def test_nao_depois_da_pergunta_geral_nao_mostra_as_listas():
+    r = conversar("como funciona a troca?", "não")
+    assert "Não entram em troca" not in r[1].texto and r[1].estado == "concluido"
+
+
+def test_outro_assunto_depois_da_pergunta_geral_segue_normal():
+    r = conversar("como funciona a troca?", "qual o endereço da loja?")
+    assert "CEP" in r[1].texto and "Não entram em troca" not in r[1].texto
 
 
 @pytest.mark.parametrize("frase", [
@@ -150,6 +171,7 @@ def test_garantia_sozinha_continua_com_a_resposta_de_garantia():
     assert "Garantia legal" in r.texto and "Como funcionam troca" not in r.texto
 
 
-def test_pergunta_geral_depois_do_caso_proprio_nao_perde_o_fluxo(sql):
-    r = conversar("quero devolver", "pedido 4, final 3456", "como funciona a troca?")
-    assert "Como funcionam troca" in r[2].texto and "Quer retomar" in r[2].texto
+def test_pergunta_geral_no_meio_de_um_caso_responde_e_depois_oferece_retomar(sql):
+    r = conversar("quero devolver", "pedido 4, final 3456", "como funciona a troca?", "sim")
+    assert "Troca, devolução e garantia" in r[2].texto and "consultar_pedido" not in [a.get("ferramenta") for a in r[2].acoes]
+    assert "Não entram em troca" in r[3].texto and "Quer retomar" in r[3].texto

@@ -27,7 +27,7 @@ def test_conversa_longa_nao_repete_aviso_nem_saudacao(monkeypatch):
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-03-22T10:00:00")  # domingo: há aviso de expediente
     rs = rodar(CONVERSA_LONGA, concisao=True)
     assert total(rs, "avisos_reapresentados") == 0 and total(rs, "fatos_reapresentados") == 0
-    assert sum(r.texto.count("Eu sou a Lia") for r in rs) == 1
+    assert sum(r.texto.count("Sou a Lia") for r in rs) == 1
     assert rs[8].texto.startswith("Em que posso ajudar?")  # segundo oi: sem apresentação de novo
     assert sum("fora do expediente" in r.texto for r in rs) == 1
     assert sum("calendário de feriados" in r.texto for r in rs) == 1
@@ -38,14 +38,14 @@ def test_conversa_longa_nao_repete_aviso_nem_saudacao(monkeypatch):
 def test_o_controle_sem_concisao_repete_e_a_metrica_enxerga(monkeypatch):
     monkeypatch.setenv("EMPORIO_DATA_REFERENCIA", "2026-03-22T10:00:00")
     rs = rodar(CONVERSA_LONGA, concisao=False)
-    assert sum(r.texto.count("Eu sou a Lia") for r in rs) == 2
+    assert sum(r.texto.count("Sou a Lia") for r in rs) == 2
     assert total(rs, "avisos_reapresentados") >= 3
     assert total(rs, "avisos_exibidos") > total(rodar(CONVERSA_LONGA, concisao=True, conversa="c2"), "avisos_exibidos")
 
 
 def test_ao_perguntar_de_novo_o_cliente_recebe_o_fato_e_o_aviso_do_assunto():
     a, b = rodar(["qual o horário de vocês?", "qual o horário de vocês?"], concisao=True)
-    assert "09:00 às 18:00" in b.texto and "calendário de feriados" in b.texto and b.texto.endswith(a.texto)  # repetir a pergunta é sinal de frustração: só ganha a frase de reconhecimento antes do mesmo bloco
+    assert "09:00 às 18:00" in b.texto and "calendário de feriados" in b.texto and a.texto == b.texto
 
 
 def test_fato_pedido_de_novo_aparece_inteiro():
@@ -118,7 +118,7 @@ def test_nao_remove_item_de_lista_nem_pedido_de_confirmacao():
 def test_dedupe_so_age_com_concisao_ligada():
     a = Agente(concisao=False)
     a.responder("c1", "oi", "eval")
-    assert "Eu sou a Lia" in a.responder("c1", "oi", "eval").texto
+    assert "Sou a Lia" in a.responder("c1", "oi", "eval").texto
 
 
 @pytest.mark.parametrize("ligada", [True, False])

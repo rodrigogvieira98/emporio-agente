@@ -12,13 +12,13 @@ from difflib import SequenceMatcher
 from typing import Any
 
 from ..texto import normalizar, tokens
-from . import catalogo, llm
+from . import catalogo, llm, persona
 from . import vocabulario as v
 from .concisao import deduplicar_frases, tem_saudacao
 from .estado import Estado
 
 SISTEMA = (
-    "Você é a Lia, atendente virtual de uma loja de instrumentos. Escreva uma abertura curta e/ou um fechamento "
+    "Escreva uma abertura curta e/ou um fechamento "
     "curto em volta do texto da loja que será mostrado ao cliente. Regras: no máximo 2 frases no total e no máximo "
     "1 pergunta; informal e educado; sem números, sem valores, sem nomes de produto, sem prometer nem dizer que fez "
     "algo (transferir, reservar, cancelar, aprovar). Se não houver nada útil a acrescentar, devolva null nos dois "
@@ -40,6 +40,11 @@ LIMIAR_REPETE_BLOCO = 0.8
 MAX_FRASES = 2
 MAX_PERGUNTAS = 1
 MAX_CARACTERES = 220
+
+
+def sistema() -> str:
+    """Instruções de cada turno redigido: a persona primeiro, depois as regras da redação."""
+    return f"{persona.instrucoes()} {SISTEMA}"
 
 
 def _frases(texto: str) -> list[str]:
@@ -105,7 +110,7 @@ class Redator:
         reg: dict[str, Any] = {"componente": "redacao", "modelo": self.modelo}
         entrada = json.dumps({"mensagem_do_cliente": mensagem[:300], "texto_da_loja": bloco}, ensure_ascii=False)
         try:
-            r = self.cliente.conversar(self.modelo, llm.mensagens_do_modelo(self.modelo, SISTEMA, entrada),
+            r = self.cliente.conversar(self.modelo, llm.mensagens_do_modelo(self.modelo, sistema(), entrada),
                                        formato=SCHEMA, maximo_tokens=120)
         except llm.TimeoutModelo as erro:
             self._contar("timeout")

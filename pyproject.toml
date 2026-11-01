@@ -18,7 +18,7 @@ e2e = ["playwright>=1.45"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-emporio = ["politicas/*.yaml", "web/templates/*.html", "web/static/*"]
+emporio = ["politicas/*.yaml", "agente/*.yaml", "agente/*.md", "web/templates/*.html", "web/static/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

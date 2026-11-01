@@ -345,7 +345,7 @@ def test_saudacao_nao_recebe_redacao():
                            proposta(resposta="saudacao"))
     redator = Redator("falso:1b", ClienteFalso({"abertura": "Olá!", "fechamento": None}))
     r = Agente(LlmDecisor("falso:1b", cliente), redator).responder("c1", "oi", "eval")
-    assert r.texto.startswith("Oi! Eu sou a Lia") and redator.cliente.chamadas == []
+    assert r.texto.startswith("Oi! Sou a Lia") and redator.cliente.chamadas == []
 
 
 def test_fabrica_regras_decidem_e_modelo_so_redige(monkeypatch):

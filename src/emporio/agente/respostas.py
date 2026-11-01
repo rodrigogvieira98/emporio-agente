@@ -1,6 +1,6 @@
 """Textos da Lia. Todo fato de loja vem de resultados de ferramenta, nunca de literais aqui.
 
-Persona: assistente virtual, informal mas profissional. Sem travessão.
+Voz: a da persona em persona.yaml (acolhedora, clara, informal mas profissional). Sem travessão.
 """
 from __future__ import annotations
 
@@ -106,8 +106,7 @@ def saudacao(e: Estado, p: dict) -> str:
     if e.concisao and e.ja_saudou:  # saudação no máximo uma vez por conversa
         txt = "Em que posso ajudar?"
     else:
-        txt = (f"Oi! Eu sou a Lia, assistente virtual{de}. Posso ajudar com produtos, preços, pedidos, trocas e "
-               "devoluções. Como posso ajudar?")
+        txt = f"Oi! Sou a Lia, assistente virtual{de}. Como posso te ajudar?"
     expediente_txt = _aviso_expediente(e)
     return f"{txt} {expediente_txt}".strip()
 
@@ -383,8 +382,8 @@ def produto_indisponivel(e: Estado, p: dict) -> str:
                 + "\nQuer ver as condições de algum deles?")
     elif r is not None and r.estado == "vazio":
         txt += f" Também não encontrei alternativas disponíveis em {d['categoria']} agora."
-    else:
-        txt += " Não consegui consultar alternativas agora."
+    else:  # a consulta falhou: a oferta só existe porque um "sim" executa a busca de novo
+        txt += f" Não consegui consultar opções parecidas agora. Quer que eu tente de novo? {CONFIRMA}"
     return txt
 
 
@@ -427,8 +426,8 @@ def fora_escopo_geral(e: Estado, p: dict) -> str:
     c = _condicoes(e)
     if not c.get("escopo.somente_instrumentos"):
         return sem_dado(e, p)
-    return ("Esse assunto foge do que eu consigo ajudar por aqui. Sou a assistente da loja, que trabalha só com "
-            "instrumentos musicais. Posso ajudar com produtos, preços, pedidos, trocas e devoluções?")
+    return ("Esse assunto foge do que eu consigo ajudar por aqui, já que a loja trabalha só com instrumentos "
+            "musicais. Posso ajudar com produtos, preços, pedidos, trocas e devoluções?")
 
 
 def disponibilidade(e: Estado, p: dict) -> str:
@@ -623,15 +622,23 @@ def atendente_ja_registrado(e: Estado, p: dict) -> str:
 
 # Tom: poucas formas, nunca repetidas na mesma conversa, sem desculpa por fato correto e sem prometer prazo.
 RECONHECIMENTOS = {
-    "frustrado": ("Entendo, vou direto ao ponto.", "Certo, sem enrolação.", "Dá para ver que isso está incomodando."),
+    "frustrado": ("Entendo, vou direto ao ponto.", "Entendo sua frustração.", "Imagino como isso é chato."),
     "irritado": ("Entendo a sua irritação e quero ajudar.", "Sinto muito que a situação esteja assim.",
                  "Percebo que está sendo difícil, vamos resolver."),
 }
 OFERTA_HUMANO = "Quer que um atendente te ajude? " + CONFIRMA
 
 
+CONFERI_PEDIDO = "Entendo sua frustração. Conferi o que está registrado sobre o seu pedido."
+
+
 def reconhecimento(e: Estado) -> str:
-    """Frase curta de reconhecimento para o sentimento do turno; vazia se neutro ou se as formas acabaram."""
+    """Frase curta de reconhecimento para o sentimento do turno; vazia se neutro ou se as formas acabaram.
+
+    A forma que fala do pedido só sai se a consulta do pedido de fato ocorreu neste turno."""
+    if e.sentimento == "frustrado" and e.ultimo("consultar_pedido") is not None             and CONFERI_PEDIDO not in e.reconhecimentos_usados:
+        e.reconhecimentos_usados.append(CONFERI_PEDIDO)
+        return CONFERI_PEDIDO
     for frase in RECONHECIMENTOS.get(e.sentimento, ()):
         if frase not in e.reconhecimentos_usados:
             e.reconhecimentos_usados.append(frase)

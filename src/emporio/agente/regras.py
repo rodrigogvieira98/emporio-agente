@@ -256,6 +256,28 @@ class RegrasDecisor:
         r = resultado_de(estado, "buscar_produtos", **args)
         if r is None:
             return ferramenta("buscar_produtos", **args)
+        if r.estado == "falha":
+            estado.coletados["parecidas"] = {"produto_id": produto["id"], "categoria": produto["categoria"]}
+            return perguntar("produto_indisponivel", "retentar_parecidas")
+        return responder("produto_indisponivel")
+
+    def _i_retentar_parecidas(self, estado: Estado) -> Acao:
+        """O "sim" à oferta de opções parecidas: nova consulta real, na mesma categoria."""
+        alvo = estado.coletados.get("parecidas")
+        if not alvo:
+            return responder("nao_entendi")
+        produto = resultado_de(estado, "ver_produto", referencia=alvo["produto_id"])
+        if produto is None:
+            return ferramenta("ver_produto", referencia=alvo["produto_id"])
+        if produto.estado != "ok":
+            return self._erro(estado, produto)
+        args = {"categoria": alvo["categoria"], "limite": 3}
+        r = resultado_de(estado, "buscar_produtos", **args)
+        if r is None:
+            return ferramenta("buscar_produtos", **args)
+        if r.estado == "falha":
+            return perguntar("produto_indisponivel", "retentar_parecidas")
+        estado.coletados.pop("parecidas", None)
         return responder("produto_indisponivel")
 
     def _i_promocao(self, estado: Estado) -> Acao:

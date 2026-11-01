@@ -64,3 +64,20 @@ def test_sem_queda_nao_ativa_mau_uso_e_volta_para_defeito():
                "e o braço que tá empenando sozinho, sem queda nenhuma? isso é defeito né")
     assert "mau uso" in t[0].lower()
     assert "mau uso" not in t[1].lower() and "fabricante" in t[1].lower()
+
+
+# 4. saudação não engole o pedido ------------------------------------------------------------------
+
+def test_saudacao_com_pedido_de_produto_segue_a_intencao():
+    (t,) = textos("Bom dia, a igreja está procurando um piano digital até 2 mil reais")
+    assert "Oi! Sou a Lia" not in t and "R$" in t
+
+
+def test_saudacao_com_presente_e_teto_pergunta_o_que_falta():
+    (t,) = textos("boa noite! queria dar um instrumento de presente pra minha sobrinha que faz 10 anos, gasto no max uns 300 reais")
+    assert "Oi! Sou a Lia" not in t and ("instrumento" in t.lower() or "R$" in t)
+
+
+def test_saudacao_sozinha_continua_saudacao():
+    (t,) = textos("bom dia")
+    assert t.startswith("Oi! Sou a Lia")

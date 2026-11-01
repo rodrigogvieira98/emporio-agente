@@ -59,3 +59,4 @@
 {"id":"c59","cat":"qa2","turnos":["vocês compram instrumento usado?"],"contem":["não tenho essa informação"],"chamado":false}
 {"id":"c60","cat":"qa2","turnos":["comprei um violão na loja física faz 3 dias, posso devolver? desisti","e a boquilha de sax que comprei com minha amiga, dá pra trocar? ela nem usou"],"contem":["boquilha"],"nao_contem":["7 dias"],"chamado":false}
 {"id":"c61","cat":"qa2","turnos":["meu violão caiu do suporte e trincou o tampo, comprei tem 2 meses. a garantia cobre?","e o braço que tá empenando sozinho, sem queda nenhuma? isso é defeito né"],"contem":["fabricante"],"nao_contem":["mau uso"],"chamado":false}
+{"id":"c62","cat":"qa2","turnos":["Bom dia, a igreja está procurando um piano digital até 2 mil reais"],"nao_contem":["Sou a Lia"],"contem":["R$"],"chamado":false}

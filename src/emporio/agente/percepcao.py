@@ -431,7 +431,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
             n in ("devolucao", "defeito", "troca_preferencia", "status_pedido", "frete") for n in achadas):
         achadas = ["preco_produto", *achadas]  # "e se eu comprar dois?", "e os dois?": conta sobre o produto em foco
     ref, categoria = slots.get("referencia"), slots.get("categoria")
-    if categoria and not ref and slots.get("demonstrativo"):
+    procurando = re.search(r"\b(procur\w+|busc\w+|precis\w+|querend\w+|pensando em|interessad\w+)\b", norm)
+    if categoria and not ref and slots.get("demonstrativo") and not procurando and "preco_max" not in slots:
         categoria = None  # "essa guitarra no pix": a categoria só nomeia o produto em foco, não pede uma busca
     if slots.get("cep") and ("frete" in achadas or not achadas or achadas[0] in ("preco_produto", "disponibilidade")):
         return "frete"  # CEP na mensagem: o cliente quer o frete (estimativa com produto e CEP)
@@ -476,6 +477,9 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         slots["assunto_geral"] = True
         return "fora_escopo"
     if re.search(v.PADROES_INTENCAO[-1][1].pattern, norm):
+        resto = [t for t in tokens(v.PADROES_INTENCAO[-1][1].sub(" ", norm)) if t not in v.PALAVRAS_SOLTAS]
+        if len(resto) >= 4:
+            return None  # a saudação veio com um pedido que as regras não leram: não responde só "oi"
         return "saudacao"
     if v.ENCERRAMENTO.search(norm):
         return "encerramento"

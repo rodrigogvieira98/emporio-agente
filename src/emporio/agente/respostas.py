@@ -566,6 +566,8 @@ def preco(e: Estado, p: dict) -> str:
                           f"na faixa de {d['parcelas']}x. Quer que eu registre a dúvida para eles? {CONFIRMA}")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
+    elif d["forma"] != "credito" and p.get("oferta_parcelas"):
+        partes.append("Quer ver as parcelas no cartão de crédito?")
     return " ".join(partes)
 
 

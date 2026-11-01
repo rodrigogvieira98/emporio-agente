@@ -341,10 +341,13 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
 
 def _trocar_assunto(estado: Estado, novo: str) -> None:
     """Guarda o assunto em andamento antes de mudar."""
+    sem_dado = estado.aguardando is not None and not estado.declarados and not any(
+        k not in MANTER for k in estado.coletados)
     if estado.objetivo and estado.objetivo != novo:
-        estado.pendentes.append({"objetivo": estado.objetivo, "coletados": estado.coletados,
-                                 "declarados": estado.declarados, "aguardando": estado.aguardando})
-        estado.pendentes = estado.pendentes[-3:]
+        if not sem_dado:  # assunto sem nenhum dado do cliente não vira convite de retomar
+            estado.pendentes.append({"objetivo": estado.objetivo, "coletados": estado.coletados,
+                                     "declarados": estado.declarados, "aguardando": estado.aguardando})
+            estado.pendentes = estado.pendentes[-3:]
         estado.coletados = {k: x for k, x in estado.coletados.items() if k in MANTER}
         estado.declarados = {k: x for k, x in estado.declarados.items() if k == "pedido_id"}
     estado.objetivo = novo
@@ -400,7 +403,8 @@ def perceber(estado: Estado, mensagem: str) -> None:
     s = estado.slots
     ag = ag_inicial = estado.aguardando
     nova = classificar(norm, s)
-    ultimo = estado.coletados.get("ultimo_produto")
+    # produto em foco: o último consultado ou, depois de uma lista, o primeiro dela
+    ultimo = estado.coletados.get("ultimo_produto") or ((estado.coletados.get("ultima_busca") or {}).get("ids") or [None])[0]
     if (nova == "pagamento" and ultimo and "referencia" not in s and (s.get("forma") or s.get("parcelas"))
             and s["palavras"] <= 5 and not re.search(r"\b(quais|formas|aceita\w*|como)\b", norm)):
         nova = "preco_produto"  # "e no pix?" depois de um preço continua falando do mesmo produto
@@ -448,6 +452,17 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.objetivo = None
         estado.aguardando = None
         return
+    if ag == "parcelamento":  # "quer ver as parcelas?": o sim mostra, o não encerra, outra coisa segue o fluxo normal
+        estado.aguardando = None
+        resposta_curta = nova in (None, "confirmacao_solta")  # outra intenção ("quero um atendente") não é o sim
+        if resposta_curta and s["afirmativo"] and not s["negativo"] and estado.coletados.get("ultimo_produto"):
+            estado.objetivo = estado.intencao = "parcelamento_produto"
+            return
+        if resposta_curta and s["negativo"] and s["palavras"] <= 4:
+            estado.objetivo = None
+            estado.intencao = "confirmacao_solta"
+            return
+        ag = None
     if ag == "retentar_parecidas":
         estado.aguardando = None
         if s["afirmativo"] and not s["negativo"]:

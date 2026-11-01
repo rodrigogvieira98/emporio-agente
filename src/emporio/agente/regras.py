@@ -488,6 +488,29 @@ class RegrasDecisor:
             return propor("preco", "duvida_politica",
                           f"Cliente perguntou parcelamento em {parcelas}x do produto {produto['id']}; "
                           "as duas leituras da parcela minima do manual divergem.")
+        if forma != "credito":  # próximo passo curto, de sim ou não: as parcelas do produto em foco
+            return responder("preco", oferta_parcelas=True)
+        return responder("preco")
+
+    def _i_parcelamento_produto(self, estado: Estado) -> Acao:
+        """O "sim" à oferta de parcelas: o parcelamento máximo do produto em foco, em duas consultas à ferramenta."""
+        pid = estado.coletados.get("ultimo_produto")
+        if not pid:
+            return responder("nao_entendi")
+        base = {"produto_id": pid, "forma": "credito"}
+        r1 = resultado_de(estado, "calcular_condicoes", parcelas=1, **base)
+        if r1 is None:
+            return ferramenta("calcular_condicoes", parcelas=1, **base)
+        if r1.estado != "ok":
+            return self._erro(estado, r1)
+        r2 = resultado_de(estado, "calcular_condicoes", parcelas=r1.dados["parcelas_max"], **base)
+        if r2 is None:
+            return ferramenta("calcular_condicoes", parcelas=r1.dados["parcelas_max"], **base)
+        if r2.estado != "ok":
+            return self._erro(estado, r2)
+        if r2.dados.get("permitido") == "requer_confirmacao":
+            return propor("preco", "duvida_politica",
+                          f"Cliente pediu o parcelamento do produto {pid}; as duas leituras da parcela minima divergem.")
         return responder("preco")
 
     # --- reclamação e atendente ------------------------------------------------------

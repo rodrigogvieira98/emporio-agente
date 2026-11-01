@@ -378,7 +378,7 @@ def _assinatura(acao: Acao) -> dict[str, Any]:
 
 def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:
     """A terceira pergunta igual seguida vira oferta de registro para a equipe, em vez de outro laço."""
-    if acao.tipo != "perguntar" or acao.parametros.get("aguardando") == "detalhe_trocas":
+    if acao.tipo != "perguntar" or acao.parametros.get("aguardando") in ("detalhe_trocas",):
         return acao  # a oferta de detalhes é informação, não um dado que o cliente deixou de dar
     anterior = estado.ultima_pergunta
     assinatura = _assinatura(acao)
@@ -415,7 +415,10 @@ def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
     for k in LIMPAR_AO_CONCLUIR:
         estado.coletados.pop(k, None)
     estado.declarados = {k: v for k, v in estado.declarados.items() if k == "pedido_id"}
-    if estado.pendentes:
+    if p.get("oferta_parcelas"):
+        estado.aguardando = "parcelamento"  # a resposta termina em pergunta de sim ou não sobre as parcelas
+    # uma pergunta por resposta: se o texto já termina em pergunta, o convite de retomar espera o próximo turno
+    if estado.pendentes and not texto.rstrip().endswith("?"):
         assunto = estado.pendentes[-1]["objetivo"]
         estado.aguardando = "retomar"
         texto = f"{texto}\n\n{respostas.retomar(estado, {'assunto': assunto})}"

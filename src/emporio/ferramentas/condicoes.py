@@ -108,7 +108,7 @@ def calcular_condicoes(e: EntradaCondicoes) -> Resultado:
         tabela = e.parcelas == 1 or parcela >= minimo_tabela
         faixas = e.parcelas == 1 or parcela >= minimo_faixa
         permitido = "sim" if tabela and faixas else "nao" if not tabela and not faixas else "requer_confirmacao"
-        dados.update({"parcela_centavos": parcela, "leitura_tabela": tabela, "leitura_faixas": faixas,
+        dados.update({"parcelas_max": parcelas_max, "parcela_centavos": parcela, "leitura_tabela": tabela, "leitura_faixas": faixas,
                       "minimo_tabela_centavos": minimo_tabela, "minimo_faixa_centavos": minimo_faixa})
         fontes += [_fonte_manual("pagamento.credito_parcela_minima_tabela_centavos"),
                    _fonte_manual("pagamento.parcelamento_faixas")]

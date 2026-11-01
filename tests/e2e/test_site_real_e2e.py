@@ -268,7 +268,7 @@ def test_filtros_recolhidos_no_celular_fecham_fora_e_com_esc(url_site, navegador
     pagina.keyboard.press("Escape")
     assert caixa.get_attribute("open") is None and pagina.evaluate("document.activeElement.tagName") == "SUMMARY"
     pagina.set_viewport_size({"width": 1280, "height": 800})  # no desktop ficam sempre à vista
-    assert pagina.locator(".filtros-caixa").get_attribute("open") is not None
+    pagina.wait_for_function("document.querySelector('.filtros-caixa').open === true")
 
 
 def test_abrir_um_elemento_fecha_o_outro(url_site, navegador):

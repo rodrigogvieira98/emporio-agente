@@ -379,6 +379,9 @@ class RegrasDecisor:
         """"sim" ou "não" sem pergunta pendente: resposta natural, nunca "não entendi"."""
         return responder("confirmacao_solta")
 
+    def _i_carrinho(self, estado: Estado) -> Acao:
+        return responder("carrinho_chat")
+
     def _i_pedido_instrucoes(self, estado: Estado) -> Acao:
         return responder("recusa_instrucoes")
 

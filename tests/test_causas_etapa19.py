@@ -98,6 +98,33 @@ def test_parcela_sozinha_depois_de_produto_em_foco():
     assert "Yamaha Bass 3X" in r[1].texto and "em 3x, cada parcela" in r[1].texto
 
 
+# --- item 4: carrinho pelo chat -------------------------------------------------------------
+
+PEDIDOS_DE_CARRINHO = ["tira um", "remove o violão do carrinho", "quanto ficou o carrinho?",
+                       "quero tirar um item do meu carrinho", "esvazia meu carrinho", "qual o total do carrinho?",
+                       "retira esse do carrinho", "o que tem no meu carrinho?", "muda a quantidade no carrinho"]
+
+
+@pytest.mark.parametrize("mensagem", PEDIDOS_DE_CARRINHO)
+def test_a_lia_nao_mexe_no_carrinho_e_manda_o_link(sql, mensagem):
+    (r,) = conversar(mensagem)
+    t = r.texto.lower()
+    assert "carrinho" in t and ("alterar" in t or "mudar" in t) and "total" in t, r.texto
+    assert any(x.get("href") == "/carrinho" for x in r.links), r.links
+    assert "removi" not in t and "tirei" not in t and "não entendi" not in t
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 0
+
+
+def test_tirar_uma_duvida_nao_e_pedido_de_carrinho():
+    (r,) = conversar("posso tirar uma dúvida sobre a garantia?")
+    assert not any(x.get("href") == "/carrinho" for x in r.links)
+
+
+def test_pedir_para_adicionar_ao_carrinho_segue_o_fluxo_de_compra():
+    r = conversar("quanto custa o Yamaha C40", "quero comprar esse, põe no carrinho")
+    assert any(x.get("tipo") == "carrinho" for x in r[1].links)
+
+
 # --- item 3: pedido explícito de atendente traz prazo e canais ------------------------------
 
 @pytest.mark.parametrize("mensagem", ["quero falar com um atendente", "me passa para uma pessoa de verdade",

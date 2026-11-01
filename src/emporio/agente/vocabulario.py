@@ -356,3 +356,18 @@ NIVEL_OUTRO = re.compile(r"\b(intermediari\w+|avancad\w+|profissional|profission
 # Resposta que dispensa a pergunta de qualificação ("tanto faz", "sem preferência").
 SEM_PREFERENCIA = re.compile(r"\b(tanto faz|qualquer (um|uma|coisa|modelo)|sem preferencia|nao tenho preferencia|nao sei)\b")
 ORCAMENTO_BAIXO = re.compile(r"\b(barat\w+|em conta|economic\w+|pouco dinheiro|sem gastar muito)\b")
+
+
+# Carrinho pelo chat: tirar, mudar quantidade ou ver o total. A Lia não altera o carrinho; manda o link do site.
+# Adicionar ao carrinho segue o fluxo de compra (COMPRA) e não entra aqui.
+_TIRAR = r"(?:tir\w+|remov\w+|retir\w+|exclu\w+|apag\w+|delet\w+|esvazi\w+|limp\w+|diminu\w+|reduz\w+)"
+CARRINHO = re.compile(
+    rf"\b{_TIRAR}\b.{{0,40}}\b(?:carrinho|quantidade|itens?)\b|"
+    rf"\bcarrinho\b.{{0,30}}\b{_TIRAR}\b|"
+    r"\b(?:mud\w+|alter\w+|troc\w+|ajust\w+|aument\w+)\b.{0,25}\b(?:carrinho|quantidade)\b|"
+    r"\b(?:tira|tire|tirar|remove|remova|remover|exclui|apaga|apagar)\b (?:so |apenas |mais )?"
+    r"(?:um|uma|dois|duas|ele|ela|esse|essa|isso|o ultimo|a ultima|o outro|a outra|um deles|uma delas)\b"
+    r"(?! (?:duvida|pergunta|foto))|"
+    r"^(?!.*\b(?:adicion\w*|coloc\w*|poe|ponha|joga|bota|mand\w+|comprar|finaliz\w+|fechar)\b).*"
+    r"(?:\b(?:quanto|qual|valor|total|soma|ver|mostr\w+|cade|onde|que tem|conteudo)\b.{0,30}\bcarrinho\b|"
+    r"\bcarrinho\b.{0,25}\b(?:total|ficou|fica|valor|soma|quanto|deu)\b)")

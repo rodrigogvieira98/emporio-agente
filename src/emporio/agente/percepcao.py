@@ -434,6 +434,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if v.MANIPULACAO.search(norm) or ((v.AUTORIDADE.search(norm) or v.PEDIDO_INDEVIDO.search(norm))
                                       and not v.DADO_DE_TERCEIRO.search(norm)):
         return "tentativa_manipulacao"
+    if v.CARRINHO.search(norm) and not v.DADO_DE_TERCEIRO.search(norm):
+        return "carrinho"  # a Lia não mexe no carrinho: explica e manda o link
     tema = _tema_sem_info(norm)
     if tema == "extravio" and slots.get("pedido_id"):
         tema = None  # com o número do pedido, a consulta do pedido responde

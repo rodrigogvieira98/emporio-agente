@@ -1016,6 +1016,11 @@ def confirmacao_solta(e: Estado, p: dict) -> str:
             "trocas e devoluções, horário e endereço.")
 
 
+def carrinho_chat(e: Estado, p: dict) -> str:
+    return ("Eu não altero o carrinho por aqui. No carrinho do site você consegue mudar as quantidades, tirar itens "
+            "e ver o total. É só abrir o link abaixo.")
+
+
 def recusa_instrucoes(e: Estado, p: dict) -> str:
     return ("Não consigo atender esse pedido, porque as minhas instruções internas não são compartilhadas. Posso "
             "ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço.")
@@ -1359,7 +1364,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_pedido_indevido, seguro_envio, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
-        item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
+        item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, carrinho_chat, reembolso_prazo,
         previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,

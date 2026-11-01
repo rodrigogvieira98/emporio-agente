@@ -94,16 +94,19 @@ button:disabled { opacity: .55; cursor: wait; }
 .menu-categorias li a, .menu-categorias li.em-breve { display: flex; justify-content: space-between; gap: var(--s4); padding: var(--s2) var(--s3); text-decoration: none; color: var(--tinta); }
 .menu-categorias li a:hover { background: var(--papel); color: var(--jacaranda); }
 .menu-categorias li.em-breve { color: var(--cinza-texto); }
-@media (max-width: 1023px) {  /* celular e tablet: marca e Lia na primeira linha, busca na segunda, links na terceira */
+@media (max-width: 1023px) {  /* celular e tablet: marca e Lia, busca e carrinho, links; grade explícita para nada estourar */
   .menu { display: contents; }
-  .topo-in { grid-template-columns: auto auto 1fr; column-gap: var(--s4); row-gap: var(--s1); }
+  .topo-in { grid-template-columns: 1fr auto auto; column-gap: var(--s3); row-gap: var(--s1); }
+  .menu-categorias summary, .menu > a:not(.botao), .link-carrinho { white-space: nowrap; }
   .marca { grid-column: 1 / 3; grid-row: 1; margin-bottom: var(--s2); }
+  .marca-nome { white-space: nowrap; }
   .botao-lia { grid-column: 3; grid-row: 1; justify-self: end; margin: 0 0 var(--s2); padding-inline: var(--s3); font-size: .875rem; }
-  .busca-topo { grid-column: 1 / -1; grid-row: 2; margin-bottom: var(--s1); }
-  .menu-categorias, .menu > a:not(.botao) { grid-row: 3; }
+  .busca-topo { grid-column: 1 / 3; grid-row: 2; margin-bottom: var(--s1); }
+  .menu > .link-carrinho { grid-column: 3; grid-row: 2; justify-self: end; margin-bottom: var(--s1); padding-block: 0; min-height: 44px; display: inline-flex; align-items: center; gap: var(--s1); }
+  .menu-categorias, .menu > a:not(.botao):not(.link-carrinho) { grid-row: 3; }
   .menu-categorias { grid-column: 1; }
-  .menu > a:not(.botao):nth-of-type(1) { grid-column: 2; }
-  .menu > a:not(.botao):nth-of-type(2) { grid-column: 3; justify-self: start; }
+  .menu > a:not(.botao):not(.link-carrinho):nth-of-type(1) { grid-column: 2; }
+  .menu > a:not(.botao):not(.link-carrinho):nth-of-type(2) { grid-column: 3; }
 }
 @media (min-width: 1024px) {
   .topo-in { grid-template-columns: auto minmax(12rem, 1fr) auto; gap: var(--s8); }

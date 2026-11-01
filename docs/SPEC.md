@@ -70,7 +70,9 @@ O resumo do chamado pode conter o relato livre do cliente, inclusive nome, porqu
 
 Na mesma conversa, com chamado já registrado, novo pedido de atendente informa o protocolo existente e não abre outro chamado. O teste `test_mesmo_pedido_repetido_nao_duplica_chamado` passou a esperar 1 chamado em vez de 2. Mudança de teste aprovada pelo Rodrigo em 01/11/2026.
 
-Também aprovadas pelo Rodrigo em 01/11/2026 estas alterações de testes existentes: "Eu sou a Lia" para "Sou a Lia" em `test_concisao.py` e `test_llm.py`; nova ordem de consultas em `test_devolucao_do_pedido_4_conversa_completa` e `test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas`, porque a regra é dita antes de pedir o pedido; teste do rodapé em `test_web.py`, que passa a exigir um telefone e um e-mail.
+Também aprovadas pelo Rodrigo em 01/11/2026 estas alterações de testes existentes: "Eu sou a Lia" para "Sou a Lia" em `test_concisao.py` e `test_llm.py`; nova ordem de consultas em `test_devolucao_do_pedido_4_conversa_completa` e `test_mensagens_exibidas_e_execucoes_sao_tabelas_separadas`, porque a regra é dita antes de pedir o pedido; teste do rodapé em `test_web.py`, que passa a exigir um telefone e um e-mail. Aprovadas também as trocas de texto esperado pela linguagem de cliente em `test_agente.py`, `test_cli_e_utilitarios.py`, `test_defeitos_das_conversas.py`, `test_falhas_dev.py`, `test_regressao_etapa3.py`, `test_compra_demo.py` e no e2e de compra.
+
+Canais de contato: decisão do Rodrigo em 01/11/2026, "vamos somente simular e nada mais, use os dados existentes". O site mostra os contatos do manual, sem ativar canal externo real.
 
 CLI `python -m emporio.cli --origem demo`.
 
@@ -195,7 +197,7 @@ Revisão enviada pelo Rodrigo em 01/11/2026. Prevalece sobre a etapa 6c e as se�
 
 **Lia:** botão com retrato e rótulo "Lia · conversar", inicialmente fechado, nunca abre sozinho e não cobre ações de compra. O painel mostra nome, identificação como assistente virtual, fechar visível e sugestões curtas ("Encontrar instrumento", "Consultar pedido", "Trocas e devoluções"), preserva a conversa ao navegar e, no celular, é amplo com campo acima do teclado.
 
-**Fotos:** genéricas reais só em categorias e conteúdo editorial. Produto específico usa foto correspondente com uso autorizado verificado na origem; sem ela, indicação clara "Foto do produto indisponível", com a ilustração da categoria. Sai a tag "Imagem ilustrativa". Foto de fabricante não é proibida por princípio, mas exige permissão conferida.
+**Fotos:** decisão do Rodrigo em 01/11/2026, por ser protótipo: todo produto tem foto real de instrumento, sem "Foto do produto indisponível". Usa a do modelo exato quando houver licença livre; senão, a do mesmo tipo de instrumento, com variação suficiente para os cartões não parecerem iguais (cor, corpo, nylon ou aço). Como o repositório é público, as fotos continuam de licença livre, com crédito em `/creditos`, e o README diz que elas são representativas do tipo de instrumento.
 
 **Fale Conosco por intenção:** Conversar (WhatsApp, ícone e texto), Ligar, Escrever, Deixar uma mensagem. Formulário com assunto, mensagem e contato para retorno; sem campo inútil; texto preservado em erro; confirma só "Mensagem registrada". Canais operacionais só viram link quando verificados: `EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK`. Sem essas variáveis, os contatos aparecem como texto com ícone, porque os números do manual são fictícios e podem pertencer a terceiros.
 

@@ -31,16 +31,16 @@ expressoes_proibidas:
   - rsrs
   - senhor
   - senhora
-  # a Lia fala como atendente de uma loja de verdade: nada de bastidor ao cliente
+  # a Lia fala como atendente de uma loja de verdade: nenhum detalhe interno ao cliente
+  - no sistema
+  - do sistema
   - manual
-  - sistema
   - ferramenta
   - seção
   - secao
-  - origem
+  - origem do dado
   - demonstração
   - demonstracao
-  - teste
-  - desafio
   - fictícia
   - ficticia
+  - desafio

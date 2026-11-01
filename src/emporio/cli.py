@@ -40,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
         if not interativo:
             print(f"Voce: {linha}")
         resposta = agente.responder(conversa, linha, args.origem)
-        print(f"Lia: {resposta.texto}\n")
+        print(f"Lia: {resposta.texto_terminal()}\n")
     return 0
 
 

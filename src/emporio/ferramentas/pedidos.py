@@ -68,6 +68,7 @@ def consultar_pedido(e: EntradaPedido) -> Resultado:
         dados = {
             "pedido_id": pedido["id"],
             "status": pedido["status"],
+            "data_pedido": pedido["data_pedido"],
             "itens": [{"nome": i["nome"], "quantidade": i["quantidade"]} for i in itens],
             "total_gravado_centavos": pedido["total_centavos"],
             "forma_pagamento": pedido["forma_pagamento"],

@@ -44,6 +44,7 @@ ROTULO_FORMA = {"pix": "PIX", "debito": "cartão de débito", "debit": "cartão 
 FRASE_STATUS = {"pending": "está pendente", "confirmed": "foi confirmado", "shipped": "foi enviado",
                 "delivered": "foi entregue", "cancelled": "foi cancelado"}
 CONFIRMA = "Responda sim ou não."
+FECHAMENTO = "Posso ajudar em mais alguma coisa?"
 
 
 # --- acesso aos resultados de ferramenta ---------------------------------------------------
@@ -198,6 +199,10 @@ def pagamento(e: Estado, p: dict) -> str:
         forma, escolhidas = None, list(linhas)
     if len(escolhidas) == 1:
         txt = linhas[escolhidas[0]] + "."
+        if escolhidas[0] == "debito":  # "todas as bandeiras aceitas" está no texto da seção de pagamento
+            bandeiras = _linha_do_manual(e, "bandeiras")
+            if bandeiras:
+                txt += " " + bandeiras.split("|")[-1].strip().rstrip(".") + "."
     else:
         txt = "Formas de pagamento:\n" + "\n".join(f"- {linhas[k]}" for k in escolhidas)
     if "credito" in escolhidas and "pagamento.parcelamento_faixas" in c:
@@ -440,6 +445,9 @@ def busca(e: Estado, p: dict) -> str:
     if r is None:
         return falha_ferramenta(e, p)
     if r.estado == "vazio":
+        if p.get("sem_categoria"):
+            return ("Não encontrei esse tipo de instrumento à venda no catálogo hoje. "
+                    f"Temos {_lista(p['sem_categoria'])}. Qual deles te interessa?")
         if r.motivo == "categoria_inexistente":
             return "Não encontrei essa categoria no nosso catálogo. Quer tentar outro tipo de instrumento?"
         return ("Não encontrei produtos disponíveis com esses filtros agora. "
@@ -651,9 +659,10 @@ def pedir_pedido(e: Estado, p: dict) -> str:
     regra = e.coletados.get("regra")
     if regra and p.get("com_regra") and e.objetivo in ROTULOS_REGRA:
         v = regra["valor"]
-        return (f"Pela regra da loja, {ROTULOS_REGRA[e.objetivo]}: {_prazo(v)}. A equipe confirma se o seu caso se "
-                "enquadra. Para consultar o pedido, me diga o número do pedido e os 4 últimos dígitos do telefone "
-                "cadastrado.")
+        online = ", e vale para compra online" if v.get("aplica_a") == "compra_online" else ""
+        return (f"Pela regra da loja, {ROTULOS_REGRA[e.objetivo]}: {_prazo(v)}{online}. A equipe confirma se o seu "
+                "caso se enquadra. Para consultar o pedido, me diga o número do pedido e os 4 últimos dígitos do "
+                "telefone cadastrado.")
     if p.get("tem_pedido") and not p.get("tem_final"):
         return "Agora preciso dos 4 últimos dígitos do telefone cadastrado no pedido."
     if p.get("tem_final") and not p.get("tem_pedido"):
@@ -711,11 +720,20 @@ def _forma_pedido(bruto: str) -> str:
     return ROTULO_FORMA.get(bruto, "")
 
 
+def _nota_prazo_defeito(e: Estado) -> str:
+    """Troca por defeito: o prazo conta da compra, e a data do pedido (do sistema) diz de quando."""
+    ped, regra = e.coletados.get("pedido") or {}, (e.coletados.get("regra") or {}).get("valor")
+    if e.objetivo != "defeito" or not ped.get("data_pedido") or not regra:
+        return ""
+    return (f" O pedido é de {_data_br(ped['data_pedido'])}, dentro do prazo de {regra['prazo_dias']} dias "
+            "para troca por defeito.")
+
+
 def pedir_dados_posvenda(e: Estado, p: dict) -> str:
     ped = e.coletados["pedido"]
     campos = [CAMPOS.get(c, c) for c in p["campos"]]
     achei = aviso(e, "pedido_encontrado", f"Encontrei o pedido {ped['pedido_id']}.", str(ped["pedido_id"]))
-    return f"{achei} Para organizar sua solicitação, me conta: {_lista(campos)}.".strip()
+    return f"{achei}{_nota_prazo_defeito(e)} Para organizar sua solicitação, me conta: {_lista(campos)}.".strip()
 
 
 def propor_posvenda(e: Estado, p: dict) -> str:
@@ -723,6 +741,8 @@ def propor_posvenda(e: Estado, p: dict) -> str:
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in ped["itens"])
     consta = (f"pedido {ped['pedido_id']}, status {STATUS_PEDIDO.get(ped['status'], ped['status'])}, {itens}, "
                f"total gravado {formatar(ped['total_gravado_centavos'])}")
+    if ped.get("data_pedido"):
+        consta += f", feito em {_data_br(ped['data_pedido'])}"
     if ped.get("previsao"):
         consta += f", previsão de entrega {_data_br(ped['previsao'])}"
     decl = []
@@ -746,7 +766,7 @@ def propor_posvenda(e: Estado, p: dict) -> str:
     pontos = [AMBIGUIDADE_CLIENTE[i] for i in amb if i in AMBIGUIDADE_CLIENTE]
     nota = f" Depende de confirmação da nossa equipe: {pontos[0]}." if pontos else ""
     return (
-        "Resumo da sua solicitação:\n"
+        "Resumo da sua solicitação:" + _nota_prazo_defeito(e) + "\n"
         f"1) O que consta no seu pedido: {consta}.\n"
         f"2) O que você me informou (não verificado): {'; '.join(decl)}.\n"
         f"3) O que a equipe confirma: se o seu caso se enquadra na regra da loja ({condicao}, {marco_txt}{aplica}).{exigido}"
@@ -953,6 +973,137 @@ def retomar(e: Estado, p: dict) -> str:
     return f"Antes a gente estava falando sobre {assunto}. Quer retomar? {CONFIRMA}"
 
 
+# --- conformidade com o manual (etapa 10) -----------------------------------------------------------------
+
+def _sentenca(texto: str) -> str:
+    """Item de lista do manual dito no meio da frase: inicial minúscula, sem ponto final."""
+    texto = texto.strip(" •\t").rstrip(".")
+    return texto[0].lower() + texto[1:] if texto and not texto[:2].isupper() else texto
+
+
+def garantia_excluida(e: Estado, p: dict) -> str:
+    itens = _condicoes(e).get("garantia.nao_cobre") or []
+    achados = [x for x in itens if re.search(r"queda|mau uso", normalizar(x))]
+    if not achados:
+        return sem_dado(e, p)
+    return (f"Pelas regras da loja, a garantia não cobre: {_sentenca(achados[0])}. Por isso esse caso não entra em troca por "
+            "defeito nem por preferência. Se o seu caso for outro, é só me contar.")
+
+
+def avaria_recebimento(e: Estado, p: dict) -> str:
+    return ("Se o produto chegou com avaria, o certo é recusar o recebimento e falar com a loja imediatamente. "
+            f"Quer que eu registre o problema para a equipe? {CONFIRMA}")
+
+
+def devolucao_loja_fisica(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    arrep, defeito, pref = c.get("regra.arrependimento"), c.get("regra.defeito"), c.get("regra.preferencia")
+    if not arrep or arrep.get("aplica_a") != "compra_online":
+        return sem_dado(e, p)
+    partes = [f"O direito de arrependimento vale para compra online ({_prazo(arrep)}), então não se aplica a uma "
+              "compra feita na loja física."]
+    cabe = []
+    if defeito:
+        cabe.append(f"troca por defeito de fabricação ({_prazo(defeito)})")
+    if pref:
+        cabe.append(f"troca por preferência ({pref['prazo_dias']} dias, conforme a disponibilidade do produto)")
+    if cabe:
+        partes.append("Dependendo do caso, cabe " + " ou ".join(cabe) + ". A equipe confirma se o seu caso se enquadra.")
+    return " ".join(partes)
+
+
+def defeito_apos_prazo(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    regra = c.get("regra.defeito")
+    if not regra or not c.get("defeito.apos_prazo_aciona_fabricante"):
+        return sem_dado(e, p)
+    ped = e.coletados.get("pedido") or {}
+    quando = f"O pedido é de {_data_br(ped['data_pedido'])} e passaram os" if ped.get("data_pedido") else "Passados os"
+    inter = (" A loja pode intermediar o processo se você pedir."
+             if c.get("defeito.loja_pode_intermediar_mediante_solicitacao") else "")
+    return (f"{quando} {regra['prazo_dias']} dias para troca por defeito. Depois desse prazo a garantia é acionada "
+            f"direto com o fabricante.{inter} Quer que eu registre o pedido de intermediação para a equipe? {CONFIRMA}")
+
+
+def devolucao_frete(e: Estado, p: dict) -> str:
+    if not _condicoes(e).get("devolucao.arrependimento_frete_por_conta_da_loja"):
+        return sem_dado(e, p)
+    return ("Na devolução por arrependimento, o frete de devolução é por conta da loja. "
+            "A equipe confirma se o seu caso se enquadra.")
+
+
+def rain_check(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    if "promocoes.rain_check" not in c or c["promocoes.rain_check"]:
+        return sem_dado(e, p)
+    return ("Não seguramos o preço de promoção: produto esgotado durante a promoção não gera rain check (reserva de "
+            "preço), e quando a promoção acaba vale o preço atual. Se quiser, é só pedir que eu mostro as promoções "
+            "ativas.")
+
+
+def rastreio_como(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    por, onde = c.get("rastreamento.enviado_por"), c.get("rastreamento.consulta_em")
+    if not por or not onde:
+        return sem_dado(e, p)
+    return (f"O código de rastreamento é enviado automaticamente por {_lista(por)} assim que o pedido é despachado, e "
+            f"dá para acompanhar no site dos {_lista(onde)}. Se já tiver um pedido, eu consulto o andamento por aqui "
+            "com o número dele e os 4 últimos dígitos do telefone.")
+
+
+def privacidade(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    secao = next((s for pas in e.passos if pas.ferramenta == "consultar_politica" and pas.resultado.estado == "ok"
+                  for s in pas.resultado.dados["secoes"] if s["id"] == "9"), None)
+    finalidades = [_sentenca(ln) for ln in ((secao or {}).get("texto") or "").splitlines() if ln.strip().startswith("•")]
+    if not secao or not finalidades or "privacidade.compartilha_para_marketing" not in c:
+        return sem_dado(e, p)
+    txt = ("Seus dados pessoais (nome, telefone, e-mail, endereço) são usados só para: "
+           + "; ".join(finalidades) + ".")
+    if not c["privacidade.compartilha_para_marketing"]:
+        txt += " Dados de clientes não são compartilhados com terceiros para fins de marketing."
+    if c.get("privacidade.exclusao_a_pedido_do_cliente"):
+        canais = [c[k] for k in ("contato.whatsapp_secao_7", "contato.email_capa") if k in c]
+        txt += " Você pode pedir a exclusão dos seus dados a qualquer momento"
+        txt += f" pelo WhatsApp ou e-mail da loja ({' / '.join(canais)})." if canais else "."
+    return txt
+
+
+def empresa_dados(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    nome, foco = c.get("empresa.nome_fantasia"), p.get("foco") or ["fundacao"]
+    partes = []
+    if "fundacao" in foco and c.get("empresa.fundacao_ano"):
+        end = c.get("empresa.endereco") or {}
+        onde = f" em {end['cidade']}" if end.get("cidade") else ""
+        partes.append(f"A {nome} foi fundada em {c['empresa.fundacao_ano']}{onde}.")
+    if ("cnpj" in foco or "razao" in foco) and c.get("empresa.razao_social"):
+        partes.append(f"A razão social é {c['empresa.razao_social']}")
+        if "cnpj" in foco and c.get("empresa.cnpj"):
+            partes[-1] += f", CNPJ {c['empresa.cnpj']}"
+        partes[-1] += "."
+    return " ".join(partes) if partes else sem_dado(e, p)
+
+
+def frete_modalidade(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    mods = c.get("frete.outras_cidades_modalidades") or []
+    m = next((x for x in mods if normalizar(x["nome"]).startswith(normalizar(p["modalidade"]))), None)
+    if not m:
+        return sem_dado(e, p)
+    prazo = m["prazo_dias_uteis"]
+    extra = ", com rastreamento" if m.get("rastreamento") else ""
+    extra += " e seguro incluído" if m.get("seguro") else ""
+    base = c.get("frete.cidade_base", "a cidade da loja")
+    return (f"{m['nome']}: {prazo['min']} a {prazo['max']} dias úteis{extra}. Vale para envios fora de {base}. "
+            "Para estimar o valor, me diga o produto e o CEP de entrega.")
+
+
+def frete_grande_porte(e: Estado, p: dict) -> str:
+    return (f"Para {str(p['cidade']).title()}, {p['item']} são instrumentos de grande porte e o frete tem cotação "
+            "individual: a nossa equipe faz o cálculo, e eu não informo valor por aqui.")
+
+
 TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
     f.__name__: f for f in (
         saudacao, horario, endereco, contato, pagamento, frete_info, pedir_valor_pedido, frete_calculado,
@@ -966,7 +1117,9 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
         previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
-        escolha_produto_curta, objecao_preco, vou_pensar)
+        escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
+        defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
+        frete_grande_porte)
 }
 
 

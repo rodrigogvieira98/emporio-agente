@@ -153,6 +153,8 @@ class Agente:
                                         bool(estado.coletados.get("compra")))
                 etapa_lead = links_mod.etapa_do_lead(chave_final, acao.parametros, links)
             texto, concluiu = fechar_turno(estado, acao, texto)
+            if concluiu and not partes:
+                texto = fechamento_cordial(estado, acao, chave_final, texto)
             if oferecer and estado.aguardando is None:  # no máximo uma pergunta por turno
                 texto, concluiu = oferecer_humano(estado, texto), False
             if chave_final == "saudacao":
@@ -387,6 +389,26 @@ def oferecer_humano(estado: Estado, texto: str) -> str:
     estado.oferta_humano = "feita"
     estado.turno_oferta = estado.turno
     return f"{texto}\n{respostas.OFERTA_HUMANO}"
+
+
+# Respostas que informam e encerram o assunto: ali o manual (7.2, passo 5) manda confirmar se o cliente precisa de
+# mais alguma coisa. Nunca em recusa, oferta, pergunta, encerramento do cliente ou cliente irritado.
+COM_FECHAMENTO = {"contato", "pagamento", "frete_calculado", "frete_prazo", "frete_estimado",
+                  "frete_cidade_base", "frete_outra_cidade", "frete_modalidade", "frete_grande_porte", "garantia_info",
+                  "reembolso_prazo", "previsao_entrega", "status_pedido", "status_pedido_demo", "devolucao_frete",
+                  "devolucao_loja_fisica", "rain_check", "rastreio_como", "privacidade", "empresa_dados",
+                  "garantia_excluida", "trocas_detalhe", "disponibilidade"}
+INTERVALO_FECHAMENTO = 3  # turnos entre dois fechamentos: perguntar a cada resposta cansa
+
+
+def fechamento_cordial(estado: Estado, acao: Acao, chave: str | None, texto: str) -> str:
+    """Pergunta se precisa de mais alguma coisa ao fim de uma resposta informativa, uma pergunta só por resposta."""
+    if (chave not in COM_FECHAMENTO or acao.tipo != "responder" or "?" in texto or estado.sentimento != "neutro"
+            or estado.aguardando or acao.parametros.get("propor_registro")
+            or estado.turno - estado.turno_fechamento <= INTERVALO_FECHAMENTO and estado.turno_fechamento):
+        return texto
+    estado.turno_fechamento = estado.turno
+    return texto + chr(10) + respostas.FECHAMENTO
 
 
 MAX_REPETICOES_PERGUNTA = 2  # a mesma pergunta de dado, no máximo 2 vezes seguidas

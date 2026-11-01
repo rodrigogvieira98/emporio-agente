@@ -15,7 +15,7 @@ from .estado import Estado
 MAX_LINKS = 2
 # Única lista de destinos permitida; qualquer outro endereço é descartado.
 DESTINOS = re.compile(
-    r"^(/produto/\d+|/catalogo(\?(categoria|termo)=[A-Za-z0-9%_.-]+)?|/rastreio|/politicas|/perguntas-frequentes|"
+    r"^(/produto/\d+|/privacidade|/catalogo(\?(categoria|termo)=[A-Za-z0-9%_.-]+)?|/rastreio|/politicas|/perguntas-frequentes|"
     r"/fale-conosco)$")
 ACAO_CARRINHO = "/carrinho/adicionar"
 
@@ -35,6 +35,13 @@ POR_RESPOSTA: dict[str, tuple[str, str]] = {
     "frete_prazo": ("/politicas", "Ver as políticas da loja"),
     "pagamento": ("/politicas", "Ver as políticas da loja"),
     "contato": ("/fale-conosco", "Falar com a loja"),
+    "privacidade": ("/privacidade", "Ver privacidade e cookies"),
+    "rastreio_como": ("/rastreio", "Rastrear pelo site"),
+    "devolucao_frete": ("/politicas", "Ver as políticas da loja"),
+    "rain_check": ("/politicas", "Ver as políticas da loja"),
+    "frete_modalidade": ("/politicas", "Ver as políticas da loja"),
+    "devolucao_loja_fisica": ("/politicas", "Ver as políticas da loja"),
+    "garantia_excluida": ("/politicas", "Ver as políticas da loja"),
     "sem_dado": ("/perguntas-frequentes", "Ver as perguntas frequentes"),
     "nao_entendi": ("/perguntas-frequentes", "Ver as perguntas frequentes"),
 }

@@ -1,8 +1,10 @@
 """RegrasDecisor: o controle determinístico. Um decisor com LLM implementa o mesmo Protocol."""
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
+from .. import config
 from ..ferramentas.envelope import Resultado
 from ..texto import normalizar
 from .estado import Acao, Estado
@@ -49,10 +51,20 @@ def _trecho_excluido(r: Resultado, texto: str) -> str | None:
         for lista in itens:
             for item in lista:
                 distintivas = {radical(t) for t in tokens(item) if len(t) >= 5 and t not in genericas}
-                if distintivas and len(distintivas & msg) / len(distintivas) >= 0.4:
+                acertos = distintivas & msg
+                if distintivas and (len(acertos) / len(distintivas) >= 0.4 or len(acertos) >= 2):
                     achado = next((ln.strip(" •\t") for ln in (s["texto"] or "").splitlines()
                                    if distintivas & {radical(t) for t in tokens(ln)} & msg), None)
                     return (achado or item).rstrip(".")
+    return None
+
+
+def _condicao(r: Resultado, chave: str) -> Any:
+    """Valor de uma condição do manual dentro de um resultado de consultar_politica."""
+    for sec in r.dados["secoes"]:
+        for c in sec["condicoes"]:
+            if c["chave"] == chave:
+                return c["valor"]
     return None
 
 
@@ -167,7 +179,66 @@ class RegrasDecisor:
         trecho = _trecho_excluido(r, estado.slots.get("texto_limpo", ""))
         return responder("item_nao_elegivel", trecho=trecho) if trecho else None
 
+    def _prazo_defeito(self, estado: Estado) -> int | None:
+        regra = estado.coletados.get("regra")
+        if regra and regra.get("objetivo") == "defeito":
+            return int(regra["valor"]["prazo_dias"])
+        return None
+
+    def _defeito_fora_do_prazo(self, estado: Estado, dias: int) -> Acao | None:
+        """Defeito depois do prazo de troca (4.2): a garantia é com o fabricante e a loja pode intermediar."""
+        acao = self._info_regra(estado, "defeito") if self._prazo_defeito(estado) is None else None
+        if acao:
+            return acao
+        if dias > (self._prazo_defeito(estado) or dias):
+            return propor("defeito_apos_prazo", "atendente",
+                          "Cliente com defeito depois do prazo de troca pediu orientacao; a equipe pode intermediar "
+                          "a garantia com o fabricante.", dias=dias)
+        return None
+
+    def _exclusao_garantia(self, estado: Estado) -> Acao | None:
+        """Queda e mau uso (8.3) têm resposta própria, nunca a regra de troca por defeito ou preferência."""
+        if estado.objetivo not in ("defeito", "garantia") or not estado.slots.get("mau_uso"):
+            return None
+        r = resultado_de(estado, "consultar_politica", temas=["garantia"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["garantia"])
+        return responder("garantia_excluida") if r.estado == "ok" else self._erro(estado, r)
+
+    def _avaria(self, estado: Estado) -> Acao | None:
+        """Avaria no recebimento (5.2): recusar o recebimento e falar com a loja, sem a regra de defeito."""
+        if estado.objetivo != "defeito" or not estado.slots.get("avaria") or estado.slots.get("pergunta_prazo"):
+            return None  # quem pergunta o prazo de troca recebe a regra de defeito (variação v14 do eval)
+        r = resultado_de(estado, "consultar_politica", temas=["frete"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["frete"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        if _condicao(r, "frete.avaria_recusar_recebimento") is not True:
+            return None
+        return propor("avaria_recebimento", "atendente",
+                      "Cliente relatou avaria no recebimento; orientado a recusar o recebimento e falar com a loja.")
+
+    def _devolucao_na_loja(self, estado: Estado) -> Acao | None:
+        """Arrependimento é regra de compra online: na loja física explica e indica troca por defeito ou preferência."""
+        loja = estado.slots.get("canal_compra") == "loja" or estado.declarado("canal_compra") == "loja"
+        if estado.objetivo != "devolucao" or not loja:
+            return None
+        r = resultado_de(estado, "consultar_politica", temas=["trocas"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["trocas"])
+        return responder("devolucao_loja_fisica") if r.estado == "ok" else self._erro(estado, r)
+
     def _posvenda(self, estado: Estado) -> Acao:
+        for exclusao in (self._exclusao_garantia, self._avaria, self._devolucao_na_loja):
+            acao = exclusao(estado)
+            if acao:
+                return acao
+        dias = estado.slots.get("dias_desde_compra")
+        if estado.objetivo == "defeito" and dias:
+            acao = self._defeito_fora_do_prazo(estado, dias)
+            if acao:
+                return acao
         regra = estado.coletados.get("regra")
         if not estado.coletados.get("pedido") and (not regra or regra.get("objetivo") != estado.objetivo):
             acao = self._item_nao_elegivel(estado)
@@ -180,7 +251,17 @@ class RegrasDecisor:
         regra = estado.coletados.get("regra")
         if not regra or regra.get("objetivo") != intencao:
             return self._info_regra(estado, intencao)
-        faltam = [c for c in regra["valor"]["dados_necessarios"] if estado.declarado(c) is None]
+        data_pedido = pedido.get("data_pedido")
+        if intencao == "defeito" and data_pedido:  # o prazo conta da compra, e o sistema sabe a data do pedido
+            dias_pedido = (config.hoje() - date.fromisoformat(data_pedido)).days
+            if dias_pedido > int(regra["valor"]["prazo_dias"]):
+                if resultado_de(estado, "consultar_politica", temas=["defeito"]) is None:
+                    return ferramenta("consultar_politica", temas=["defeito"])  # a resposta cita o fabricante do manual
+                return propor("defeito_apos_prazo", "atendente",
+                              f"Cliente com defeito no pedido {pedido['pedido_id']}, feito depois do prazo de troca; "
+                              "a equipe pode intermediar a garantia com o fabricante.")
+        faltam = [c for c in regra["valor"]["dados_necessarios"]
+                  if estado.declarado(c) is None and not (c == "data_compra" and data_pedido)]
         if faltam:
             return perguntar("pedir_dados_posvenda", "dados_posvenda", campos=faltam)
         resumo = self._resumo_posvenda(estado, pedido, regra)
@@ -227,7 +308,25 @@ class RegrasDecisor:
         return self._info(estado, ["trocas", "garantia"], "trocas_detalhe")
 
     def _i_garantia(self, estado: Estado) -> Acao:
+        acao = self._exclusao_garantia(estado)
+        if acao:
+            return acao
         return self._info(estado, ["garantia"], "garantia_info", oferta="solicitacao")
+
+    def _i_devolucao_frete(self, estado: Estado) -> Acao:
+        return self._info(estado, ["arrependimento"], "devolucao_frete")
+
+    def _i_rain_check(self, estado: Estado) -> Acao:
+        return self._info(estado, ["promocoes"], "rain_check")
+
+    def _i_rastreio_como(self, estado: Estado) -> Acao:
+        return self._info(estado, ["rastreamento"], "rastreio_como")
+
+    def _i_privacidade(self, estado: Estado) -> Acao:
+        return self._info(estado, ["privacidade", "contato"], "privacidade")
+
+    def _i_empresa_dados(self, estado: Estado) -> Acao:
+        return self._info(estado, ["empresa"], "empresa_dados", foco=estado.slots.get("empresa_foco") or ["fundacao"])
 
     # --- informativos ----------------------------------------------------------------
 
@@ -317,9 +416,25 @@ class RegrasDecisor:
             return responder("frete_cotacao_individual", produto=produto["nome"])
         return responder("frete_estimado", produto=produto["nome"])
 
+    def _grande_porte(self, estado: Estado) -> str | None:
+        """Item de grande porte (5.2) citado pelo cliente, comparando as palavras da lista do manual com a mensagem."""
+        from ..texto import radical, tokens
+
+        r = resultado_de(estado, "consultar_politica", temas=["frete"])
+        if r is None or r.estado != "ok":
+            return None
+        msg = {radical(t) for t in tokens(estado.slots.get("texto_limpo", ""))}
+        for item in _condicao(r, "frete.grande_porte_cotacao_individual") or []:
+            chaves = {radical(t) for t in tokens(item)}
+            if chaves and chaves <= msg:
+                return str(item)
+        return None
+
     def _i_frete(self, estado: Estado) -> Acao:
         s = estado.slots
         cep = s.get("cep") or estado.coletados.get("cep")
+        if s.get("modalidade") and not cep:  # "qual o prazo do PAC?": a modalidade tem prazo próprio no manual
+            return self._info(estado, ["frete"], "frete_modalidade", modalidade=s["modalidade"])
         if cep:
             estado.coletados["cep"] = cep
             return self._frete_por_cep(estado, cep)
@@ -340,6 +455,9 @@ class RegrasDecisor:
                 return self._erro(estado, r)
             base = self._cidade_base(estado)
             if base and normalizar(cidade) != normalizar(base):  # fora da base: a equipe calcula, sem pedir valor
+                grande = self._grande_porte(estado)
+                if grande:
+                    return responder("frete_grande_porte", cidade=cidade, item=grande)
                 return responder("frete_outra_cidade", cidade=cidade)
         if cidade and valor:
             estado.coletados["valor_pedido"] = valor
@@ -387,6 +505,8 @@ class RegrasDecisor:
         if r.estado == "falha":
             return self._erro(estado, r)
         if r.estado != "ok":
+            if set(args) == {"categoria"}:  # categoria sem produto à venda: diz isso e mostra o que há
+                return responder("busca", sem_categoria=categorias_com_produto())
             return responder("busca")
         return self._aquecer_busca(estado, args, r)
 
@@ -572,12 +692,19 @@ class RegrasDecisor:
             return ferramenta("calcular_condicoes", parcelas=1, **base)
         if r1.estado != "ok":
             return self._erro(estado, r1)
-        r2 = resultado_de(estado, "calcular_condicoes", parcelas=r1.dados["parcelas_max"], **base)
+        # a maior quantidade de parcelas que passa nas duas leituras da parcela mínima do manual, nunca 12x inválido
+        from .. import dinheiro
+
+        final, minimo = r1.dados["final_centavos"], r1.dados["minimo_tabela_centavos"]
+        n = max([k for k in range(1, r1.dados["parcelas_max"] + 1) if dinheiro.dividir(final, k) >= minimo] or [1])
+        if n == 1:
+            return responder("preco")
+        r2 = resultado_de(estado, "calcular_condicoes", parcelas=n, **base)
         if r2 is None:
-            return ferramenta("calcular_condicoes", parcelas=r1.dados["parcelas_max"], **base)
+            return ferramenta("calcular_condicoes", parcelas=n, **base)
         if r2.estado != "ok":
             return self._erro(estado, r2)
-        if r2.dados.get("permitido") == "requer_confirmacao":
+        if r2.dados.get("permitido") != "sim":
             return propor("preco", "duvida_politica",
                           f"Cliente pediu o parcelamento do produto {pid}; as duas leituras da parcela minima divergem.")
         return responder("preco")

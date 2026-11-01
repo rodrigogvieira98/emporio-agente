@@ -39,6 +39,16 @@ def _ler(caminho: str, mtime_ns: int) -> Vocabulario:
     return voc
 
 
+def modalidades() -> list[str]:
+    """Primeira palavra do nome de cada modalidade de envio do manual (para reconhecer o que o cliente citou)."""
+    from ..politicas import manual
+
+    try:
+        return [tokens(m["nome"])[0] for m in manual.valor("frete.outras_cidades_modalidades")]
+    except Exception:  # noqa: BLE001 - sem manual, a Lia só não reconhece a modalidade
+        return []
+
+
 def vocabulario() -> Vocabulario:
     caminho = config.caminho_banco()
     try:

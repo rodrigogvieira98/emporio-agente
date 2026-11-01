@@ -444,6 +444,15 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Navegação sem duplicidade (etapa 18)
+
+Pedido do Rodrigo em 01/11/2026, depois do holdout. Só templates e CSS do site; agente, ferramentas e regras não mudam. O README declara que a navegação mudou depois de e0f35d6.
+
+- Cabeçalho, para comprar: Categorias, Catálogo, Rastrear pedido, Carrinho. Sai "Perguntas frequentes" do cabeçalho; sai "Todos os instrumentos" do menu Categorias, porque "Catálogo" já está ao lado.
+- Rodapé, institucional: Perguntas frequentes, Políticas da Loja, Privacidade e cookies.
+- Carrinho com a mesma cor, peso e comportamento dos demais itens do cabeçalho, em computador e celular, sem borda ou destaque próprio; a contagem de itens continua como selo pequeno ao lado do texto.
+- O botão "Rastrear pedido" da faixa de contato fica, por ser ação dentro do bloco de contato.
+
 ## Provedor de modelo plugável (etapa 17)
 
 Pedido do Rodrigo em 01/11/2026: a Lia precisa poder usar outro modelo, inclusive pago por API, sem mudar a arquitetura.

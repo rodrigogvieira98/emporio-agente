@@ -288,7 +288,7 @@ A consulta é feita pelo servidor no ViaCEP (`https://viacep.com.br/ws/{cep}/jso
 
 **Privacidade: decisão final.** Texto em linguagem simples, descrevendo o funcionamento real. Sai o jargão técnico. Informa que o cookie nasce na primeira visita e que o site não tem prazo automático de exclusão: os dados ficam até o cliente pedir a exclusão. Não declara prazo de retenção nem base legal específica sem fundamentação. Informa que "Enviar e-mail" abre o aplicativo de e-mail do cliente.
 
-**Frete: decisão final.** Pedido de exatamente R$ 500,00 continua com confirmação da equipe, no site e na Lia. O CEP é obrigatório para simular a entrega, não para navegar ou conversar. Fórmula ou tabela de frete estimado só entra depois de aprovada pelo Rodrigo.
+**Frete: decisão final.** Decisão do Rodrigo, seguindo a prática de mercado: em Campo Grande, frete grátis **a partir de** R$ 500,00, inclusive, e taxa de R$ 35,00 de R$ 499,99 para baixo, no site e na Lia. O manual diz "acima de" e "abaixo de" e não define o valor exato: essa é uma decisão da loja para resolver a ambiguidade `frete_exatamente_500`, e o texto original do manual fica intacto. Os textos ao cliente passam a dizer "a partir de R$ 500,00". O CEP é obrigatório para simular a entrega, não para navegar ou conversar. Fórmula ou tabela de frete estimado só entra depois de aprovada pelo Rodrigo.
 
 A faixa fica em `base.html`, em todas as páginas com rodapé, exceto `/fale-conosco`. No celular os blocos empilham, com divisórias horizontais. Ela não pode ficar coberta pelo botão da Lia.
 

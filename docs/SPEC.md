@@ -362,6 +362,12 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 
 **Rodapé compacto.** Pedido do Rodrigo, seguindo o modelo enviado: uma faixa baixa, com o nome da loja à esquerda e os links em linha única à direita (Catálogo, Perguntas frequentes, Políticas, Rastrear pedido, Privacidade e cookies, Créditos das imagens), sem as colunas e sem os títulos "Comprar" e "Informações". Sem espaço vazio abaixo dos links. Altura de até 96 px em 1280 px. No celular, os links quebram em poucas linhas, com alvos de toque adequados e sem rolagem horizontal. Segue sem dados de contato.
 
+**Endereço e horário: decisão final do Rodrigo.** Prevalece sobre o que estiver diferente nas seções anteriores, inclusive sobre a altura do rodapé compacto e o endereço na faixa.
+- O rodapé ganha a parte "Onde estamos", com o endereço completo, e "Horário de funcionamento", com os dados do manual. Telefone, e-mail e WhatsApp seguem fora do rodapé. Ele continua compacto: até 160 px em 1280 px, com nome e endereço, horário e links, sem espaço vazio.
+- O endereço sai da faixa e dos cards de `/fale-conosco`. O bloco de telefone da faixa e os cards de WhatsApp e Telefone mostram o horário de atendimento, que é o mesmo da loja.
+- O card à direita em `/fale-conosco` passa a "Horário de atendimento", informando que WhatsApp e ligações seguem o horário da loja, e mantém o bloco de rastreio.
+- A página offline mantém o endereço, porque não tem rodapé.
+
 **Lia: ajustes da conversa real do Rodrigo em 01/11/2026.**
 - Uma pergunta por resposta: se a resposta já termina com pergunta, o convite para retomar o assunto anterior fica para o próximo turno em que não houver outra pergunta.
 - Sem convite para retomar quando o assunto anterior não recebeu nenhum dado do cliente, como pedir o pedido e mudar de assunto logo em seguida.

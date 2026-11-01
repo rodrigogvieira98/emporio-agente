@@ -320,7 +320,8 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .lia-botao { gap: var(--s2); padding: var(--s1) var(--s4) var(--s1) var(--s1); min-height: 52px; border-radius: 999px; background: var(--ipe); color: var(--palco); border-color: var(--ipe);
   font-weight: 700; box-shadow: 0 2px 0 var(--ipe-escuro), 0 4px 14px rgba(27,20,16,.3); }
 .lia-botao:hover { background: var(--ipe-escuro); color: var(--palco); }
-.lia-retrato { width: 44px; height: 44px; border-radius: 50%; flex: none; background: var(--palco); border: 2px solid var(--palco); }
+.lia-retrato { width: 44px; height: 44px; border-radius: 50%; flex: none; object-fit: cover; background: var(--palco); border: 2px solid var(--palco); }
+.chat-topo .lia-retrato { border-color: var(--ipe); }
 .lia-aberta .lia-botao { display: none; }
 .chat { width: 23rem; max-width: calc(100vw - 2 * var(--s4)); background: var(--creme-claro); border: 1px solid var(--tinta); border-radius: var(--raio); box-shadow: 0 8px 28px rgba(31,26,23,.28); overflow: hidden; }
 .chat[hidden] { display: none; }
@@ -517,3 +518,4 @@ a.canal { text-decoration: underline; text-underline-offset: 3px; }
 .busca-vazia-caminhos { list-style: none; display: grid; gap: var(--s2); }
 .busca-vazia-caminhos li { padding-block: var(--s1); }
 .politicas-conteudo, .politica { min-width: 0; }
+.credito-lia { display: flex; align-items: center; gap: var(--s4); } .credito-lia img { border-radius: 50%; }

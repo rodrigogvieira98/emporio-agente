@@ -333,7 +333,7 @@ def test_imagens_tem_alt_dimensoes_e_lazy(cliente):
     for caminho in ("/", "/catalogo", "/produto/90", "/creditos"):
         html = cliente.get(caminho).text
         for tag in re.findall(r"<img\b[^>]*>", html):
-            if "lia.svg" in tag:
+            if "/static/lia-" in tag:
                 continue
             assert "alt=" in tag and "width=" in tag and "height=" in tag, (caminho, tag)
         assert "Foto do produto indisponível" not in html

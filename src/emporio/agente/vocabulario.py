@@ -49,6 +49,11 @@ CASO_PROPRIO = re.compile(
     r"\b(meu|minha|meus|minhas|comprei|recebi|chegou|veio|me arrependi|preciso|"
     r"(quero|queria|gostaria de|vou|posso|consigo) (trocar|devolver)|pedido (n|no|numero)? ?\d+)\b")
 
+# Pedido concreto: se vier junto de um desabafo, a intenção concreta manda e o desabafo só muda o tom.
+CONCRETAS = {"preco_produto", "disponibilidade", "status_pedido", "horario", "endereco", "contato", "pagamento",
+             "frete", "promocao", "garantia"}
+RECLAMACAO_EXPLICITA = re.compile(r"\b(reclam\w*|mau atendimento|atendimento ruim)\b")
+
 # palavra do cliente -> termo de categoria entendido por buscar_produtos
 CATEGORIAS = {
     "violao": "violao", "violoes": "violao", "guitarra": "guitarra", "guitarras": "guitarra",

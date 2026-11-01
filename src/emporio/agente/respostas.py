@@ -639,6 +639,10 @@ def reconhecimento(e: Estado) -> str:
     return ""
 
 
+def dado_recusado(e: Estado, p: dict) -> str:
+    return "Tudo bem. Quando quiser retomar, é só me chamar."
+
+
 def confirmar_registro(e: Estado, p: dict) -> str:
     return f"Posso registrar isso para a equipe? {CONFIRMA}"
 
@@ -670,7 +674,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
-        atendente_ja_registrado, trocas_info, trocas_detalhe)
+        atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado)
 }
 
 

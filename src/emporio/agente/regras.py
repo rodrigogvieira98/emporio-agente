@@ -173,6 +173,9 @@ class RegrasDecisor:
         chave = "fora_escopo_geral" if estado.slots.get("assunto_geral") else "fora_escopo"
         return self._info(estado, ["escopo"], chave)
 
+    def _i_dado_recusado(self, estado: Estado) -> Acao:
+        return responder("dado_recusado")
+
     def _i_retomada_recusada(self, estado: Estado) -> Acao:
         return responder("ok_sem_retomar")
 

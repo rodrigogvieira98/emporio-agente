@@ -281,7 +281,7 @@ def completar_datas(estado: Estado) -> None:
 # Respostas que já cuidam do tom ou que são o próprio atendimento: sem frase de reconhecimento nem oferta.
 SEM_AJUSTE_DE_TOM = {"saudacao", "reclamacao_empatia", "pedir_relato", "chamado_registrado", "atendente_ja_registrado",
                      "confirmar_registro", "registro_cancelado", "registro_falhou", "perguntas_repetidas",
-                     "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao"}
+                     "nao_entendi_de_novo", "falha_ferramenta", "negacao_atendente", "negacao_reclamacao", "dado_recusado"}
 FECHO_DISPENSAVEL = re.compile(r"^(Se quiser|Se precisar|Se estiver|Posso ajudar)")
 
 

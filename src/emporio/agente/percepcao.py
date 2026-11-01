@@ -219,6 +219,10 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "dado_de_terceiro"
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
     ref, categoria = slots.get("referencia"), slots.get("categoria")
+    if achadas and achadas[0] == "reclamacao" and not v.RECLAMACAO_EXPLICITA.search(norm):
+        # desabafo ("que absurdo") com pedido concreto: segue o pedido; sem pedido concreto continua reclamação
+        if any(n in v.CONCRETAS for n in achadas[1:]):
+            achadas = achadas[1:]
     if (achadas and achadas[0] in ("devolucao", "troca_preferencia", "defeito")
             and v.PERGUNTA_GERAL_TROCAS.search(norm) and not v.CASO_PROPRIO.search(norm)):
         return "info_trocas"  # pergunta geral: responde a política, sem abrir o fluxo do pedido
@@ -342,6 +346,12 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.coletados.pop("proposta", None)
         estado.aguardando = None
         ag = None
+    pergunta_so_do_estado = estado.ultima_pergunta.get("campos") == ["estado_produto"]  # aí "não" é resposta
+    if (ag == "pedido" or (ag == "dados_posvenda" and not pergunta_so_do_estado)) and s["negativo"]             and s["palavras"] <= 4:
+        estado.intencao = "dado_recusado"  # "não" a um pedido de dados encerra o assunto, sem repetir o pedido
+        estado.objetivo = None
+        estado.aguardando = None
+        return
     if ag == "detalhe_trocas":  # "quer ver o que não entra em troca e o que a garantia não cobre?"
         estado.aguardando = None
         if s["afirmativo"] and not s["negativo"]:

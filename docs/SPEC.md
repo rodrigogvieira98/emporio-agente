@@ -360,6 +360,8 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 
 **Resumo do checkout.** Uma linha só: "Frete: Grátis", "Frete: R$ 35,00", "Frete estimado (simulação): R$ X", "Frete: Informe o CEP". A região fica apenas em "Entrega em:". Pendência só em erro. O texto sobre o CEP fica só uma vez. `carrinho.html` passa a dizer "do CEP".
 
+**Rodapé compacto.** Pedido do Rodrigo, seguindo o modelo enviado: uma faixa baixa, com o nome da loja à esquerda e os links em linha única à direita (Catálogo, Perguntas frequentes, Políticas, Rastrear pedido, Privacidade e cookies, Créditos das imagens), sem as colunas e sem os títulos "Comprar" e "Informações". Sem espaço vazio abaixo dos links. Altura de até 96 px em 1280 px. No celular, os links quebram em poucas linhas, com alvos de toque adequados e sem rolagem horizontal. Segue sem dados de contato.
+
 **Auditoria: corrigir.**
 1. POST sem cookie válido não emite cookie novo, e as ações POST conferem `Origin`.
 2. Falhas de rastreio contam por pedido e por IP, com janela de tempo, no site e na Lia.

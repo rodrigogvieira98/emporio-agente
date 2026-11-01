@@ -40,6 +40,8 @@ Exceção interna vira `falha`, nunca sobe ao laço. Entrada inválida vira `fal
 
 **calcular_condicoes(produto_id ou valor, forma, parcelas=1, cidade=None, valor_pedido=None)**. Formas: pix, debito, credito, boleto. Promoção só por is_active=1, nunca por calendário; duas ativas no mesmo produto retornam `ambiguo`. Com promoção: original, percentual, final, sem PIX. Sem promoção: PIX aplica 5%. Crédito, 1 a 12: leitura_tabela exige parcela >= 100 quando parcelas > 1. leitura_faixas exige >= 50 até 3x, >= 80 de 4 a 6, >= 100 de 7 a 12. Ambas sim: `permitido=sim`. Ambas não: `nao`. Divergem: `requer_confirmacao`. Frete: Campo Grande acima de 500 grátis, abaixo taxa do manual, exatamente 500 `requer_confirmacao`; outra cidade `cotacao_necessaria`. Valores de regra vêm do YAML.
 
+**listar_promocoes(termo=None)**. Adicionada na revisão da etapa 3, pela seção 7.3 do manual. Devolve só promoções com is_active=1, com produto, percentual e situação de venda; nunca deduz por calendário. Termo sem promoção ativa: `vazio`, e a resposta diz que aquela promoção não está ativa no sistema.
+
 **consultar_pedido(pedido_id, final_telefone, conversa_id)**. Identificação simulada. Pedido inexistente, final incorreto e limite de 3 tentativas por conversa retornam o mesmo `negado`. `ok` traz status, itens (nome, quantidade), total gravado, forma, rastreio, previsão, previsao_vencida, nota. Nunca nome, telefone, e-mail ou cidade.
 
 **consultar_politica(temas)**. Lista de temas conhecidos. Devolve seções com id, título, versão, hash, texto, condições e ambiguidades ligadas. Tema desconhecido: `vazio`. Função `fato(chave)` serve as respostas rápidas da mesma fonte.

@@ -97,6 +97,13 @@ class RegrasDecisor:
         return ferramenta("consultar_pedido", pedido_id=pid, final_telefone=final), None
 
     def _i_status_pedido(self, estado: Estado) -> Acao:
+        demo = estado.declarado("pedido_demo")
+        r = estado.ultimo("consultar_pedido_demo")
+        if demo or r is not None:  # pedido de demonstração: nunca cai na consulta dos pedidos dos dados
+            if r is None:
+                return ferramenta("consultar_pedido_demo", numero=demo)
+            return responder("status_pedido_demo") if r.estado == "ok" else (
+                responder("pedido_demo_negado") if r.estado == "negado" else self._erro(estado, r))
         acao, pedido = self._pedido(estado)
         if acao:
             return acao

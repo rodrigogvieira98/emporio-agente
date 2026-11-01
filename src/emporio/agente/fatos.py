@@ -36,6 +36,8 @@ def fatos_do_resultado(ferramenta: str, args: dict[str, Any], r: Resultado) -> l
         for atributo, chave in (("status", "status"), ("total_gravado_centavos", "total_gravado_centavos"),
                                 ("previsao", "previsao"), ("rastreio", "rastreio")):
             add("pedido", d["pedido_id"], atributo, d.get(chave))
+    elif ferramenta == "consultar_pedido_demo":
+        add("pedido_demo", d["numero"], "total_gravado_centavos", d.get("total_gravado_centavos"))
     elif ferramenta == "consultar_politica":
         for s, f in zip(d["secoes"], r.fontes):
             for c in s["condicoes"]:

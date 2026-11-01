@@ -14,7 +14,15 @@
     </div>
     {% if descricao %}<p class="descricao">{{ descricao }}</p>{% endif %}
     {% if p.pode_comprar %}
-      <p><button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button></p>
+      <p class="aviso aviso-demo"><strong>{{ aviso_demo }}</strong> O estoque não é baixado.</p>
+      <form class="form-compra" action="/carrinho/adicionar" method="post">
+        <input type="hidden" name="produto_id" value="{{ p.id }}">
+        <label>Quantidade
+          <select name="quantidade">{% for n in range(1, 4) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select>
+        </label>
+        <button type="submit" class="botao-cheio btn-comprar">Quero comprar</button>
+        <button type="button" class="btn-compra" data-mensagem="Quero comprar {{ p.nome }}">Quero comprar com a Lia</button>
+      </form>
       {% if condicoes %}
       <h2>Formas de pagamento</h2>
       <ul class="condicoes">

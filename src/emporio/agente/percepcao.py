@@ -9,6 +9,7 @@ from typing import Any
 from .. import config
 from ..dinheiro import para_centavos
 from ..ferramentas.encaminhamento import mascarar_dado_pessoal
+from ..ferramentas.pedido_demo import PADRAO_NUMERO, achar_numero
 from ..texto import normalizar, tokens
 from . import catalogo, sentimento
 from . import vocabulario as v
@@ -92,6 +93,10 @@ def _numeros_de_pedido(norm: str, estado: Estado) -> dict[str, Any]:
     """Número do pedido e final do telefone. O final nunca é gravado."""
     out: dict[str, Any] = {}
     resto = norm
+    demo = achar_numero(resto)  # pedido de demonstração (DEMO-0001): não é pedido dos dados
+    if demo:
+        out["pedido_demo"] = demo
+        resto = PADRAO_NUMERO.sub(" ", resto)
     tel = v.TELEFONE_COMPLETO.search(resto)
     if tel:
         out["final_telefone"] = re.sub(r"\D", "", tel.group(0))[-4:]
@@ -266,6 +271,8 @@ def _trocar_assunto(estado: Estado, novo: str) -> None:
 
 def _aplicar_slots(estado: Estado) -> None:
     s = estado.slots
+    if "pedido_demo" in s:
+        estado.declarar("pedido_demo", s["pedido_demo"])
     if "pedido_id" in s:
         atual = estado.coletados.get("pedido")
         if atual and atual.get("pedido_id") != s["pedido_id"]:

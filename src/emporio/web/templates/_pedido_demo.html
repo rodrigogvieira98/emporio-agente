@@ -1,0 +1,26 @@
+<section class="pedido pedido-demo" aria-label="Pedido de demonstração">
+  <p class="categoria">Pedido de demonstração</p>
+  <h2 class="pedido-numero">{{ d.numero }}</h2>
+  <p class="aviso aviso-demo"><strong>{{ d.aviso }}</strong> Nada será enviado.</p>
+  <ul class="resumo-linhas">
+    {% for i in d.itens %}
+    <li>
+      <span class="resumo-nome">{{ i.nome }}</span>
+      <span class="resumo-qtd">{{ i.quantidade }} x {{ i.final_unit_centavos | brl }}</span>
+      <span class="resumo-sub">{{ i.subtotal_centavos | brl }}</span>
+      <small class="resumo-nota">{% if i.percentual %}de {{ i.original_unit_centavos | brl }}, promoção -{{ i.percentual }}%{% elif i.pix_aplicado %}de {{ i.original_unit_centavos | brl }}, desconto do PIX{% else %}preço de tabela{% endif %}</small>
+    </li>
+    {% endfor %}
+  </ul>
+  <dl class="resumo-total">
+    <div>
+      <dt>Frete</dt>
+      <dd>{% if d.frete_situacao == 'gratis' %}{{ 0 | brl }}{% elif d.frete_centavos is not none %}{{ d.frete_centavos | brl }}{% else %}calculado pela equipe{% endif %}</dd>
+    </div>
+    <div class="resumo-final"><dt>Total gravado</dt><dd>{{ d.total_gravado_centavos | brl }}</dd></div>
+    <div>
+      <dt>Pagamento</dt>
+      <dd>{{ rotulo_forma.get(d.forma, d.forma) }}{% if d.forma == 'credito' %}, {{ d.parcelas }}x de {{ d.parcela_centavos | brl }}{% endif %}</dd>
+    </div>
+  </dl>
+</section>

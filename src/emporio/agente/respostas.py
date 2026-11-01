@@ -506,6 +506,19 @@ def status_pedido(e: Estado, p: dict) -> str:
     return txt
 
 
+def status_pedido_demo(e: Estado, p: dict) -> str:
+    d = e.coletados["pedido_demo"]
+    itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in d["itens"])
+    return (f"Pedido {d['numero']}: é um pedido de demonstração, feito no site. {d['aviso']}\n"
+            f"Itens: {itens}.\nTotal gravado: {formatar(d['total_gravado_centavos'])}. "
+            "Ele não tem rastreio nem entrega, porque nada foi vendido de verdade.")
+
+
+def pedido_demo_negado(e: Estado, p: dict) -> str:
+    return ("Não encontrei esse pedido de demonstração nesta conversa. Pedido de demonstração só abre no mesmo "
+            "navegador em que foi feito. Confira o número, que começa com DEMO-.")
+
+
 def _forma_pedido(bruto: str) -> str:
     if bruto.startswith("credit_"):
         return f"cartão de crédito em {bruto.split('_')[1]}"
@@ -677,7 +690,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         saudacao, horario, endereco, contato, pagamento, frete_info, pedir_valor_pedido, frete_calculado,
         fora_escopo, garantia_info, busca, pedir_categoria, pedir_produto, produto_nao_encontrado, escolha_produto,
         disponibilidade, preco, preco_promocao_conflitante, pedir_pedido, pedido_negado, pedido_negado_limite,
-        status_pedido, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
+        status_pedido, status_pedido_demo, pedido_demo_negado, pedir_dados_posvenda, propor_posvenda, reclamacao_empatia, pedir_relato, negacao_reclamacao,
         negacao_atendente, chamado_registrado, registro_falhou, registro_cancelado, falha_ferramenta, sem_dado,
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,

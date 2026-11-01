@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Carrinho{% endblock %}
+{% block conteudo %}
+<div class="contorno pagina">
+<h1>Carrinho</h1>
+<p class="aviso aviso-demo"><strong>{{ aviso_demo }}</strong> O estoque não é baixado.</p>
+{% if aviso %}<p class="aviso aviso-erro" role="alert">{{ aviso }}</p>{% endif %}
+{% if not linhas %}
+<p class="vazio-msg">Seu carrinho está vazio.</p>
+<p><a class="botao botao-cheio" href="/catalogo">Ver o catálogo</a></p>
+{% else %}
+<ul class="itens-compra">
+{% for l in linhas %}
+  <li class="item-compra">
+    {% if l.p %}
+    {% set p = l.p %}
+    <div class="item-arte"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="/static/ilustracoes.svg#{{ p.ilustracao or 'instrumento' }}"/></svg></div>
+    <div class="item-dados">
+      <h2 class="item-nome"><a href="/produto/{{ p.id }}">{{ p.nome }}</a></h2>
+      {% include "_preco.html" %}
+      {% if not p.pode_comprar %}<p class="aviso">Este produto não está mais disponível. Tire do carrinho para continuar.</p>{% endif %}
+    </div>
+    <div class="item-acoes">
+      <form action="/carrinho/alterar" method="post" class="form-qtd">
+        <input type="hidden" name="produto_id" value="{{ p.id }}">
+        <label>Quantidade
+          <select name="quantidade" aria-label="Quantidade de {{ p.nome }}">
+            {% for n in range(1, max_por_item + 1) %}<option value="{{ n }}"{% if n == l.quantidade %} selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </label>
+        <button type="submit">Atualizar</button>
+      </form>
+      <form action="/carrinho/remover" method="post">
+        <input type="hidden" name="produto_id" value="{{ p.id }}">
+        <button type="submit" class="botao-link">Tirar do carrinho</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="item-dados"><p class="aviso">Não consegui consultar este item agora.</p></div>
+    <div class="item-acoes">
+      <form action="/carrinho/remover" method="post">
+        <input type="hidden" name="produto_id" value="{{ l.produto_id }}">
+        <button type="submit" class="botao-link">Tirar do carrinho</button>
+      </form>
+    </div>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
+<p class="nota-valores">O total depende da forma de pagamento e da cidade, e é calculado no próximo passo.</p>
+<p class="acoes-compra"><a class="botao" href="/catalogo">Continuar comprando</a> <a class="botao botao-cheio" href="/checkout">Ir para o checkout</a></p>
+{% endif %}
+</div>
+{% endblock %}

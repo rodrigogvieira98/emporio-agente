@@ -181,3 +181,17 @@ def test_nao_ao_pedido_de_dados_nao_conta_como_pergunta_repetida():
     r = conversar("quero devolver", "não", "quero devolver", "pedido 4, final 3456")
     assert "número do pedido" in r[2].texto and "Posso registrar o seu caso" not in r[2].texto
     assert "Encontrei o pedido 4" in r[3].texto
+
+
+# 5. nome do produto no meio de uma frase com palavras de conversa --------------------------------
+
+@pytest.mark.parametrize("frase,nome,preco", [
+    ("não estou bravo, só quero saber o preço do Yamaha C40", "Yamaha C40", "R$ 599,90"),
+    ("só quero saber o preço do Yamaha C40", "Yamaha C40", "R$ 599,90"),
+    ("me fala o valor do Takamine GD20 por favor", "Takamine GD20", "R$"),
+    ("bom dia, gostaria de saber quanto custa o Martin D-28 Dreadnought", "Martin D-28 Dreadnought", "R$ 11.499,00"),
+])
+def test_produto_no_meio_da_frase_e_encontrado(frase, nome, preco):
+    (r,) = conversar(frase)
+    assert nome in r.texto and preco in r.texto and "Não encontrei" not in r.texto
+    assert not tem_empatia(r.texto)  # "não estou bravo" e as demais são neutras

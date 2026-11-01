@@ -362,6 +362,11 @@ Aprovada pelo Rodrigo em 01/11/2026 (decisões 1 a 12, todas na opção A). Prev
 
 **Rodapé compacto.** Pedido do Rodrigo, seguindo o modelo enviado: uma faixa baixa, com o nome da loja à esquerda e os links em linha única à direita (Catálogo, Perguntas frequentes, Políticas, Rastrear pedido, Privacidade e cookies, Créditos das imagens), sem as colunas e sem os títulos "Comprar" e "Informações". Sem espaço vazio abaixo dos links. Altura de até 96 px em 1280 px. No celular, os links quebram em poucas linhas, com alvos de toque adequados e sem rolagem horizontal. Segue sem dados de contato.
 
+**Lia: ajustes da conversa real do Rodrigo em 01/11/2026.**
+- Uma pergunta por resposta: se a resposta já termina com pergunta, o convite para retomar o assunto anterior fica para o próximo turno em que não houver outra pergunta.
+- Sem convite para retomar quando o assunto anterior não recebeu nenhum dado do cliente, como pedir o pedido e mudar de assunto logo em seguida.
+- Depois de informar preço de um produto, a resposta oferece um próximo passo curto, com pergunta de sim ou não sobre parcelamento. "Sim" mostra as parcelas do produto em foco.
+
 **Auditoria: corrigir.**
 1. POST sem cookie válido não emite cookie novo, e as ações POST conferem `Origin`.
 2. Falhas de rastreio contam por pedido e por IP, com janela de tempo, no site e na Lia.

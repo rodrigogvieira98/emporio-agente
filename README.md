@@ -96,7 +96,7 @@ python eval/comparar.py eval/resultados/dev_a.json eval/resultados/dev_b.json
 
 Na versão entregue: 1.515 testes unitários e 210 de navegador (Playwright, inclusive celular emulado).
 
-Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_conversas.jsonl` (105, achados de revisão e QA) são de desenvolvimento; `casos_frescos.jsonl` (18) foi escrito antes das correções para medir às cegas e depois passou a desenvolvimento; `casos_holdout.jsonl` (20) e `casos_holdout2.jsonl` (40) rodam uma vez cada, com hash conferido. Critérios em `eval/PREREGISTRO.md` e `eval/PREREGISTRO_RESERVA.md`; toda correção de instrumento ou gabarito está em `eval/CORRECOES.md`.
+Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_conversas.jsonl` (108, achados de revisão e QA) são de desenvolvimento; `casos_frescos.jsonl` (18) foi escrito antes das correções para medir às cegas e depois passou a desenvolvimento; `casos_holdout.jsonl` (20) e `casos_holdout2.jsonl` (40) rodam uma vez cada, com hash conferido. Critérios em `eval/PREREGISTRO.md` e `eval/PREREGISTRO_RESERVA.md`; toda correção de instrumento ou gabarito está em `eval/CORRECOES.md`.
 
 ## Decisões técnicas
 

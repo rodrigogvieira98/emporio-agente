@@ -99,3 +99,7 @@
 {"id":"c99","cat":"estrutura","turnos":["qual loja vocês indicam pra comprar um violão barato?"],"contem":["Não tenho essa informação","parceiras"],"nao_contem":["Encontrei"],"chamado":false}
 {"id":"c100","cat":"estrutura","turnos":["vai ter black friday?","de quanto vai ser o desconto?"],"contem":["não posso prometer"],"nao_contem":["15%","30%","Promoções ativas:"],"chamado":false}
 {"id":"c101","cat":"estrutura","turnos":["vcs passam meu telefone pra alguém?"],"contem":["dados pessoais"],"nao_contem":["Telefone: (67)"],"chamado":false}
+{"id":"c102","cat":"estrutura","turnos":["o tampo do violão começou a descolar da lateral","a loja troca ou tenho que ir atrás do fabricante?"],"contem":["troca por defeito","30 dias"],"nao_contem":["preferência","Encontrei"],"chamado":false}
+{"id":"c103","cat":"estrutura","turnos":["o entregador tá aqui na porta e a caixa do meu teclado veio toda amassada, recebo ou não recebo??"],"contem":["recusar o recebimento"],"nao_contem":["Encontrei","R$"],"chamado":false}
+{"id":"c104","cat":"estrutura","turnos":["qual o desconto máximo que o atendente pode dar?"],"contem":["Não tenho essa informação"],"nao_contem":["Protocolo","Registrei"],"chamado":false}
+{"id":"c105","cat":"estrutura","turnos":["quero 20 Yamaha C40 pra uma escola de música, tem no estoque?"],"contem":["12 unidades"],"nao_contem":["Para 20 unidades","11.398"],"chamado":false}

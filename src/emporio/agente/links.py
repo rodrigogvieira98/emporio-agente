@@ -18,6 +18,8 @@ DESTINOS = re.compile(
     r"^(/produto/\d+|/privacidade|/catalogo(\?(categoria|termo)=[A-Za-z0-9%_.-]+)?|/rastreio|/politicas|/perguntas-frequentes|"
     r"/fale-conosco)$")
 ACAO_CARRINHO = "/carrinho/adicionar"
+# A página do carrinho fica fora de DESTINOS (a lista de links genéricos); só a resposta "carrinho_chat" a oferece.
+PAGINA_CARRINHO = "/carrinho"
 
 # resposta -> destino
 POR_RESPOSTA: dict[str, tuple[str, str]] = {
@@ -87,6 +89,8 @@ def gerar(estado: Estado, chave: str | None, parametros: dict[str, Any], compra:
         if produto is not None:
             saida.append({"tipo": "carrinho", "rotulo": "Adicionar ao carrinho", "acao": ACAO_CARRINHO,
                           "produto_id": int(produto["id"]), "quantidade": 1})
+    if chave == "carrinho_chat":
+        return [{"tipo": "link", "rotulo": "Abrir o carrinho", "href": PAGINA_CARRINHO}]
     if chave in COM_PRODUTO:
         produto = _produto_do_turno(estado)
         if produto is not None:

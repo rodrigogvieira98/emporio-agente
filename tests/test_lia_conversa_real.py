@@ -42,7 +42,7 @@ def test_nao_a_oferta_de_parcelas_encerra_e_outra_pergunta_segue_normal():
     r1, r2 = dizer("quanto custa o Yamaha C40?", "não")
     assert "Tudo bem" in r2.texto and "No crédito" not in r2.texto
     s1, s2 = dizer("quanto custa o Yamaha C40?", "qual o horário de vocês?", conversa="c2")
-    assert "No crédito" not in s2.texto and "09:00" in s2.texto
+    assert "No crédito" not in s2.texto and "9h" in s2.texto
 
 
 def test_pedido_de_atendente_depois_do_preco_nao_vira_sim_das_parcelas():

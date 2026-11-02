@@ -55,7 +55,14 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\b((quanto tempo|quando|em quantos dias|em quanto tempo|qual o prazo|que prazo|prazo)\b.{0,40}"
         r"\b(dinheiro|reembols\w*|estorno|valor de volta|restitu\w*|receber de volta|pagamento de volta)|"
         r"(reembols\w*|estorno|dinheiro de volta)\b.{0,30}\b(quanto tempo|quantos dias|quando|prazo|demora\w*)|"
-        r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b)")),
+        r"(recebo|volta|devolvem|devolve|caem?|cai) (o |meu |de volta o )?(meu )?(dinheiro|reembolso|estorno|valor)\b|"
+        # em que forma o dinheiro volta: por quê (cartão, pix) e para onde, sem pedir a abertura de uma devolução
+        r"(?<!quero )(?<!queria )(?<!preciso )\b(dinheiro|reembols\w*|estorn\w*|valor|ressarcimento)\b.{0,40}\b(volta\w*|cai\w*|devolvid\w*|"
+        r"reembolsad\w*|estornad\w*|creditad\w*|feito|feita|pago|paga|sai)\b.{0,30}\b(cartao|pix|boleto|credito|debito|forma|como|onde|conta|pra onde|para onde)\b|"
+        r"\b(volta\w*|devolvem|devolve|cai\w*|reembolsam|estornam)\b.{0,25}\b(dinheiro|valor|reembolso|estorno)\b.{0,25}\b(cartao|pix|boleto|credito|debito|forma|como|onde|conta|pra onde|para onde)\b|"
+        r"\b(dinheiro|valor|reembolso|estorno)\b.{0,25}\b(volta\w*|cai\w*)\b.{0,12}\b(pra|para) onde\b|"
+        r"\b(como|qual forma|em que forma|de que forma|que forma)\b.{0,25}\b(reembolso|estorno|ressarcimento)\b|"
+        r"\b(reembolso|estorno)\b.{0,25}\b(como|qual forma|em que forma|de que forma|que forma|cai como)\b)")),
     ("devolucao", re.compile(r"\b(devol\w*|reembols\w*|arrepend\w*|estorno|dinheiro de volta)\b")),
     ("defeito", re.compile(
         r"\b(defeit\w*|(entregador|transportadora|motoboy|carteiro)\b.{0,40}\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)|"
@@ -349,3 +356,38 @@ NIVEL_OUTRO = re.compile(r"\b(intermediari\w+|avancad\w+|profissional|profission
 # Resposta que dispensa a pergunta de qualificação ("tanto faz", "sem preferência").
 SEM_PREFERENCIA = re.compile(r"\b(tanto faz|qualquer (um|uma|coisa|modelo)|sem preferencia|nao tenho preferencia|nao sei)\b")
 ORCAMENTO_BAIXO = re.compile(r"\b(barat\w+|em conta|economic\w+|pouco dinheiro|sem gastar muito)\b")
+
+
+# Carrinho pelo chat: tirar, mudar quantidade ou ver o total. A Lia não altera o carrinho; manda o link do site.
+# Adicionar ao carrinho segue o fluxo de compra (COMPRA) e não entra aqui.
+_TIRAR = r"(?:tir\w+|remov\w+|retir\w+|exclu\w+|apag\w+|delet\w+|esvazi\w+|limp\w+|diminu\w+|reduz\w+)"
+CARRINHO = re.compile(
+    rf"\b{_TIRAR}\b.{{0,40}}\b(?:carrinho|quantidade|itens?)\b|"
+    rf"\bcarrinho\b.{{0,30}}\b{_TIRAR}\b|"
+    r"\b(?:mud\w+|alter\w+|troc\w+|ajust\w+|aument\w+)\b.{0,25}\b(?:carrinho|quantidade)\b|"
+    r"\b(?:tira|tire|tirar|remove|remova|remover|exclui|apaga|apagar)\b (?:so |apenas |mais )?"
+    r"(?:um|uma|dois|duas|ele|ela|esse|essa|isso|o ultimo|a ultima|o outro|a outra|um deles|uma delas)\b"
+    r"(?! (?:duvida|pergunta|foto))|"
+    r"^(?!.*\b(?:adicion\w*|coloc\w*|poe|ponha|joga|bota|mand\w+|comprar|finaliz\w+|fechar)\b).*"
+    r"(?:\b(?:quanto|qual|valor|total|soma|ver|mostr\w+|cade|onde|que tem|conteudo)\b.{0,30}\bcarrinho\b|"
+    r"\bcarrinho\b.{0,25}\b(?:total|ficou|fica|valor|soma|quanto|deu)\b)")
+
+
+# Abreviações de modelo que o cliente usa na fala ("a tele", "uma strato"): viram o nome inteiro antes da leitura.
+ABREVIACOES = {"tele": "telecaster", "teles": "telecasters", "strato": "stratocaster", "stratos": "stratocasters",
+               "strat": "stratocaster", "strats": "stratocasters"}
+_RE_ABREVIACAO = re.compile(r"\b(" + "|".join(ABREVIACOES) + r")\b(?!-)")
+
+
+def expandir_abreviacoes(norm: str) -> str:
+    return _RE_ABREVIACAO.sub(lambda m: ABREVIACOES[m.group(1)], norm)
+
+
+# Diferença de preço entre os dois produtos que o cliente acabou de ver: o código calcula, a Lia não faz conta.
+DIFERENCA_PRECO = re.compile(
+    r"\b(?:diferenca|diferencas)\b.{0,25}\b(?:preco|precos|valor|valores|custo)\b|"
+    r"\b(?:preco|precos|valor|valores)\b.{0,15}\bdiferenca\b|"
+    r"\bquanto\b.{0,25}\b(?:a mais|mais caro|mais cara|mais barato|mais barata|de diferenca)\b|"
+    r"\bquanto (?:e|fica|ficou|deu|da) a diferenca\b")
+OS_DOIS_REF = re.compile(r"\b(?:entre (?:eles|elas)|um e (?:o )?outro|uma e (?:a )?outra|que (?:o|a) outr[oa]|"
+                         r"(?:um|uma) custa)\b")

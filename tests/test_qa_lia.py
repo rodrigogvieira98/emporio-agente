@@ -25,7 +25,7 @@ def quinta_noite(monkeypatch):
 def test_proxima_abertura_traz_ressalva_de_feriado(quinta_noite):
     saudacao, horario = textos("oi", "que horas vocês abrem?")
     for t in (saudacao, horario):
-        assert "09:00" in t and "feriado" in t.lower()
+        assert "9h" in t and "feriado" in t.lower()
     assert "o horário pode mudar" in saudacao
 
 

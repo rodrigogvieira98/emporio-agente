@@ -51,7 +51,7 @@ def test_as_mensagens_de_teste_realmente_nao_tem_intencao_nas_regras():
 def test_rotulo_valido_vira_a_intencao_e_as_regras_respondem_com_o_manual():
     dubla = Dubla({"intencao": "horario"})
     (r,) = conversar(agente_com(dubla), SEM_INTENCAO)
-    assert "09:00" in r.texto and "Não entendi" not in r.texto  # texto e fato vêm das regras e do manual
+    assert "9h" in r.texto and "Não entendi" not in r.texto  # texto e fato vêm das regras e do manual
     assert r.contagens["reserva_tentada"] == 1 and r.contagens["reserva_aceita"] == 1
     assert "reserva_nenhuma" not in r.contagens and "reserva_falha" not in r.contagens
     assert [a["ferramenta"] for a in r.acoes if "ferramenta" in a] == ["consultar_politica"]
@@ -136,7 +136,7 @@ def test_o_modelo_recebe_so_mensagem_sem_dado_pessoal_e_com_esquema_fechado():
 def test_pedido_de_intencao_so_vale_no_turno_e_nao_vaza_para_o_seguinte():
     agente = agente_com(Dubla({"intencao": "horario"}))
     r1, r2 = conversar(agente, SEM_INTENCAO, "qual o endereço?")
-    assert "09:00" in r1.texto and "Estamos na" in r2.texto and "reserva_tentada" not in r2.contagens
+    assert "9h" in r1.texto and "Estamos na" in r2.texto and "reserva_tentada" not in r2.contagens
 
 
 def test_telemetria_do_turno_fica_no_trace(tmp_path):
@@ -152,7 +152,7 @@ def test_a_reserva_convive_com_a_redacao_do_modelo():
     redator = Redator("falso:1b", Dubla({"abertura": "Claro.", "fechamento": None}))
     agente = Agente(redator=redator, reserva=Reserva("falso:1b", dubla))
     (r,) = conversar(agente, SEM_INTENCAO)
-    assert r.contagens["reserva_aceita"] == 1 and r.contagens["redacao_exibida"] == 1 and "09:00" in r.texto
+    assert r.contagens["reserva_aceita"] == 1 and r.contagens["redacao_exibida"] == 1 and "9h" in r.texto
 
 
 def test_fabrica_liga_a_reserva_so_com_modelo_e_decisor_de_regras(monkeypatch):

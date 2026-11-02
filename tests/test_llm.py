@@ -169,7 +169,7 @@ def test_proposta_valida_vira_acao_e_o_laco_executa():
                            proposta(resposta="horario"))
     r = agente_com(cliente).responder("c1", "qual o horário de vocês?", "eval")
     assert [a.get("ferramenta") or a.get("resposta") for a in r.acoes] == ["consultar_politica", "horario"]
-    assert "09:00 às 18:00" in r.texto and r.contagens.get("proposta_invalida", 0) == 0
+    assert "9h às 18h" in r.texto and r.contagens.get("proposta_invalida", 0) == 0
     assert len(cliente.chamadas) == 2
     # estado resumido no prompt: mensagem, percepção e o que rodou no turno
     entrada = json.loads(cliente.chamadas[1]["mensagens"][-1]["content"])
@@ -179,7 +179,7 @@ def test_proposta_valida_vira_acao_e_o_laco_executa():
 def test_proposta_invalida_cai_nas_regras_e_conta():
     cliente = ClienteFalso("isto nao e json")
     r = agente_com(cliente).responder("c1", "qual o horário de vocês?", "eval")
-    assert "09:00 às 18:00" in r.texto  # as regras responderam
+    assert "9h às 18h" in r.texto  # as regras responderam
     assert r.contagens["proposta_invalida"] >= 3 and r.contagens["fallback_regras"] >= 1
     t = trace_do_turno()[0]
     assert t["contagens"]["proposta_invalida"] == r.contagens["proposta_invalida"]
@@ -195,7 +195,7 @@ def test_proposta_invalida_cai_nas_regras_e_conta():
 def test_propostas_ruins_sao_recusadas(ruim):
     cliente = ClienteFalso(ruim)
     r = agente_com(cliente).responder("c1", "qual o horário de vocês?", "eval")
-    assert r.contagens["proposta_invalida"] >= 1 and "09:00" in r.texto
+    assert r.contagens["proposta_invalida"] >= 1 and "9h" in r.texto
 
 
 def test_correcao_apos_recusa_e_contada():
@@ -209,9 +209,9 @@ def test_correcao_apos_recusa_e_contada():
 
 def test_timeout_e_erro_de_modelo_caem_nas_regras_com_contagem_propria():
     r = agente_com(ClienteFalso(TimeoutModelo("lento"))).responder("c1", "qual o horário de vocês?", "eval")
-    assert "09:00" in r.texto and r.contagens["timeout"] >= 1 and "erro_modelo" not in r.contagens
+    assert "9h" in r.texto and r.contagens["timeout"] >= 1 and "erro_modelo" not in r.contagens
     r2 = agente_com(ClienteFalso(ErroModelo("sem conexao"))).responder("c2", "qual o horário de vocês?", "eval")
-    assert "09:00" in r2.texto and r2.contagens["erro_modelo"] >= 1 and "timeout" not in r2.contagens
+    assert "9h" in r2.texto and r2.contagens["erro_modelo"] >= 1 and "timeout" not in r2.contagens
 
 
 def test_numero_e_final_do_pedido_vem_do_codigo_nao_do_modelo():
@@ -233,7 +233,7 @@ def test_registro_sem_permissao_e_bloqueado_pelo_laco_e_vira_pergunta(sql):
 def test_repeticao_de_ferramenta_no_turno_e_recusada():
     cliente = ClienteFalso(proposta(ferramenta="consultar_politica", temas=["horario"]))
     r = agente_com(cliente).responder("c1", "qual o horário de vocês?", "eval")
-    assert r.contagens["proposta_invalida"] >= 1 and "09:00" in r.texto
+    assert r.contagens["proposta_invalida"] >= 1 and "9h" in r.texto
 
 
 def test_resposta_com_dado_pessoal_no_resumo_e_mascarada():
@@ -285,7 +285,7 @@ def test_redacao_aceita_abertura_e_fechamento_curtos_ao_redor_do_bloco():
     r = _redigir({"abertura": "Claro, já te passo.", "fechamento": "Qualquer coisa é só falar."})
     linhas = r.texto.splitlines()
     assert linhas[0] == "Claro, já te passo." and linhas[-1] == "Qualquer coisa é só falar."
-    assert "09:00 às 18:00" in r.texto and "redacao_descartada" not in r.contagens
+    assert "9h às 18h" in r.texto and "redacao_descartada" not in r.contagens
 
 
 @pytest.mark.parametrize("livre,motivo", [
@@ -305,7 +305,7 @@ def test_redacao_aceita_abertura_e_fechamento_curtos_ao_redor_do_bloco():
 ])
 def test_redacao_reprovada_descarta_o_texto_livre_e_conta(livre, motivo):
     r = _redigir(livre)
-    assert "09:00 às 18:00" in r.texto and r.contagens["redacao_descartada"] == 1
+    assert "9h às 18h" in r.texto and r.contagens["redacao_descartada"] == 1
     for pedaco in ("transferi", "Reservei", "Aprovei", "Cancelei", "Takamine", "frases", "R$ pouco"):
         assert pedaco not in r.texto
     assert r.texto.splitlines()[0].startswith("Nosso horário")  # só o bloco controlado

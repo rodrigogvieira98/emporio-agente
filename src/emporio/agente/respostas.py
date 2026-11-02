@@ -98,7 +98,7 @@ def _aviso_expediente(estado: Estado) -> str:
     ressalva = (" (pela regra de funcionamento; em feriado o horário pode mudar)"
                 if "feriados_sem_calendario" in _ambiguidades(estado) else "")
     return aviso(estado, "fora_do_expediente",
-                 f"No momento estamos fora do expediente. Voltamos {r['quando']} às {r['hora']}{ressalva}.",
+                 f"No momento estamos fora do expediente. Voltamos {r['quando']} às {expediente.hora_br(r['hora'])}{ressalva}.",
                  valor=f"{r['quando']} {r['hora']}")
 
 
@@ -139,7 +139,7 @@ def horario(e: Estado, p: dict) -> str:
     for faixa in c.get("horario.funcionamento", []):
         dias = expediente.descrever_dias(faixa["dias"])
         linhas.append(f"- {dias}: fechado" if faixa.get("fechado") else
-                      f"- {dias}: das {faixa['abre']} às {faixa['fecha']}")
+                      f"- {dias}: das {expediente.hora_br(faixa['abre'])} às {expediente.hora_br(faixa['fecha'])}")
     if not linhas:
         return sem_dado(e, p)
     if c.get("horario.feriados_fechado"):
@@ -950,8 +950,27 @@ def chamado_registrado(e: Estado, p: dict) -> str:
         txt += " Esse chamado já estava registrado com esse protocolo."
     if d.get("prazo_retorno_horas_uteis"):
         txt += f" Você recebe o retorno de um atendente em até {d['prazo_retorno_horas_uteis']} horas úteis."
+    if p.get("explicito"):  # pediu um atendente: prazo de retorno e canais, não só o protocolo
+        txt += _retorno_e_canais(e, txt)
     aviso = _aviso_expediente(e)
     return f"{txt} {aviso}".strip()
+
+
+def _retorno_e_canais(e: Estado, ja_dito: str) -> str:
+    c = _condicoes(e)
+    partes = []
+    prazo = c.get("atendimento.prazo_retorno_reclamacao_horas_uteis")
+    if prazo and "horas úteis" not in ja_dito:
+        partes.append(f" O retorno de um atendente é em até {prazo} horas úteis.")
+    canais = [f"WhatsApp {c['contato.whatsapp_secao_7']}"] if "contato.whatsapp_secao_7" in c else []
+    if "contato.telefone_capa" in c:
+        canais.append(f"telefone {c['contato.telefone_capa']}")
+    if canais:
+        faixas = [f"{expediente.descrever_dias(f['dias'])}, das {expediente.hora_br(f['abre'])} às {expediente.hora_br(f['fecha'])}"
+                  for f in c.get("horario.funcionamento", []) if not f.get("fechado")]
+        horario = f" ({'; '.join(faixas)})" if faixas else ""
+        partes.append(f" Se preferir falar agora, os canais são {' e '.join(canais)}{horario}.")
+    return "".join(partes)
 
 
 def registro_falhou(e: Estado, p: dict) -> str:
@@ -997,6 +1016,11 @@ def confirmacao_solta(e: Estado, p: dict) -> str:
             "trocas e devoluções, horário e endereço.")
 
 
+def carrinho_chat(e: Estado, p: dict) -> str:
+    return ("Eu não altero o carrinho por aqui. No carrinho do site você consegue mudar as quantidades, tirar itens "
+            "e ver o total. É só abrir o link abaixo.")
+
+
 def recusa_instrucoes(e: Estado, p: dict) -> str:
     return ("Não consigo atender esse pedido, porque as minhas instruções internas não são compartilhadas. Posso "
             "ajudar com produtos e preços, pedidos, pagamento, frete, trocas e devoluções, horário e endereço.")
@@ -1019,9 +1043,15 @@ def reembolso_prazo(e: Estado, p: dict) -> str:
     linha = _linha_do_manual(e, "reembolso")
     if linha:
         corpo = linha[0].lower() + linha[1:].rstrip(".")
-        return f"Na devolução por arrependimento, {corpo}. {NAO_CONFIRMO}"
-    return (f"Na devolução por arrependimento, o reembolso sai em até {dias} dias úteis. "
-            + NAO_CONFIRMO)
+        txt = f"Na devolução por arrependimento, {corpo}."
+    else:
+        txt = f"Na devolução por arrependimento, o reembolso sai em até {dias} dias úteis."
+    arrep = _condicoes(e).get("regra.arrependimento")
+    if arrep:  # a condição de elegibilidade vai junto da forma e do prazo
+        online = " em compra online" if arrep.get("aplica_a") == "compra_online" else ""
+        estado = f", com o produto {arrep['estado_exigido']}" if arrep.get("estado_exigido") else ""
+        txt += f" Vale{online}, em até {_prazo(arrep)}{estado}."
+    return f"{txt} {NAO_CONFIRMO}"
 
 
 def previsao_entrega(e: Estado, p: dict) -> str:
@@ -1310,6 +1340,22 @@ def soma_dois(e: Estado, p: dict) -> str:
     return "Somando os dois últimos produtos que você viu:\n" + "\n".join(linhas) + "\n" + fecho
 
 
+def diferenca_dois(e: Estado, p: dict) -> str:
+    """Diferença de preço entre os dois últimos produtos citados, calculada sobre os valores das ferramentas."""
+    calc = [x.resultado.dados for x in e.passos if x.ferramenta == "calcular_condicoes" and x.resultado.estado == "ok"][-2:]
+    a, b = calc
+    maior, menor = (a, b) if a["original_centavos"] >= b["original_centavos"] else (b, a)
+    dif = maior["original_centavos"] - menor["original_centavos"]
+    if dif == 0:
+        return f"{a['produto_nome']} e {b['produto_nome']} têm o mesmo preço de tabela, {formatar(a['original_centavos'])}."
+    txt = (f"O {maior['produto_nome']} custa {formatar(dif)} a mais que o {menor['produto_nome']} no preço de tabela "
+           f"({formatar(maior['original_centavos'])} contra {formatar(menor['original_centavos'])}).")
+    dif_final = maior["final_centavos"] - menor["final_centavos"]
+    if p.get("forma", "pix") == "pix" and dif_final != dif:
+        txt += f" No PIX, a diferença é de {formatar(dif_final)}."
+    return txt
+
+
 def parecidos(e: Estado, p: dict) -> str:
     """Outros modelos da mesma categoria do produto em foco, em faixa de preço próxima (ou mais baratos)."""
     d = _dados(e, "ver_produto")
@@ -1334,12 +1380,12 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         nao_entendi, nao_entendi_de_novo, ok_sem_retomar, confirmar_registro, produto_indisponivel, promocoes,
         recusa_manipulacao, recusa_pedido_indevido, seguro_envio, recusa_dado_de_terceiro, fora_escopo_geral, perguntas_repetidas,
         atendente_ja_registrado, trocas_info, trocas_detalhe, dado_recusado, frete_prazo,
-        item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, reembolso_prazo,
+        item_nao_elegivel, identidade, encerramento, confirmacao_solta, recusa_instrucoes, carrinho_chat, reembolso_prazo,
         previsao_entrega, extremo_lista, frete_outra_cidade, frete_estimado, frete_cotacao_individual,
         frete_cep_indisponivel, frete_cep_nao_encontrado, frete_pedir_produto, frete_pedir_cep, frete_cidade_base,
         escolha_produto_curta, objecao_preco, vou_pensar, garantia_excluida, avaria_recebimento, devolucao_loja_fisica,
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
-        frete_grande_porte, parecidos, soma_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
+        frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
         preco_pix_e_parcelas, combinacao_formas)
 }

@@ -94,7 +94,7 @@ python eval/rodar.py --conjunto dev --rotulo meu_teste
 python eval/comparar.py eval/resultados/dev_a.json eval/resultados/dev_b.json
 ```
 
-Na versão entregue: 1.500 testes unitários e 206 de navegador (Playwright, inclusive celular emulado).
+Na versão entregue: 1.515 testes unitários e 210 de navegador (Playwright, inclusive celular emulado).
 
 Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_conversas.jsonl` (105, achados de revisão e QA) são de desenvolvimento; `casos_frescos.jsonl` (18) foi escrito antes das correções para medir às cegas e depois passou a desenvolvimento; `casos_holdout.jsonl` (20) e `casos_holdout2.jsonl` (40) rodam uma vez cada, com hash conferido. Critérios em `eval/PREREGISTRO.md` e `eval/PREREGISTRO_RESERVA.md`; toda correção de instrumento ou gabarito está em `eval/CORRECOES.md`.
 
@@ -184,13 +184,13 @@ Aquela versão reprovou por omitir a forma do reembolso (h12); além disso, não
 
 ### Versão avaliada e verificação da entrega
 
-- Código avaliado no holdout 2: **fafe24c**. Commits posteriores alteram só `README.md`, `exemplos/*.md` e `eval/resultados/*.json`: nenhuma linha de `src/`, `tests/`, `docker-compose.yml` ou `requirements*.txt`.
-- Instalação limpa sem Docker, em um clone do GitHub de f12c19f, seguindo só este README: 1.500 testes passando (01/11/2026, 23h46).
+- Código avaliado no holdout 2: **fafe24c**. Depois dele, por decisão do Rodrigo em 02/11/2026, mudaram: o banner (bolinhas indicadoras e foto de violão sem pessoa), o rodapé (sem Perguntas frequentes) e o tom de quatro respostas da Lia (acolhimento curto em reclamação irritada; todo chamado informa protocolo, prazo de 24 horas úteis e canais; pergunta sobre um dia responde só aquele dia; resumo de devolução em até 4 linhas). Saiu também a frase "um atendente já tem como falar com você", que não era verdadeira num chat anônimo. Os números do holdout 2 valem para fafe24c, e o holdout não rodou de novo; depois das mudanças, dev 62/62, variações 14/14 e conversas 108/108, com zero fatos críticos e zero chamados indevidos.
+- Instalação limpa sem Docker e Docker verificados em f12c19f (01/11/2026, 23h46): 1.500 testes passando, site, modelo `qwen3:4b` e Lia respondendo. A versão final com as mudanças acima passou em 1.515 testes unitários e 210 de navegador (02/11/2026, 01h30).
 - Docker, no mesmo commit, com `docker compose up -d --build`: site no ar, modelo `qwen3:4b` carregado e Lia respondendo. O download do zero foi verificado antes, em 38b8370, com cerca de 4 minutos, e nesta rodada o modelo já estava no volume.
 
 ## Exemplos de conversa
 
-Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exemplos/gerar_conversas.py` na configuração entregue (`qwen3:4b`, redação ligada): catálogo com orçamento e sugestão, informações da loja e fora do escopo, preço com nome ambíguo, promoção e parcela em conferência, devolução com consulta ao pedido e às políticas, e reclamação com chamado. Na versão e0f35d6 a redação abriu a conversa 05 com "Ola", sem acento; o validador da versão final barra saudação solta, e as conversas foram geradas de novo.
+Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exemplos/gerar_conversas.py` na configuração entregue (`qwen3:4b`, redação ligada): catálogo com orçamento e sugestão, informações da loja e fora do escopo, preço com nome ambíguo, promoção e parcela em conferência, devolução com consulta ao pedido e às políticas, e reclamação com chamado. Na versão e0f35d6 a redação abriu a conversa 05 com "Ola", sem acento; o validador da versão final barra saudação solta, e as conversas foram geradas de novo. As conversas 02, 04 e 05 foram geradas de novo depois dos ajustes de tom de 02/11/2026.
 
 ## Suposições documentadas
 
@@ -208,6 +208,7 @@ Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exem
 - A compreensão de frases livres é o limite real: cerca de 35% dos turnos corretos em conversas novas. O teste com um modelo maior por API não foi feito.
 - A Lia pode omitir parte da resposta em perguntas duplas, mas nos QAs os preços e os dados de pedido conferidos estavam certos, salvo o total por quantidade abaixo.
 - A redação quase não aparece com o validador atual; a experiência da entrega é, na prática, a das regras.
+- O tom da Lia não teve revisão por pessoa: o formulário previsto ficou em branco e foi retirado. O tom foi ajustado a partir da leitura das conversas de exemplo durante o desenvolvimento.
 - Total por quantidade é unidade vezes quantidade, igual ao checkout; o PIX pode diferir em centavos do cálculo sobre o total.
 - A consulta de produto pode citar dois valores quando a ficha contradiz a descrição nos dados originais.
 - Sete produtos têm marca no nome diferente da descrição nos dados originais; os CSV não foram alterados.

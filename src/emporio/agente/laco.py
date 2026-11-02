@@ -28,7 +28,7 @@ from .reserva import EXECUTA, Reserva
 from .decisor import Decisor
 from .estado import ORIGENS, Acao, Estado, Passo, Resposta, carregar_estado, para_json, salvar_estado
 from .fatos import fatos_do_resultado
-from .percepcao import AGUARDA_DADO, aplicar_rotulo, perceber
+from .percepcao import AGUARDA_DADO, FAMILIAS, aplicar_rotulo, perceber
 from .regras import REGRA_POR_INTENCAO, RegrasDecisor
 
 log = logging.getLogger("emporio.agente")
@@ -447,6 +447,16 @@ def limitar_repeticao(acao: Acao, estado: Estado) -> Acao:
     return acao
 
 
+DADO_QUE_O_CLIENTE_PODE_DAR = {"pedido", "dados_posvenda", "cidade", "cep", "valor_pedido", "relato"}
+
+
+def _vale_retomar(pendente: dict[str, Any], estado: Estado) -> bool:
+    assunto = pendente["objetivo"]
+    return (assunto in respostas.ROTULOS_ASSUNTO and assunto not in estado.convites_retomar
+            and pendente.get("aguardando") in DADO_QUE_O_CLIENTE_PODE_DAR
+            and FAMILIAS.get(assunto) != "produto")
+
+
 def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
     p = acao.parametros
     chave = acao.resposta
@@ -472,13 +482,15 @@ def fechar_turno(estado: Estado, acao: Acao, texto: str) -> tuple[str, bool]:
         estado.aguardando = "parcelamento"  # a resposta termina em pergunta de sim ou não sobre as parcelas
     elif p.get("oferta_condicoes"):
         estado.aguardando = "condicoes"  # termina em "quer ver as condições dele?": o sim mostra o preço
-    # uma pergunta por resposta: se o texto já termina em pergunta, o convite de retomar espera o próximo turno
-    # só se retoma assunto nomeado que ainda espera dado do cliente; oferta já respondida ou sem nome não volta
-    estado.pendentes = [x for x in estado.pendentes
-                        if x["objetivo"] in respostas.ROTULOS_ASSUNTO and x.get("aguardando") in (AGUARDA_DADO | {"relato"})]
+    # Convite de retomar: só quando o assunto anterior ficou incompleto por falta de um dado que o cliente pode dar
+    # (pedido, dados do caso, cidade, CEP), no máximo uma vez por assunto, e nunca para escolha entre modelos que a
+    # própria Lia não resolveu nem para produto ainda por nomear: a resposta informativa já concluída não reabre isso.
+    # Uma pergunta por resposta: se o texto já termina em pergunta, o convite espera o próximo turno.
+    estado.pendentes = [x for x in estado.pendentes if _vale_retomar(x, estado)]
     if estado.pendentes and not texto.rstrip().endswith("?"):
         assunto = estado.pendentes[-1]["objetivo"]
         estado.aguardando = "retomar"
+        estado.convites_retomar.append(assunto)
         texto = f"{texto}\n\n{respostas.retomar(estado, {'assunto': assunto})}"
     return texto, True
 

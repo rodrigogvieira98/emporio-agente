@@ -65,6 +65,8 @@ class Estado(BaseModel):
     ja_saudou: bool = False
     # Condições de valor já citadas ao cliente (uma por vez): "frete_gratis", "parcelas".
     valores_citados: list[str] = []
+    # Assuntos para os quais a Lia já ofereceu retomar: no máximo um convite por assunto na conversa.
+    convites_retomar: list[str] = []
     turno_fechamento: int = 0  # último turno em que a Lia fechou perguntando se precisa de mais alguma coisa
 
     @property

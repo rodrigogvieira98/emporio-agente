@@ -76,3 +76,4 @@
 {"id":"c76","cat":"causas","turnos":["quanto custa a tele?"],"contem":["Telecaster","5.400,00"],"nao_contem":["Qual produto"],"chamado":false}
 {"id":"c77","cat":"causas","turnos":["quanto custa a Telecaster","e a Stratocaster?","quanto uma custa a mais que a outra?"],"contem":["7.100,00"],"nao_contem":["Somando"],"chamado":false}
 {"id":"c78","cat":"estrutura","turnos":["quero devolver o violão que comprei, ainda tá na caixa","que horas vocês fecham?","não, quero ver o preço do Yamaha C40"],"contem":["Yamaha C40","R$ 599,90"],"nao_contem":["deixei esse assunto de lado","Quer retomar"],"chamado":false}
+{"id":"c79","cat":"estrutura","turnos":["dá pra pagar metade no pix e metade no cartão? o violão custa 1299","e num de 1700?","pix tem desconto?"],"contem":["5% de desconto"],"nao_contem":["Quer retomar","antes estávamos"],"chamado":false}

@@ -65,3 +65,30 @@ def test_recusa_de_registro_com_pergunta_responde_a_pergunta():
     assert "Responda sim ou não" in r.texto
     (r,) = conversar("não, qual o horário de vocês?", conversa="e23b")
     assert "das 9h às 18h" in r.texto and "não registrei nada" not in r.texto.lower(), r.texto
+
+
+# --- item 2: convite de retomar -----------------------------------------------------------------
+
+def test_sem_convite_quando_o_assunto_anterior_era_so_um_produto_a_nomear():
+    rs = conversar("dá pra pagar metade no pix e metade no cartão? o violão custa 1299", "e num de 1700?",
+                   "pix tem desconto?", conversa="e23r1")
+    assert "Quer retomar" not in rs[-1].texto, rs[-1].texto
+
+
+def test_sem_convite_quando_o_assunto_anterior_era_escolha_entre_modelos_parecidos():
+    rs = conversar("quero o Rozini", "qual o horário de vocês?", conversa="e23r2")
+    assert "Achei mais de um modelo" in rs[0].texto
+    assert "Quer retomar" not in rs[1].texto, rs[1].texto
+
+
+def test_convite_so_uma_vez_por_assunto():
+    rs = conversar("quero devolver o violão que comprei, ainda tá na caixa", "que horas vocês fecham?", "sim",
+                   "onde fica a loja?", conversa="e23r3")
+    assert "Quer retomar" in rs[1].texto
+    assert "4 últimos" in rs[2].texto
+    assert "Rua 14 de Maio" in rs[3].texto and "Quer retomar" not in rs[3].texto, rs[3].texto
+
+
+def test_convite_continua_quando_falta_dado_de_pos_venda_que_o_cliente_pode_dar():
+    rs = conversar("quero trocar a guitarra que comprei online, ainda na caixa", "qual o endereço da loja?", conversa="e23r4")
+    assert "Quer retomar" in rs[1].texto

@@ -116,11 +116,11 @@ def test_sem_rolagem_horizontal_e_altura_mantida(url_site, navegador, largura):
 
 
 def _pontos(p):
-    return p.locator("[data-ponto]")
+    return p.locator(".banner-pontos [data-ponto]")
 
 
 def _atual(p) -> list[int]:
-    return p.evaluate("[...document.querySelectorAll('[data-ponto]')].map((b, i) => b.getAttribute('aria-current') === 'true' ? i : -1).filter(i => i >= 0)")
+    return p.evaluate("[...document.querySelectorAll('.banner-pontos [data-ponto]')].map((b, i) => b.getAttribute('aria-current') === 'true' ? i : -1).filter(i => i >= 0)")
 
 
 def test_bolinhas_levam_a_foto_certa_e_reiniciam_a_contagem(url_site, navegador):

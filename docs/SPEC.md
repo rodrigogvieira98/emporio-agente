@@ -489,6 +489,10 @@ Revisão do Rodrigo em 01/11/2026: a disposição já segue a home, mas o conte�
 - Temas revistos: Pagamento; Entrega e frete; Pedido e rastreio; Trocas, devoluções e garantia; Sobre a loja. Incluir perguntas que faltam e que o manual responde: reembolso (mesma forma de pagamento, até 10 dias úteis), produto com avaria na entrega, acessórios (não vendemos), privacidade dos dados.
 - Fatos continuam derivados do manual pelo código, sem número escrito à mão nos textos fixos.
 
+## Rodapé sem Perguntas frequentes (etapa 27)
+
+Pedido do Rodrigo em 02/11/2026. O rodapé fica com nome da loja, endereço, Políticas da Loja e Privacidade e cookies. A página `/perguntas-frequentes` continua no ar e é alcançada pelo link "Ver todas as perguntas" da seção da home e pelos links internos já existentes.
+
 ## Tom das conversas de exemplo (etapa 26)
 
 Decisão do Rodrigo em 02/11/2026, depois do holdout 2: corrigir e declarar no README que a mudança veio depois de fafe24c. `eval/REVISAO_TOM.md` sai do repositório (não é exigido pelo desafio); a avaliação de tom fica registrada como não feita por pessoa.

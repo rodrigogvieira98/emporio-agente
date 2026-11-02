@@ -20,7 +20,7 @@ Aviso do repositório: a loja é fictícia e os pedidos não são reais. Nenhum 
 3. **Resposta escrita pelo código:** preço, prazo, regra, protocolo e link saem sempre do resultado das ferramentas.
 4. **Redação pelo modelo, opcional e limitada:** um modelo local (`qwen3:4b`) pode acrescentar até 2 frases curtas, sem números. Um validador descarta qualquer frase com fato fora do bloco factual, eco da mensagem do cliente, caixa alta ou oferta não apoiada nos dados, e não há redação em recusas, pedidos, pós-venda e compra. Na dúvida, descarta.
 
-O modelo nunca decide ações nem escreve fatos. Isso foi uma decisão medida, explicada abaixo.
+Na configuração entregue, o modelo nunca decide ações nem escreve fatos. Isso foi uma decisão medida, explicada abaixo; com um modelo por API, a decisão das ações pode ser ligada (ver [Trocar de modelo](#trocar-de-modelo)), e os fatos continuam vindo das ferramentas.
 
 ## Executar com Docker
 

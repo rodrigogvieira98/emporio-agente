@@ -856,9 +856,17 @@ def fora_escopo_geral(e: Estado, p: dict) -> str:
             "musicais. Posso ajudar com produtos, preços, pedidos, trocas e devoluções?")
 
 
+def _unidades_em_estoque(estoque: int) -> str:
+    return f"Temos {estoque} {'unidade' if estoque == 1 else 'unidades'} em estoque agora"
+
+
 def disponibilidade(e: Estado, p: dict) -> str:
     d = _dados(e, "ver_produto")
     txt = f"{d['nome']}: {SITUACAO.get(d['situacao_venda'], d['situacao_venda'])}, conforme o estoque agora."
+    n, estoque = e.slots.get("quantidade"), d.get("estoque_unidades")
+    if n and estoque is not None:  # "tem 20 no estoque?": compara o pedido com o estoque do produto
+        txt = (f"{d['nome']}: {_unidades_em_estoque(estoque)}, " + ("menos que as %d que você pediu." % n if n > estoque
+               else "o bastante para as %d que você pediu." % n))
     return f"{txt} Preço de tabela: {formatar(d['preco_centavos'])}." if d.get("preco_centavos") else txt
 
 
@@ -893,21 +901,28 @@ def preco(e: Estado, p: dict) -> str:
                          "e é isto que vale para este produto.")
     if p.get("pergunta_promocao") and not d.get("percentual") and not p.get("promo_inativa"):
         partes.append("Esse produto não está em promoção ativa agora.")
+    acima_do_estoque = False
     if p.get("quantidade"):
         n = p["quantidade"]
-        if d["forma"] == "credito":
-            partes.append(f"Para {n} unidades, são {formatar(d['parcela_centavos'] * n)} por mês em {d['parcelas']}x "
-                          f"(total {formatar(d['final_centavos'] * n)}).")
+        estoque = _dados(e, "ver_produto").get("estoque_unidades")
+        if estoque is not None and n > estoque:
+            acima_do_estoque = True  # pedido maior que o estoque: diz quantas há e não cota a quantidade pedida
+            partes.append(f"{_unidades_em_estoque(estoque)}, menos que as {n} que você pediu, "
+                          "então não consigo cotar essa quantidade.")
         else:
-            rotulo = " no PIX" if d["forma"] == "pix" and not d.get("percentual") else ""
-            partes.append(f"Para {n} unidades{rotulo}: {formatar(d['final_centavos'] * n)}.")
+            if d["forma"] == "credito":
+                partes.append(f"Para {n} unidades, são {formatar(d['parcela_centavos'] * n)} por mês em {d['parcelas']}x "
+                              f"(total {formatar(d['final_centavos'] * n)}).")
+            else:
+                rotulo = " no PIX" if d["forma"] == "pix" and not d.get("percentual") else ""
+                partes.append(f"Para {n} unidades{rotulo}: {formatar(d['final_centavos'] * n)}.")
     if d.get("situacao_venda") not in (None, "disponivel"):
         partes.append(f"Atenção: o produto está {SITUACAO.get(d['situacao_venda'])}.")
         return " ".join(partes)
     if p.get("valor_frete"):  # uma condição que ajuda por vez, e só uma vez na conversa
         partes.append(f"Em {str(p['valor_frete']).title()}, o frete desse produto é grátis.")
         e.valores_citados.append("frete_gratis")
-    if p.get("compra"):  # o passo seguinte é o botão: a Lia nunca adiciona nada sozinha
+    if p.get("compra") and not acima_do_estoque:  # o passo seguinte é o botão: a Lia nunca adiciona nada sozinha
         partes.append("Para comprar, toque em Adicionar ao carrinho; eu não adiciono nada por você.")
     elif d["forma"] != "credito" and p.get("oferta_parcelas"):
         partes.append("Quer ver as parcelas no cartão de crédito?")

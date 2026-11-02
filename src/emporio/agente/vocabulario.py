@@ -336,7 +336,8 @@ _NUM = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco"
 QUANTIDADE = re.compile(
     r"\b(?:comprar|levar|levo|quero|pegar|pego|fechar|compro)\s+(?:mais\s+)?(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\b"
     r"(?!\s*(?:x|vezes|parcelas|reais|real|dias))|"
-    r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b")
+    r"\b(\d{1,2}|dois|duas|tres|quatro|cinco|seis)\s+(?:unidades?|pecas?|instrumentos?)\b|"
+    r"\btem(?: em estoque)?\s+(\d{1,2})\s+(?!dias?\b|x\b|vezes|reais|real\b|parcelas?|anos?\b|meses|mes\b|horas?|mm\b|cordas?|teclas?|trastes?|polegadas?|watts?)\w")
 # Pergunta em inglês: palavras que não existem em português; duas ou mais, e nenhuma palavra comum do português.
 INGLES = {"the", "is", "what", "you", "ship", "shipping", "how", "much", "hi", "hello", "thanks", "thank", "open", "hours",
           "where", "can", "your", "are", "have", "buy", "delivery", "deliver", "return", "refund", "does", "store",

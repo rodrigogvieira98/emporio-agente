@@ -384,7 +384,7 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     slots["os_dois"] = bool(v.OS_DOIS.search(norm)) or (slots["diferenca_dois"] and bool(v.OS_DOIS_REF.search(norm)))
     mq = v.QUANTIDADE.search(norm)
     if mq:
-        bruto = mq.group(1) or mq.group(2)
+        bruto = mq.group(1) or mq.group(2) or mq.group(3)
         qtd = int(bruto) if bruto.isdigit() else v._NUM[bruto]
         if 2 <= qtd <= 20:
             slots["quantidade"] = qtd

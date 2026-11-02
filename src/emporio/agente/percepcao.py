@@ -643,9 +643,11 @@ def perceber(estado: Estado, mensagem: str) -> None:
     estado.intencao = nova
     s["nova"] = nova
 
-    # respostas a perguntas de sim ou não
+    # respostas a perguntas de sim ou não: o "sim" e o "não" só consomem a mensagem quando ela é só confirmação ou
+    # recusa; com conteúdo ("não, quero colocar o RC-104 no carrinho") a pendência se encerra e vale o resto da frase
+    com_conteudo = nova not in (None, "confirmacao_solta")
     if ag == "retomar":
-        if s["afirmativo"] and estado.pendentes:
+        if s["afirmativo"] and estado.pendentes and not com_conteudo:
             guardado = estado.pendentes.pop()
             estado.objetivo = guardado["objetivo"]
             estado.coletados = {**guardado["coletados"], **{k: x for k, x in estado.coletados.items() if k == "pedido"}}
@@ -657,16 +659,20 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.pendentes = []
         estado.aguardando = None
         estado.objetivo = None
-        if s["negativo"]:
+        if s["negativo"] and not com_conteudo:
             estado.intencao = "retomada_recusada"
             return
         ag = None
     if ag == "confirmacao_registro":
-        if s["afirmativo"] and not s["negativo"]:
+        if s["negativo"] and com_conteudo and (estado.coletados.get("proposta") or {}).get("origem") == "sentimento":
+            estado.oferta_humano = "recusada"  # a recusa vale mesmo quando a frase traz outro pedido
+        if com_conteudo:
+            pass  # a proposta de registro se encerra sem resposta: segue a intenção do resto da frase
+        elif s["afirmativo"] and not s["negativo"]:
             estado.permissao_registro = True
             estado.intencao = estado.objetivo
             return
-        if s["negativo"]:
+        elif s["negativo"]:
             if (estado.coletados.get("proposta") or {}).get("origem") == "sentimento":
                 estado.oferta_humano = "recusada"  # oferta de atendente recusada não volta na conversa
             estado.intencao = estado.objetivo
@@ -676,7 +682,7 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.aguardando = None
         ag = None
     pergunta_so_do_estado = estado.ultima_pergunta.get("campos") == ["estado_produto"]  # aí "não" é resposta
-    if (ag == "pedido" or (ag == "dados_posvenda" and not pergunta_so_do_estado)) and s["negativo"]             and s["palavras"] <= 4:
+    if (ag == "pedido" or (ag == "dados_posvenda" and not pergunta_so_do_estado)) and s["negativo"] and not com_conteudo and s["palavras"] <= 4:
         estado.intencao = "dado_recusado"  # "não" a um pedido de dados encerra o assunto, sem repetir o pedido
         estado.objetivo = None
         estado.aguardando = None
@@ -730,21 +736,21 @@ def perceber(estado: Estado, mensagem: str) -> None:
         ag = ag_inicial = None
     if ag == "retentar_parecidas":
         estado.aguardando = None
-        if s["afirmativo"] and not s["negativo"]:
+        if s["afirmativo"] and not s["negativo"] and not com_conteudo:
             estado.intencao = "retentar_parecidas"
             return
         estado.coletados.pop("parecidas", None)
         estado.objetivo = None
-        if s["negativo"]:
+        if s["negativo"] and not com_conteudo:
             estado.intencao = "retomada_recusada"
             return
         ag = None
     if ag == "detalhe_trocas":  # "quer ver o que não entra em troca e o que a garantia não cobre?"
         estado.aguardando = None
-        if s["afirmativo"] and not s["negativo"]:
+        if s["afirmativo"] and not s["negativo"] and not com_conteudo:
             estado.intencao = "detalhe_trocas"
             return
-        if s["negativo"]:
+        if s["negativo"] and not com_conteudo:
             estado.objetivo = None
             estado.intencao = "retomada_recusada"
             return
@@ -752,6 +758,9 @@ def perceber(estado: Estado, mensagem: str) -> None:
         ag = None
     if ag == "relato" and nova == "pedir_atendente" and not s["nega_atendente"]:
         estado.aguardando = ag = None  # pedir um humano no meio do relato não é o relato: registra o pedido de atendente
+        estado.objetivo = None
+    if ag == "relato" and com_conteudo and nova not in POSVENDA | {"garantia", "reclamacao"} and s["negativo"]:
+        estado.aguardando = ag = None  # "não, quero saber o horário": o relato fica de lado e vale a pergunta
         estado.objetivo = None
     if ag == "relato":
         if s["negativo"] and s["palavras"] <= 4:

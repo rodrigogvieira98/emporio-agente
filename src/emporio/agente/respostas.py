@@ -134,8 +134,41 @@ def saudacao(e: Estado, p: dict) -> str:
     return f"{txt} {expediente_txt}".strip()
 
 
+_DIAS_CITADOS = (("segunda", 0), ("terca", 1), ("quarta", 2), ("quinta", 3), ("sexta", 4), ("sabado", 5), ("domingo", 6))
+_SEMANA_TODA = re.compile(r"\b(semana|todos os dias|todo dia|toda a semana|horarios?|funcionamento|expediente|dias)\b")
+
+
+def _dia_perguntado(e: Estado) -> int | None:
+    """Dia da semana (0 = segunda) quando a pergunta cita um só dia e não pede a semana inteira."""
+    msg = normalizar(e.slots.get("texto_limpo", ""))
+    if _SEMANA_TODA.search(msg):
+        return None
+    achados = {n for nome, n in _DIAS_CITADOS if re.search(rf"\b{nome}s?\b", msg)}
+    return achados.pop() if len(achados) == 1 else None
+
+
+def _horario_do_dia(e: Estado, c: dict, dia: int) -> str | None:
+    faixa = next((f for f in c.get("horario.funcionamento", []) if dia in f["dias"]), None)
+    if faixa is None:
+        return None
+    nome = expediente.DIAS[dia]
+    artigo = "no" if dia >= 5 else "na"
+    if faixa.get("fechado"):
+        txt = f"{artigo.capitalize()} {nome} não abrimos: fica fechado o dia todo."
+    else:
+        txt = f"{artigo.capitalize()} {nome} abrimos das {expediente.hora_br(faixa['abre'])} às {expediente.hora_br(faixa['fecha'])}."
+    if c.get("horario.feriados_fechado") or "feriados_sem_calendario" in _ambiguidades(e):
+        txt += " Se for feriado, o horário pode mudar; antes de vir, vale falar com um atendente."
+    return txt
+
+
 def horario(e: Estado, p: dict) -> str:
     c = _condicoes(e)
+    dia = _dia_perguntado(e)
+    if dia is not None and c.get("horario.funcionamento"):
+        txt = _horario_do_dia(e, c, dia)
+        if txt:
+            return txt
     linhas = []
     for faixa in c.get("horario.funcionamento", []):
         dias = expediente.descrever_dias(faixa["dias"])
@@ -1033,8 +1066,6 @@ def propor_posvenda(e: Estado, p: dict) -> str:
                f"total gravado {formatar(ped['total_gravado_centavos'])}")
     if ped.get("data_pedido"):
         consta += f", feito em {_data_br(ped['data_pedido'])}"
-    if ped.get("previsao"):
-        consta += f", previsão de entrega {_data_br(ped['previsao'])}"
     decl = []
     rotulo = {"canal_compra": "compra {}", "data_recebimento": "recebimento em {}", "data_compra": "compra em {}",
               "estado_produto": "produto {}", "descricao_defeito": "problema: {}"}
@@ -1055,11 +1086,10 @@ def propor_posvenda(e: Estado, p: dict) -> str:
     amb = e.coletados["regra"].get("ambiguidades_ids", [])
     pontos = [AMBIGUIDADE_CLIENTE[i] for i in amb if i in AMBIGUIDADE_CLIENTE]
     nota = f" Não consigo confirmar daqui {pontos[0]}." if pontos else ""
-    return (
-        "Resumo da sua solicitação:" + _nota_prazo_defeito(e) + "\n"
-        f"1) O que consta no seu pedido: {consta}.\n"
-        f"2) O que você me informou (não verificado): {'; '.join(decl)}.\n"
-        f"3) O que um atendente precisa confirmar: se o seu caso se enquadra na nossa regra ({condicao}, {marco_txt}{aplica}).{exigido}"
+    return (  # quatro linhas: pedido, o que o cliente informou, regra, pergunta de registro
+        f"O que consta no seu pedido: {consta}.{_nota_prazo_defeito(e)}\n"
+        f"O que você me informou (não verificado): {'; '.join(decl)}.\n"
+        f"O que um atendente precisa confirmar: se o seu caso se enquadra na nossa regra ({condicao}, {marco_txt}{aplica}).{exigido}"
         f"{nota} Eu não consigo garantir a elegibilidade; a decisão é de um atendente.\n"
         f"Posso registrar essa solicitação para um atendente avaliar? {CONFIRMA}")
 
@@ -1071,7 +1101,7 @@ def reclamacao_empatia(e: Estado, p: dict) -> str:
 
 def pedir_relato(e: Estado, p: dict) -> str:
     return ("Entendo. Pode me contar em poucas palavras o que aconteceu? "
-            "Não precisa passar telefone nem e-mail, um atendente já tem como falar com você.")
+            "Não precisa passar telefone nem e-mail: ao registrar, eu te passo um protocolo para acompanhar.")
 
 
 def negacao_reclamacao(e: Estado, p: dict) -> str:
@@ -1089,8 +1119,12 @@ def chamado_registrado(e: Estado, p: dict) -> str:
         txt += " Esse chamado já estava registrado com esse protocolo."
     if d.get("prazo_retorno_horas_uteis"):
         txt += f" Você recebe o retorno de um atendente em até {d['prazo_retorno_horas_uteis']} horas úteis."
-    if p.get("explicito"):  # pediu um atendente: prazo de retorno e canais, não só o protocolo
-        txt += _retorno_e_canais(e, txt)
+    txt += _retorno_e_canais(e, txt)  # todo chamado: protocolo, prazo de retorno e canais
+    txt += " Ao falar com a loja, cite o protocolo."
+    if d.get("tipo") == "reclamacao" and e.sentimento in ("irritado", "frustrado"):
+        # reclamação com irritação: acolhimento curto antes do registro, sem pedir desculpa por fato não verificado
+        acolhe = reconhecimento(e)
+        txt = f"{acolhe}\n{txt}" if acolhe else txt
     aviso = _aviso_expediente(e)
     return f"{txt} {aviso}".strip()
 
@@ -1099,6 +1133,14 @@ def _retorno_e_canais(e: Estado, ja_dito: str) -> str:
     c = _condicoes(e)
     partes = []
     prazo = c.get("atendimento.prazo_retorno_reclamacao_horas_uteis")
+    if not prazo:  # o chamado de qualquer tipo informa o prazo do manual, mesmo sem a seção 7.3 carregada
+        from ..politicas import manual
+
+        try:
+            fato = manual.fato("atendimento.prazo_retorno_reclamacao_horas_uteis")
+        except Exception:  # manual indisponível: o chamado já foi gravado, então só omite o prazo
+            fato = None
+        prazo = fato.valor if fato is not None else None
     if prazo and "horas úteis" not in ja_dito:
         partes.append(f" O retorno de um atendente é em até {prazo} horas úteis.")
     canais = [f"WhatsApp {c['contato.whatsapp_secao_7']}"] if "contato.whatsapp_secao_7" in c else []
@@ -1116,7 +1158,7 @@ def registro_falhou(e: Estado, p: dict) -> str:
     r = e.ultimo("registrar_encaminhamento")
     if r is not None and r.estado == "negado":
         return ("Não consegui registrar porque o texto tinha telefone ou e-mail, e isso eu não guardo. "
-                "Um atendente já tem como falar com você. Pode repetir sem esses dados?")
+                "Ao registrar, eu te passo um protocolo para acompanhar. Pode repetir sem esses dados?")
     return ("Não consegui registrar o chamado agora, então ainda não existe protocolo. "
             "Pode tentar de novo em instantes?")
 

@@ -200,12 +200,17 @@ def test_chamado_so_diz_registrado_e_protocolo_exceto_reclamacao():
     assert a.texto.startswith("Registrei o seu chamado. Protocolo: EM-000001.") and "24 horas úteis" in a.texto and "WhatsApp" in a.texto
     assert "contato" not in a.texto.lower()
     (rec,) = dizer("quero abrir uma reclamação porque o pedido 8 atrasou muito e ninguém avisou", conversa="b")
-    assert rec.texto == "Registrei o seu chamado. Protocolo: EM-000002. Você recebe o retorno de um atendente em até 24 horas úteis."
+    # etapa 26: todo chamado traz protocolo, prazo de 24 horas úteis e canais; o texto da reclamação não repete o prazo
+    assert rec.texto.startswith("Registrei o seu chamado. Protocolo: EM-000002. Você recebe o retorno de um atendente em até 24 horas úteis.")
+    assert rec.texto.count("24 horas") == 1 and "WhatsApp" in rec.texto and "cite o protocolo" in rec.texto
 
 
 def test_posvenda_e_duvida_tambem_nao_prometem_contato(sql):
     textos = [r.texto for r in dizer("quero devolver", "pedido 4 final 3456", "online, recebi dia 15/12/2025, sem uso", "sim")]
-    assert textos[-1] == "Registrei o seu chamado. Protocolo: EM-000001."
+    # etapa 26: o chamado de devolução também traz prazo e canais; não promete ligação nem e-mail
+    assert textos[-1].startswith("Registrei o seu chamado. Protocolo: EM-000001.")
+    assert "24 horas úteis" in textos[-1] and "WhatsApp" in textos[-1] and "cite o protocolo" in textos[-1]
+    assert "ligamos" not in textos[-1].lower() and "entraremos" not in textos[-1].lower()
 
 
 # 10. extração de produto ---------------------------------------------------------------------

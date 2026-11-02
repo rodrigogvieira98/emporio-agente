@@ -245,7 +245,7 @@ ESTADO_RUIM = re.compile(
 
 DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b")
 PEDIDO_EXPLICITO = re.compile(r"\b(?:pedido|numero|nro|num)\s*(?:no\s*|n\s*)?#?\s*(\d{1,6})\b|#\s*(\d{1,6})\b")
-FINAL_EXPLICITO = re.compile(r"\b(?:final|ultimos|termina|terminad\w*|terminando|acaba|acabando)\s*(?:em|com|de|do telefone|e)?\s*(\d{4})\b")
+FINAL_EXPLICITO = re.compile(r"(?:\b\d\s+(?=ultimos\b))?\b(?:final|ultimos|termina|terminad\w*|terminando|acaba|acabando)\s*(?:digitos\s*)?(?:em|com|de|do telefone|e|sao|eh)?\s*(\d{4})\b")
 TELEFONE_COMPLETO = re.compile(r"\(?\b\d{2}\)?[\s.-]*9?\d{4}[\s.-]?\d{4}\b")
 
 # Pedidos que o agente recusa sem consultar nada.

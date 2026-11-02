@@ -83,6 +83,13 @@ def _cortar_cidade(trecho: str) -> str:
     return " ".join(saida)
 
 
+def _data_valida(ano: int, mes: int, dia: int) -> date | None:
+    try:
+        return date(ano, mes, dia)
+    except ValueError:
+        return None
+
+
 def _datas(norm: str) -> list[tuple[date, str | None]]:
     hoje = config.hoje()
     achadas: list[tuple[date, str | None]] = []
@@ -97,6 +104,19 @@ def _datas(norm: str) -> list[tuple[date, str | None]]:
                 a = int(ano)
                 d = date(a + 2000 if a < 100 else a, mes, dia)
         except ValueError:
+            continue
+        antes = norm[max(0, m.start() - 30):m.start()]
+        dica = ("recebimento" if re.search(r"receb|entreg|chegou|chegada", antes)
+                else "compra" if re.search(r"compr|pedi|fiz", antes) else None)
+        achadas.append((d, dica))
+    for m in RE_DIA.finditer(norm):
+        dia, com_mes = int(m.group(1)), m.group(2) is not None
+        mes = MESES[m.group(2)] if com_mes else hoje.month
+        d = _data_valida(hoje.year, mes, dia)
+        if d is not None and d > hoje:  # "dia 27 de outubro" em janeiro é do ano passado; "dia 27" sem mês é do mês anterior
+            d = (_data_valida(hoje.year - 1, mes, dia) if com_mes else
+                 _data_valida(hoje.year - (mes == 1), (mes - 1) or 12, dia))
+        if d is None:
             continue
         antes = norm[max(0, m.start() - 30):m.start()]
         dica = ("recebimento" if re.search(r"receb|entreg|chegou|chegada", antes)
@@ -177,9 +197,19 @@ RE_NUMERO_NAO_PRODUTO = re.compile(
     r"|\b\d+(?:,\d+)?\s*(?:%|por cento)")
 
 
+MESES = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
+         "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
+RE_DIA = re.compile(r"\bdia\s+(\d{1,2})(?:\s+de\s+(" + "|".join(MESES) + r"))?\b")
+# valor em reais dito sem "R$" nem "reais": só com palavra de preço antes e três algarismos ou mais ("por 620", "custa 1299")
+RE_VALOR_SOLTO = re.compile(r"\b(?:custa|custando|custou|por|de|ta|esta|fica|sai|saindo|a)\s+(?:r\$\s*)?\d{3,6}(?:[.,]\d{1,2})?\b(?!\s*(?:x\b|%))")
+
+
 def _limpar_para_referencia(norm: str, voc: catalogo.Vocabulario) -> str:
     s = re.sub(r"\b\d{5}-\d{3}\b|\bcep\b\D{0,12}?\d{8}\b|\b\d{5}-?\d{3}\b", " ", norm)  # o CEP não faz parte do nome do produto
     s = RE_NUMERO_NAO_PRODUTO.sub(" ", s)
+    s = v.QUANTIDADE.sub(" ", s)  # "levar 2", "duas unidades": quantidade do produto em foco, não nome de produto
+    s = RE_DIA.sub(" ", s)  # "dia 27 de outubro"
+    s = RE_VALOR_SOLTO.sub(" ", s)  # "por 620", "custa 1299", "de 1700": preço dito pelo cliente
     s = RE_MAX.sub(" ", s)
     s = RE_MIN.sub(" ", s)
     s = RE_TETO_IMPLICITO.sub(lambda m: " " if re.search(r"\breais?\b|r\$|mil", m.group(0)) else m.group(0), s)
@@ -263,13 +293,13 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
     conteudo = [t for t in sobra if t not in v.CATEGORIAS and t not in corrigidos
                 and not any(p.fullmatch(t) for _, p in v.PADROES_INTENCAO)
                 and not re.fullmatch(r"(comprar|comprei|gostei|interesse|interessado|interessada|fazer|quer)", t)]
-    nomes = [t for t in conteudo if t in voc.df]
+    com_letra = any(not t.isdigit() for t in conteudo)
+    nomes = [t for t in conteudo if t in voc.df and (com_letra or not t.isdigit())]  # número puro não identifica produto
     if nomes:
         slots["termo"] = " ".join(nomes)
     # só vale como produto se algum termo identifica (modelo com número, ou marca rara no catálogo);
     # as demais palavras seguem junto, para que o que não existir resulte em "não encontrei"
     # número puro ("8", "10") nunca identifica produto sozinho: precisa de marca ou modelo junto
-    com_letra = any(not t.isdigit() for t in conteudo)
     if any((re.search(r"\d", t) and (not t.isdigit() or com_letra)) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
@@ -800,6 +830,11 @@ def perceber(estado: Estado, mensagem: str) -> None:
         estado.intencao = "encerramento"
         return
 
+    if estado.objetivo and ag != "escolha_produto" and _numero_escolhido(estado):
+        estado.aguardando = ag = "escolha_produto"  # a lista numerada ainda vale: "o 2" escolhe o item 2 dela
+        if nova in ("preco_produto", "busca_produto", "disponibilidade") and "referencia" not in s:
+            nova = None
+
     # categoria nova no meio de uma pergunta de produto ("violão barato" quando se esperava o modelo): busca nova
     if nova == "busca_produto" and s.get("categoria") and "referencia" not in s and ag in ("escolha_produto", "referencia_produto"):
         estado.objetivo = None
@@ -857,10 +892,27 @@ def aplicar_rotulo(estado: Estado, rotulo: str) -> None:
     _aplicar_slots(estado)
 
 
+ORDINAIS = {"primeiro": 1, "primeira": 1, "segundo": 2, "segunda": 2, "terceiro": 3, "terceira": 3, "quarto": 4,
+            "quarta": 4, "quinto": 5, "quinta": 5}
+RE_ESCOLHA = re.compile(
+    r"(?:(?:quero|vou de|vou querer|fico com|pode ser|prefiro|escolho)\s+)?(?:(?:o|a|opcao|numero|n|item)\s+)*"
+    r"(\d|" + "|".join(ORDINAIS) + r")(?:\s+(?:por favor|mesmo|ai|ne))?")
+
+
+def _numero_escolhido(estado: Estado) -> int | None:
+    """"2", "o 2", "opção 2", "o segundo": a escolha de um item da lista numerada que a Lia mostrou (e só dela)."""
+    opcoes = estado.coletados.get("opcoes")
+    if not opcoes:
+        return None
+    m = RE_ESCOLHA.fullmatch(normalizar(estado.slots.get("texto_limpo", "")).strip(" .!?"))
+    if not m:
+        return None
+    n = int(m.group(1)) if m.group(1).isdigit() else ORDINAIS[m.group(1)]
+    return n if 1 <= n <= len(opcoes) else None
+
+
 def _escolha_numerada(estado: Estado) -> None:
     """Resposta '2' a uma lista de modelos escolhe a opção correspondente."""
-    opcoes = estado.coletados.get("opcoes")
-    if estado.aguardando == "escolha_produto" and opcoes:
-        m = re.fullmatch(r"\s*(?:opcao\s*)?(\d)\s*", normalizar(estado.slots.get("texto_limpo", "")))
-        if m and 1 <= int(m.group(1)) <= len(opcoes):
-            estado.slots["produto_id"] = opcoes[int(m.group(1)) - 1]["id"]
+    n = _numero_escolhido(estado)
+    if estado.aguardando == "escolha_produto" and n:
+        estado.slots["produto_id"] = estado.coletados["opcoes"][n - 1]["id"]

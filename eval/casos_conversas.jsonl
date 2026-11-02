@@ -82,3 +82,7 @@
 {"id":"c82","cat":"estrutura","turnos":["quanto custa o Yamaha C70?","e em quantas vezes dá?"],"contem":["No crédito em 8x"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c83","cat":"estrutura","turnos":["quanto custa o Shelby SU-21S?","e qual a diferença dele pro Kala KA-15S?"],"contem":["Comparando os dois","Kala KA-15S"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c84","cat":"estrutura","turnos":["o Yamaha FG800 serve pra iniciante?"],"contem":["Não tenho essa informação"],"nao_contem":["Protocolo"],"chamado":false}
+{"id":"c85","cat":"estrutura","turnos":["quero o Kalani KAL-700T","se eu levar 2 quanto dá?"],"contem":["646,20"],"nao_contem":["Achei mais de um modelo"],"chamado":false}
+{"id":"c86","cat":"estrutura","turnos":["quero o Rozini","o 2"],"contem":["Rozini RV-174"],"nao_contem":["Em qual desses"],"chamado":false}
+{"id":"c87","cat":"estrutura","turnos":["oi meu pedido 18 foi cancelado? pq?","4 últimos 7654"],"contem":["Pedido 18 foi cancelado","fora de estoque"],"nao_contem":["Não consegui validar"],"chamado":false}
+{"id":"c88","cat":"estrutura","turnos":["vi esse Yamaha F310 por 620 na internet, vcs cobrem?"],"contem":["Yamaha F310"],"nao_contem":["Não encontrei esse produto"],"chamado":false}

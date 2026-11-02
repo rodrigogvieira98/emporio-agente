@@ -168,3 +168,57 @@ def test_diferenca_entre_o_produto_em_foco_e_outro_citado_usa_a_comparacao():
     rs = conversar("quanto custa o Shelby SU-21S?", "e qual a diferença dele pro Kala KA-15S?", conversa="e23f11")
     t = rs[1].texto
     assert t.startswith("Comparando os dois") and "Shelby SU-21S" in t and "Kala KA-15S" in t, t
+
+
+# --- item 4: números com contexto ------------------------------------------------------------------
+
+@pytest.mark.parametrize("fala", ["se eu levar 2 quanto dá?", "e se eu comprar 2?", "quero levar duas unidades, quanto fica?"])
+def test_quantidade_multiplica_o_produto_em_foco(fala):
+    rs = conversar("quero o Kalani KAL-700T", fala, conversa="e23n1")
+    t = rs[1].texto
+    assert "Kalani KAL-700T" in t and "646,20" in t and "Achei mais de um modelo" not in t, t
+
+
+@pytest.mark.parametrize("fala", ["o 2", "2", "opção 2", "a 2", "quero o 2"])
+def test_escolha_em_lista_numerada(fala):
+    rs = conversar("quero o Rozini", fala, conversa="e23n2")
+    assert "1) " in rs[0].texto
+    assert "Rozini RV-174" in rs[1].texto and "Achei mais de um modelo" not in rs[1].texto, rs[1].texto
+
+
+def test_numero_sozinho_sem_lista_nao_e_produto():
+    (r,) = conversar("o 2", conversa="e23n3")
+    assert "Pearl Kit 2" not in r.texto and "Nord Synth 2" not in r.texto, r.texto
+
+
+@pytest.mark.parametrize("fala", ["4 últimos 7654", "os 4 últimos dígitos são 7654", "4 ultimos 7654"])
+def test_quatro_ultimos_e_identificacao_nao_numero_de_pedido(fala):
+    rs = conversar("oi meu pedido 18 foi cancelado? pq?", fala, conversa="e23n4")
+    assert "Pedido 18 foi cancelado" in rs[1].texto, rs[1].texto
+
+
+def test_quatro_ultimos_com_pedido_ja_em_foco_nao_pede_o_numero_de_novo():
+    rs = conversar("pedido 18 final 7654", "4 últimos 7654", conversa="e23n5")
+    assert "Pedido 18" in rs[1].texto and "Qual é o número do pedido" not in rs[1].texto, rs[1].texto
+
+
+def test_valor_citado_nao_entra_na_busca_de_produto():
+    rs = conversar("vi esse Yamaha F310 por 620 na internet, vcs cobrem?", conversa="e23n6")
+    assert "Não encontrei esse produto" not in rs[0].texto and "Yamaha F310" in rs[0].texto, rs[0].texto
+
+
+@pytest.mark.parametrize("fala", ["dá pra pagar metade no pix e metade no cartão? o violão custa 1299",
+                                  "e num de 1700?"])
+def test_preco_dito_pelo_cliente_nao_vira_modelo(fala):
+    (r,) = conversar(fala, conversa="e23n7")
+    assert "Não encontrei esse produto" not in r.texto, r.texto
+
+
+def test_data_dita_como_dia_nao_entra_na_busca_e_vira_data():
+    from emporio.agente.estado import Estado
+    from emporio.agente.percepcao import extrair_slots
+
+    est = Estado()
+    s = extrair_slots("foi dia 27 de outubro, nao usei nada, posso trocar?", "foi dia 27 de outubro, não usei nada, posso trocar?", est)
+    assert not s.get("referencia") and not s.get("termo"), s
+    assert [d.isoformat() for d, _ in s["datas"]] == ["2026-10-27"], s["datas"]

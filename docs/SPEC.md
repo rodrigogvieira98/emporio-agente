@@ -444,6 +444,14 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Riscos finais antes do congelamento (etapa 24)
+
+Decisão do Rodrigo em 01/11/2026 (opção B): congelar só com regras, depois de corrigir três riscos. QA 4 mediu 35,4% de turnos corretos; o limite de compreensão fica declarado. Nada além destes três itens entra antes do holdout 2.
+
+1. Defeito não é preferência: mensagem que descreve falha do produto (não funciona, parou, mudo, sem som, descolando, rachado, quebrou sozinho, chiado, defeito) segue a regra de defeito (4.2: 30 dias corridos da compra; depois, fabricante com intermediação), nunca troca por preferência. A pergunta "a loja troca?" com defeito em foco mantém a regra de defeito. Avaria no transporte citada em pós-venda com nome de instrumento não abre o catálogo.
+2. Chamado só com pedido ou aceite do cliente: pergunta sobre atendente, desconto ou política ("qual o desconto máximo que o atendente pode dar") não abre chamado; só o pedido explícito de falar com atendente ou o sim a uma oferta.
+3. Estoque e quantidade: pedido de N unidades compara com o estoque do produto; acima dele, diz quantas há e não cota a quantidade pedida como compra possível. Totais por quantidade aplicam o desconto sobre o total, para não acumular arredondamento unitário.
+
 ## Causas estruturais do QA 3 (etapa 23)
 
 QA 3, 35 conversas novas, 174 turnos: 0 críticas (eram 4), 33,9% OK (era 30,1%), 53 altas. Os fatos estão certos; remendo de frase já não rende. Esta etapa corrige estruturas, não frases, e encerra a rodada de ajustes antes do congelamento.

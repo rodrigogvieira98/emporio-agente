@@ -174,6 +174,8 @@ SECUNDARIAS = ("horario", "endereco", "contato")
 # Palavras que indicam pergunta geral sobre pagamento (não é "e em 12x" de um produto)
 PAGAMENTO_GERAL = re.compile(r"\b(quais|formas|aceita\w*|aceitam|como|posso|voces|vcs|quantas|ate quanto|parcelam|trabalham)\b")
 
+# "qual chega mais rápido?": compara os prazos das modalidades de envio do manual
+MAIS_RAPIDO = re.compile(r"\b(mais rapid[oa]s?|menor prazo|mais cedo|chega primeiro|prazo menor)\b")
 PERGUNTA_PRAZO = re.compile(r"\b(prazo|demora\w*|quanto tempo|quantos dias|dias uteis|chega em)\b")
 
 # Pedido de produto sem dizer qual: a Lia lista as categorias que têm o que vender.
@@ -415,3 +417,19 @@ QUANTAS_VEZES = re.compile(r"\bquantas (vezes|parcelas|x)\b|\bate quantas (vezes
 NIVEL_NA_DESCRICAO = re.compile(
     r"iniciante|estudante|comecando|come[cç]ando|est[aá] come[cç]ando|intermedi[aá]ri|avan[cç]ad|profission|n[ií]vel|"
     r"todos os n[ií]veis|palco|est[uú]dio|apresenta[cç]", re.I)
+
+
+# Filtros da ficha do catálogo que o cliente soma a uma busca em andamento: (campo da ficha, valor, palavra do cliente).
+# Cada campo aparece uma vez: o filtro novo do mesmo campo troca o anterior ("de aço" ... "e de nylon?").
+FILTROS_FICHA = (
+    ("electronics", "no", re.compile(r"\bsem (captac\w+|captador\w*|eletronica)\b")),
+    ("electronics", "yes", re.compile(r"\b(captac\w+|captador\w*|eletroacustic\w+|amplificad[oa]s?)\b")),
+    ("strings", "steel", re.compile(r"\b(aco)\b")),
+    ("strings", "nylon", re.compile(r"\bnylon\b")),
+)
+FICHA_ROTULO = {("electronics", "yes"): "captação", ("electronics", "no"): "sem captação",
+                ("strings", "steel"): "cordas de aço", ("strings", "nylon"): "cordas de nylon"}
+# palavras do filtro que não são termo de busca por nome (a ficha responde)
+CORES = {"preto", "natural", "sunburst", "mogno", "cedar", "vermelho", "azul", "branco", "vinho"}  # cor não identifica modelo
+PALAVRAS_DE_FILTRO = {"aco", "nylon", "captacao", "captador", "captadores", "eletroacustico", "eletroacustica",
+                      "amplificado", "amplificada", "eletronica"}

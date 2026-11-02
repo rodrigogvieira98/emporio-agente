@@ -518,6 +518,11 @@ class RegrasDecisor:
                 return str(item)
         return None
 
+    def _i_frete_mais_rapido(self, estado: Estado) -> Acao:
+        """"Qual chega mais rápido?": responde pelos prazos do manual (cidade da loja ou envio para fora)."""
+        cidade = estado.slots.get("cidade") or estado.coletados.get("cidade_cliente")
+        return self._info(estado, ["frete"], "frete_mais_rapido", cidade=cidade)
+
     def _i_frete(self, estado: Estado) -> Acao:
         s = estado.slots
         cep = s.get("cep") or estado.coletados.get("cep")
@@ -589,7 +594,10 @@ class RegrasDecisor:
         for k in ("preco_min", "preco_max"):
             if s.get(k) is not None:
                 args[k] = s[k]
-        if not args:
+        ficha = s.get("ficha") or s.get("filtros_ficha")
+        if ficha:
+            args["ficha"] = dict(ficha)
+        if not args or set(args) == {"ficha"}:
             return perguntar("pedir_categoria", "categoria", categorias=categorias_com_produto())
         r = busca_exata(estado, args)
         if r is None:
@@ -599,7 +607,7 @@ class RegrasDecisor:
         if r.estado != "ok":
             if set(args) == {"categoria"}:  # categoria sem produto à venda: diz isso e mostra o que há
                 return responder("busca", sem_categoria=categorias_com_produto())
-            return responder("busca")
+            return responder("busca", filtros=bool(set(args) - {"categoria"}))
         return self._aquecer_busca(estado, args, r)
 
     def _aquecer_busca(self, estado: Estado, args: dict[str, Any], r: Resultado) -> Acao:
@@ -617,7 +625,7 @@ class RegrasDecisor:
                 and not recusada(estado, f"qualificacao:{args['categoria']}")):
             estado.coletados["qualificacao"] = {"categoria": args["categoria"]}
             return perguntar("busca", "qualificacao", qualificar=True)
-        if "termo" in args or not (faixa or nivel or baixo or s.get("qualificado")):
+        if "termo" in args or "ficha" in args or not (faixa or nivel or baixo or s.get("qualificado")):
             return responder("busca")
         motivo, escolhido = None, None
         if nivel == "iniciante":

@@ -68,7 +68,7 @@ def _cidade_plausivel(candidata: str) -> bool:
     """Nome de cidade tem poucas palavras e nenhuma de pergunta, prazo ou preço."""
     palavras = candidata.split()
     return 0 < len(palavras) <= 4 and not any(p in PALAVRAS_QUE_NAO_SAO_CIDADE for p in palavras)
-PARA_NA_CIDADE = {"com", "um", "uma", "pedido", "valor", "no", "e", "ou", "r", "se", "que", "por", "quanto"}
+PARA_NA_CIDADE = {"com", "um", "uma", "pedido", "valor", "no", "e", "ou", "r", "se", "que", "por", "quanto", "capital"}
 
 
 def _cortar_cidade(trecho: str) -> str:
@@ -295,12 +295,23 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
                 and not re.fullmatch(r"(comprar|comprei|gostei|interesse|interessado|interessada|fazer|quer)", t)]
     com_letra = any(not t.isdigit() for t in conteudo)
     nomes = [t for t in conteudo if t in voc.df and (com_letra or not t.isdigit())]  # número puro não identifica produto
+    filtros: dict[str, str] = {}
+    for campo, valor, padrao in v.FILTROS_FICHA:
+        if campo not in filtros and padrao.search(norm):
+            filtros[campo] = valor
+    # "de aço", "com captação": filtro pela ficha, não palavra do nome (o violão dreadnought de aço não diz "aço" no nome)
+    tem_nome_proprio = any(re.search(r"\d", t) for t in conteudo)
+    if filtros and not tem_nome_proprio:
+        slots["filtros_ficha"] = filtros
+        nomes = [t for t in nomes if t not in v.PALAVRAS_DE_FILTRO]
+        conteudo = [t for t in conteudo if t not in v.PALAVRAS_DE_FILTRO]
     if nomes:
         slots["termo"] = " ".join(nomes)
     # só vale como produto se algum termo identifica (modelo com número, ou marca rara no catálogo);
     # as demais palavras seguem junto, para que o que não existir resulte em "não encontrei"
     # número puro ("8", "10") nunca identifica produto sozinho: precisa de marca ou modelo junto
-    if any((re.search(r"\d", t) and (not t.isdigit() or com_letra)) or voc.df[t] <= LIMITE_DISTINTIVO for t in nomes):
+    if any((re.search(r"\d", t) and (not t.isdigit() or com_letra)) or (voc.df[t] <= LIMITE_DISTINTIVO and t not in v.CORES)
+           for t in nomes):
         slots["referencia"] = " ".join(conteudo)
         slots["tem_modelo"] = True
     elif any(re.search(r"\d", t) and (not t.isdigit() or com_letra) for t in conteudo) and re.search(
@@ -521,6 +532,9 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     if (achadas and achadas[0] in ("devolucao", "troca_preferencia", "defeito")
             and v.PERGUNTA_GERAL_TROCAS.search(norm) and not v.CASO_PROPRIO.search(norm)):
         return "info_trocas"  # pergunta geral: responde a política, sem abrir o fluxo do pedido
+    if (slots.get("filtros_ficha") and categoria and not ref
+            and all(n in ("caracteristica", "preco_produto", "disponibilidade", "pagamento") for n in achadas)):
+        return "busca_produto"  # "violão de aço com captação": filtros da ficha somados à categoria
     for nome in achadas:
         if nome == "promocao":
             if ref:
@@ -567,6 +581,16 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     return None
 
 
+def _somar_filtros(s: dict[str, Any], ub: dict[str, Any]) -> None:
+    """Os filtros da busca em andamento passam para a nova busca; o filtro novo do mesmo campo troca o anterior."""
+    ficha = {**(ub.get("ficha") or {}), **(s.get("filtros_ficha") or {})}
+    if ficha:
+        s["ficha"] = ficha
+    termos = list(dict.fromkeys([*tokens(ub.get("termo") or ""), *tokens(s.get("termo") or "")]))
+    if termos:
+        s["termo"] = " ".join(termos)
+
+
 def _recusar_oferta(estado: Estado, oferta: str) -> None:
     """Oferta recusada não se repete no assunto (produto ou categoria)."""
     recusadas = list(estado.coletados.get("ofertas_recusadas") or [])
@@ -580,7 +604,7 @@ def _trocar_assunto(estado: Estado, novo: str) -> None:
     sem_dado = estado.aguardando is not None and not estado.declarados and not any(
         k not in MANTER for k in estado.coletados)
     if estado.objetivo and estado.objetivo != novo:
-        if not sem_dado:  # assunto sem nenhum dado do cliente não vira convite de retomar
+        if not sem_dado and not (estado.objetivo == "frete" and novo == "frete_mais_rapido"):  # mesmo assunto  # assunto sem nenhum dado do cliente não vira convite de retomar
             estado.pendentes.append({"objetivo": estado.objetivo, "coletados": estado.coletados,
                                      "declarados": estado.declarados, "aguardando": estado.aguardando})
             estado.pendentes = estado.pendentes[-3:]
@@ -660,6 +684,16 @@ def perceber(estado: Estado, mensagem: str) -> None:
     if len(s.get("comparar_refs") or []) == 1 and foco_unico and v.COMPARACAO.search(norm) and nova != "comparar":
         s["comparar_refs"] = [foco_unico, s["comparar_refs"][0]]  # "a diferença dele pro Kala KA-15S": o foco e o citado
         nova = "comparar"
+    # o destino do frete fica no estado: "é de um violão Yamaha C40" depois de "frete pra Dourados" retoma a cidade
+    preco_explicito = any(p.search(norm) for n, p in v.PADROES_INTENCAO
+                          if n in ("preco_produto", "pagamento", "promocao", "objecao_preco", "disponibilidade"))
+    if (nova in ("preco_produto", "disponibilidade") and ("referencia" in s or "produto_id" in s) and not preco_explicito
+            and not s.get("compra") and estado.ultimo_assunto == "frete" and estado.coletados.get("cidade_cliente")):
+        nova = "frete"
+    if (v.MAIS_RAPIDO.search(norm) and nova in (None, "frete", "previsao_entrega", "preco_produto")
+            and (estado.ultimo_assunto == "frete" or nova == "frete" or estado.coletados.get("cidade_cliente"))):
+        nova = "frete_mais_rapido"
+    foco_unico_pergunta = bool(s.get("atributos") and foco_unico and "referencia" not in s)
     if (s.get("atributos") and "referencia" not in s and not s.get("compra") and not s.get("comparar_refs")
             and nova in (None, "caracteristica", "fora_escopo", "confirmacao_solta", "preco_produto", "disponibilidade")
             and (foco_unico or (s.get("demonstrativo") and ultimo))):
@@ -679,6 +713,18 @@ def perceber(estado: Estado, mensagem: str) -> None:
         for k in ("preco_min", "preco_max"):
             if k not in s and ub.get(k) is not None:
                 s[k] = ub[k]
+        _somar_filtros(s, ub)
+        nova = "busca_produto"
+    elif (ub.get("categoria") and "referencia" not in s and "categoria" not in s and not s.get("compra")
+            and (s.get("filtros_ficha") or s.get("termo")) and not s.get("demonstrativo")
+            and nova in (None, "caracteristica", "disponibilidade", "busca_produto", "confirmacao_solta")
+            and not foco_unico_pergunta):
+        # busca em andamento: o filtro novo (aço, nylon, captação, cor) soma aos anteriores e à faixa de preço
+        s["categoria"] = ub["categoria"]
+        for k in ("preco_min", "preco_max"):
+            if k not in s and ub.get(k) is not None:
+                s[k] = ub[k]
+        _somar_filtros(s, ub)
         nova = "busca_produto"
     if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
         nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco

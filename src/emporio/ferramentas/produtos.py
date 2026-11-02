@@ -56,6 +56,9 @@ class EntradaBusca(EntradaBase):
     deslocamento: int = 0
     para_site: bool = False
     incluir_indisponiveis: bool = False
+    # filtro pela ficha do catálogo (specs): {"strings": "steel", "electronics": "yes"}. Produto sem a chave na ficha
+    # (guitarra não tem "electronics") não é excluído: o filtro só tira quem declara outro valor.
+    ficha: dict[str, str] | None = None
 
 
 @ferramenta(EntradaBusca)
@@ -90,6 +93,8 @@ def buscar_produtos(e: EntradaBusca) -> Resultado:
             filtros.append("status = 'active' AND estoque > 0")
         where = (" WHERE " + " AND ".join(filtros)) if filtros else ""
         linhas = conn.execute(f"SELECT * FROM produtos{where} ORDER BY preco_centavos, id", params).fetchall()
+        if e.ficha:
+            linhas = [r for r in linhas if _ficha_confere(r["specs_json"], e.ficha)]
         if e.termo:
             partes = [radical(t) for t in tokens(e.termo)]
             linhas = [r for r in linhas
@@ -111,6 +116,11 @@ def _especificacoes(bruto: str | None) -> dict[str, Any]:
     except ValueError:
         return {}
     return dados if isinstance(dados, dict) else {}
+
+
+def _ficha_confere(bruto: str | None, filtro: dict[str, str]) -> bool:
+    ficha = _especificacoes(bruto)
+    return all(k not in ficha or str(ficha[k]).lower() == v.lower() for k, v in filtro.items())
 
 
 class EntradaProduto(EntradaBase):

@@ -86,3 +86,6 @@
 {"id":"c86","cat":"estrutura","turnos":["quero o Rozini","o 2"],"contem":["Rozini RV-174"],"nao_contem":["Em qual desses"],"chamado":false}
 {"id":"c87","cat":"estrutura","turnos":["oi meu pedido 18 foi cancelado? pq?","4 últimos 7654"],"contem":["Pedido 18 foi cancelado","fora de estoque"],"nao_contem":["Não consegui validar"],"chamado":false}
 {"id":"c88","cat":"estrutura","turnos":["vi esse Yamaha F310 por 620 na internet, vcs cobrem?"],"contem":["Yamaha F310"],"nao_contem":["Não encontrei esse produto"],"chamado":false}
+{"id":"c89","cat":"estrutura","turnos":["queria um violão","já toco, quero de aço","com captação","até 1500"],"contem":["Shelby SGD-195E","Tagima Vegas","Encontrei 2 opções"],"nao_contem":["Yamaha F310","Não entendi"],"chamado":false}
+{"id":"c90","cat":"estrutura","turnos":["quero ver guitarras","de nylon"],"contem":["Não encontrei","nylon"],"nao_contem":["Protocolo"],"chamado":false}
+{"id":"c91","cat":"estrutura","turnos":["quanto é o frete pra Dourados?","é de um violão Yamaha C40","qual chega mais rápido?"],"contem":["Dourados","SEDEX (Correios, 2 a 5 dias úteis)"],"nao_contem":["Em Campo Grande","Não entendi","Quer retomar"],"chamado":false}

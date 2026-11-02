@@ -460,6 +460,20 @@ def trocas_detalhe(e: Estado, p: dict) -> str:
     return "\n".join(partes) + "\nSe tiver um caso seu, me diga que quer trocar ou devolver e o número do pedido."
 
 
+def _busca_sem_resultado_com_filtros(e: Estado) -> str:
+    """A combinação de filtros somados não existe no catálogo: diz qual é, sem inventar produto."""
+    args = next((x.args for x in reversed(e.passos) if x.ferramenta == "buscar_produtos" and "limite" not in x.args), {})
+    partes = [vocabulario.FICHA_ROTULO.get((k, v), f"{k} {v}") for k, v in (args.get("ficha") or {}).items()]
+    partes += [t for t in (args.get("termo") or "").split()]
+    if args.get("preco_min") is not None:
+        partes.append(f"a partir de {formatar(args['preco_min'])}")
+    if args.get("preco_max") is not None:
+        partes.append(f"até {formatar(args['preco_max'])}")
+    categoria = str(args.get("categoria") or "produto")
+    return (f"Não encontrei {categoria} disponível com " + _lista(partes) + " no catálogo agora. "
+            "Quer tirar algum desses filtros ou tentar outra faixa de preço?")
+
+
 def busca(e: Estado, p: dict) -> str:
     # a busca principal não leva "limite"; a consulta de apoio da recomendação (limite 1) não é a lista mostrada
     r = next((x.resultado for x in reversed(e.passos)
@@ -472,6 +486,8 @@ def busca(e: Estado, p: dict) -> str:
                     f"Temos {_lista(p['sem_categoria'])}. Qual deles te interessa?")
         if r.motivo == "categoria_inexistente":
             return "Não encontrei essa categoria no nosso catálogo. Quer tentar outro tipo de instrumento?"
+        if p.get("filtros"):
+            return _busca_sem_resultado_com_filtros(e)
         return ("Não encontrei produtos disponíveis com esses filtros agora. "
                 "Quer tentar outra faixa de preço ou outro modelo?")
     d = r.dados
@@ -1373,6 +1389,24 @@ def frete_modalidade(e: Estado, p: dict) -> str:
             "Para estimar o valor, me diga o produto e o CEP de entrega.")
 
 
+def frete_mais_rapido(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    mods = sorted(c.get("frete.outras_cidades_modalidades") or [],
+                  key=lambda m: (m["prazo_dias_uteis"]["max"], m["prazo_dias_uteis"]["min"]))
+    if not mods:
+        return sem_dado(e, p)
+    base = str(c.get("frete.cidade_base", ""))
+    prazo_base = c.get("frete.prazo_dias_uteis")
+    if p.get("cidade") and base and normalizar(str(p["cidade"])) == normalizar(base) and prazo_base:
+        return (f"Em {base} a entrega é feita por motoboy próprio, em {prazo_base['min']} a {prazo_base['max']} dias úteis.")
+    rapida, outras = mods[0], mods[1:]
+    destino = f"Para {str(p['cidade']).title()}, o" if p.get("cidade") else "O"
+    txt = f"{destino} mais rápido é o {_modalidade_com_prazo(rapida)}."
+    if outras:
+        txt += " Os outros são " + _lista([_modalidade_com_prazo(m) for m in outras]) + "."
+    return txt + " O prazo vale para envios fora de " + (base or "a nossa cidade") + "; o valor depende do CEP."
+
+
 def frete_grande_porte(e: Estado, p: dict) -> str:
     return (f"Para {str(p['cidade']).title()}, {p['item']} são instrumentos de grande porte e o frete tem cotação "
             "individual, e daqui eu não consigo informar o valor.")
@@ -1465,7 +1499,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
-        preco_pix_e_parcelas, combinacao_formas, ficha_produto)
+        preco_pix_e_parcelas, combinacao_formas, ficha_produto, frete_mais_rapido)
 }
 
 

@@ -35,6 +35,7 @@ POR_RESPOSTA: dict[str, tuple[str, str]] = {
     "item_nao_elegivel": ("/politicas", "Ver as políticas da loja"),
     "frete_info": ("/politicas", "Ver as políticas da loja"),
     "frete_prazo": ("/politicas", "Ver as políticas da loja"),
+    "frete_mais_rapido": ("/politicas", "Ver as políticas da loja"),
     "pagamento": ("/politicas", "Ver as políticas da loja"),
     "contato": ("/fale-conosco", "Falar com a loja"),
     "privacidade": ("/privacidade", "Ver privacidade e cookies"),

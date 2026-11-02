@@ -222,3 +222,61 @@ def test_data_dita_como_dia_nao_entra_na_busca_e_vira_data():
     s = extrair_slots("foi dia 27 de outubro, nao usei nada, posso trocar?", "foi dia 27 de outubro, não usei nada, posso trocar?", est)
     assert not s.get("referencia") and not s.get("termo"), s
     assert [d.isoformat() for d, _ in s["datas"]] == ["2026-10-27"], s["datas"]
+
+
+# --- item 5: filtros acumulados e destino de frete no estado ----------------------------------------
+
+def _nomes_listados(texto: str) -> list[str]:
+    return re.findall(r"^- (.+?): R\$", texto, flags=re.M)
+
+
+def test_filtros_somam_numa_busca_em_andamento():
+    rs = conversar("queria um violão", "já toco, quero de aço", "com captação", "até 1500", conversa="e23b1")
+    assert "Yamaha F310" in rs[1].texto and "Tagima Memphis AC-39" not in rs[1].texto, rs[1].texto  # aço pela ficha
+    assert "Shelby SGD-195E" in rs[2].texto and "Yamaha F310" not in rs[2].texto, rs[2].texto  # aço e captação
+    assert _nomes_listados(rs[3].texto) == ["Shelby SGD-195E Elétrico Aço Sunburst", "Tagima Vegas Elétrico Aço Natural"], rs[3].texto
+    assert "Encontrei 2 opções" in rs[3].texto
+
+
+def test_filtro_do_mesmo_tipo_troca_o_anterior():
+    rs = conversar("queria um violão", "de aço", "e de nylon?", conversa="e23b2")
+    nomes = _nomes_listados(rs[2].texto)
+    assert nomes and all("Aço" not in n for n in nomes), rs[2].texto
+    assert "Tagima Memphis AC-39 Nylon Natural" in nomes
+
+
+def test_cor_e_faixa_somam():
+    rs = conversar("queria um violão", "tem preto?", "até 600 reais", conversa="e23b3")
+    assert _nomes_listados(rs[2].texto) == ["Shelby SN-100 Folk Aço Preto"], rs[2].texto
+
+
+def test_o_que_nao_existe_no_catalogo_e_dito():
+    rs = conversar("quero ver guitarras", "de nylon", conversa="e23b4")
+    t = rs[1].texto
+    assert t.startswith("Não encontrei") and "nylon" in t.lower() and "guitarra" in t.lower(), t
+    assert "Encontrei" not in t.replace("Não encontrei", "")
+
+
+def test_filtros_na_primeira_mensagem():
+    (r,) = conversar("quero um violão de aço com captação até 1000", conversa="e23b5")
+    assert _nomes_listados(r.texto) == ["Shelby SGD-195E Elétrico Aço Sunburst"], r.texto
+
+
+def test_destino_do_frete_fica_no_estado_e_o_produto_retoma_a_cidade():
+    rs = conversar("quanto é o frete pra Dourados?", "é de um violão Yamaha C40", conversa="e23b6")
+    t = rs[1].texto
+    assert "Dourados" in t and "Yamaha C40" in t and "CEP" in t, t
+    assert "Em Campo Grande" not in t
+
+
+def test_qual_chega_mais_rapido_responde_pelos_prazos():
+    rs = conversar("quanto é o frete pra Dourados?", "é de um violão Yamaha C40", "qual chega mais rápido?",
+                   conversa="e23b7")
+    t = rs[2].texto
+    assert "SEDEX" in t and "2 a 5 dias úteis" in t and not _nao_entendi(rs[2]), t
+
+
+def test_outra_cidade_depois_de_pergunta_de_frete_com_produto():
+    rs = conversar("quanto é o frete pra Dourados?", "é de um violão Yamaha C40", "e pra São Paulo capital?",
+                   conversa="e23b8")
+    assert re.search(r"S[aã]o Paulo", rs[2].texto) and "Yamaha C40" in rs[2].texto and not _nao_entendi(rs[2]), rs[2].texto

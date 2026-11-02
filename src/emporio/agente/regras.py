@@ -12,6 +12,7 @@ from .estado import Acao, Estado
 
 REGRA_POR_INTENCAO = {"devolucao": "arrependimento", "troca_preferencia": "preferencia", "defeito": "defeito"}
 TEMA_POR_INTENCAO = {"devolucao": "arrependimento", "troca_preferencia": "troca_preferencia", "defeito": "defeito"}
+TEMAS_DEFEITO_FORA = ["defeito", "garantia"]  # depois dos 30 dias: garantia legal, do fabricante e intermediação
 TENTATIVAS_ANTES_DE_OFERECER_ATENDENTE = 3  # alinhado ao limite de consultar_pedido
 
 
@@ -190,9 +191,9 @@ class RegrasDecisor:
     def _defeito_fora_do_prazo(self, estado: Estado, dias: int) -> Acao | None:
         """Defeito depois do prazo de troca (4.2): a garantia é com o fabricante e a loja pode intermediar."""
         # a resposta cita o fabricante do manual: a consulta tem de estar neste turno, mesmo com a regra já guardada
-        r = resultado_de(estado, "consultar_politica", temas=["defeito"])
+        r = resultado_de(estado, "consultar_politica", temas=TEMAS_DEFEITO_FORA)
         if r is None:
-            return ferramenta("consultar_politica", temas=["defeito"])
+            return ferramenta("consultar_politica", temas=TEMAS_DEFEITO_FORA)
         if r.estado != "ok":
             return self._erro(estado, r)
         if dias > (self._prazo_defeito(estado) or dias):
@@ -249,6 +250,29 @@ class RegrasDecisor:
             return self._erro(estado, r)
         return responder("reembolso_cancelado")
 
+    def _i_cancelar_pedido(self, estado: Estado) -> Acao:
+        """A Lia não cancela pedido: diz isso e oferece um atendente, sem pedir os dados do pedido."""
+        pid = estado.slots.get("pedido_id") or estado.declarado("pedido_id")
+        return propor("cancelar_pedido", "atendente",
+                      "Cliente pediu o cancelamento" + (f" do pedido {pid}" if pid else " de um pedido")
+                      + "; o cancelamento nao e feito pelo chat.")
+
+    def _i_retorno_prazo(self, estado: Estado) -> Acao:
+        temas = ["horario", "contato", "reclamacao"]
+        r = resultado_de(estado, "consultar_politica", temas=temas)
+        if r is None:
+            return ferramenta("consultar_politica", temas=temas)
+        return responder("retorno_prazo") if r.estado == "ok" else self._erro(estado, r)
+
+    def _i_intermediacao(self, estado: Estado) -> Acao:
+        r = resultado_de(estado, "consultar_politica", temas=["defeito"])
+        if r is None:
+            return ferramenta("consultar_politica", temas=["defeito"])
+        if r.estado != "ok":
+            return self._erro(estado, r)
+        return propor("intermediacao", "atendente",
+                      "Cliente pediu que a loja intermedie a garantia com o fabricante.")
+
     def _i_motivo_cancelamento(self, estado: Estado) -> Acao:
         """"Por que foi cancelado?": a observação gravada no pedido já consultado; sem pedido, pede os dados."""
         if estado.coletados.get("pedido"):
@@ -271,6 +295,9 @@ class RegrasDecisor:
             acao = self._defeito_fora_do_prazo(estado, dias)
             if acao:
                 return acao
+        acao = self._fora_do_prazo(estado, dias)
+        if acao:
+            return acao
         regra = estado.coletados.get("regra")
         # exclusão citada vale em qualquer ponto da troca (QA 2): depois da regra, só se a fala traz palavra nova
         traz_dado = any(k in estado.slots for k in ("pedido_id", "final_telefone")) or bool(estado.slots.get("datas"))
@@ -291,17 +318,50 @@ class RegrasDecisor:
         if intencao == "defeito" and data_pedido:  # o prazo conta da compra, e o sistema sabe a data do pedido
             dias_pedido = (config.hoje() - date.fromisoformat(data_pedido)).days
             if dias_pedido > int(regra["valor"]["prazo_dias"]):
-                if resultado_de(estado, "consultar_politica", temas=["defeito"]) is None:
-                    return ferramenta("consultar_politica", temas=["defeito"])  # a resposta cita o fabricante do manual
+                if resultado_de(estado, "consultar_politica", temas=TEMAS_DEFEITO_FORA) is None:
+                    return ferramenta("consultar_politica", temas=TEMAS_DEFEITO_FORA)  # cita a garantia legal e o fabricante
                 return propor("defeito_apos_prazo", "atendente",
                               f"Cliente com defeito no pedido {pedido['pedido_id']}, feito depois do prazo de troca; "
                               "a equipe pode intermediar a garantia com o fabricante.")
+        nao_entregue = pedido.get("status") in ("pending", "confirmed", "shipped")  # sem recebimento, não há data a pedir
         faltam = [c for c in regra["valor"]["dados_necessarios"]
-                  if estado.declarado(c) is None and not (c == "data_compra" and data_pedido)]
+                  if estado.declarado(c) is None and not (c == "data_compra" and data_pedido)
+                  and not (c == "data_recebimento" and nao_entregue)]
         if faltam:
             return perguntar("pedir_dados_posvenda", "dados_posvenda", campos=faltam)
         resumo = self._resumo_posvenda(estado, pedido, regra)
         return propor("propor_posvenda", "atendente", resumo)
+
+    def _fora_do_prazo(self, estado: Estado, dias_compra: int | None) -> Acao | None:
+        """Devolução por arrependimento ou troca por preferência com o tempo já dito pelo cliente: aplica a regra ao caso
+        em vez de repetir o prazo. Pedido ainda não entregue não tem recebimento, então o prazo não começou."""
+        intencao = estado.objetivo
+        if intencao not in ("devolucao", "troca_preferencia"):
+            return None
+        if estado.coletados.get("pedido"):
+            return None  # com o pedido consultado, o fluxo normal confere as datas do pedido e propõe o registro
+        dias = None
+        recebimento = estado.declarado("data_recebimento")
+        if recebimento is None:
+            recebimento = next((d.isoformat() for d, dica in estado.slots.get("datas", []) if dica == "recebimento"), None)
+        if recebimento:
+            dias = (config.hoje() - date.fromisoformat(recebimento)).days
+        elif dias_compra:
+            dias = dias_compra
+        if dias is None:
+            return None
+        regra = estado.coletados.get("regra")
+        if not regra or regra.get("objetivo") != intencao:
+            return self._info_regra(estado, intencao)
+        prazo = int(regra["valor"]["prazo_dias"])
+        if dias <= prazo:
+            return None
+        ruim = "com sinais de uso ou sem a embalagem original"
+        usado = estado.slots.get("estado_produto") == ruim or estado.declarado("estado_produto") == ruim
+        return propor("posvenda_fora_do_prazo", "atendente",
+                      f"Cliente quer {'devolucao' if intencao == 'devolucao' else 'troca por preferencia'} e informou "
+                      f"{dias} dias, acima dos {prazo} do manual; atendente avalia.",
+                      dias=dias, prazo=prazo, objetivo=intencao, usado=usado)
 
     def _pedido_com_regra(self, estado: Estado) -> tuple[Acao | None, dict[str, Any] | None]:
         """Antes de pedir o pedido pela primeira vez, diz a regra do manual (o cliente já sabe o prazo)."""
@@ -347,6 +407,15 @@ class RegrasDecisor:
         acao = self._exclusao_garantia(estado)
         if acao:
             return acao
+        dias = estado.slots.get("dias_desde_compra") or (estado.coletados.get("dias_compra") or {}).get("dias")
+        if dias and dias > 30:  # depois dos 30 dias da troca por defeito: garantia legal, do fabricante e intermediação
+            r = resultado_de(estado, "consultar_politica", temas=TEMAS_DEFEITO_FORA)
+            if r is None:
+                return ferramenta("consultar_politica", temas=TEMAS_DEFEITO_FORA)
+            if r.estado == "ok" and _condicao(r, "regra.defeito"):
+                return propor("defeito_apos_prazo", "atendente",
+                              "Cliente perguntou da garantia depois do prazo de troca; a equipe pode intermediar com o fabricante.",
+                              dias=dias)
         return self._info(estado, ["garantia"], "garantia_info", oferta="solicitacao")
 
     def _i_devolucao_frete(self, estado: Estado) -> Acao:

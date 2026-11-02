@@ -1311,8 +1311,54 @@ def defeito_apos_prazo(e: Estado, p: dict) -> str:
     quando = f"O pedido é de {_data_br(ped['data_pedido'])} e passaram os" if ped.get("data_pedido") else "Passados os"
     inter = (" Nós podemos intermediar o processo, se você pedir."
              if c.get("defeito.loja_pode_intermediar_mediante_solicitacao") else "")
+    legal, fab = c.get("regra.garantia_legal"), c.get("garantia.fabricante_prazo_meses")
+    garantias = ""
+    if legal:
+        garantias = (f" Há também a garantia legal de {legal['prazo_dias']} dias contra defeito de fabricação, contados do "
+                     f"{legal['marco_inicial']}")
+        garantias += (f", e a garantia do fabricante, de {fab['min']} meses a {fab['max'] // 12} anos, descrita no certificado "
+                      "do produto." if fab else ".")
+        if "prazo_30_x_90" in _ambiguidades(e):
+            garantias += " Como esses prazos se combinam, um atendente confirma o seu caso."
     return (f"{quando} {regra['prazo_dias']} dias para troca por defeito. Depois desse prazo a garantia é acionada "
-            f"direto com o fabricante.{inter} Quer que eu registre o pedido de intermediação para um atendente? {CONFIRMA}")
+            f"direto com o fabricante.{garantias}{inter} Quer que eu registre o pedido de intermediação para um atendente? {CONFIRMA}")
+
+
+def cancelar_pedido(e: Estado, p: dict) -> str:
+    return ("O cancelamento de pedido não é feito por aqui; só um atendente consegue fazer. "
+            f"Quer que eu registre o pedido de cancelamento para um atendente? {CONFIRMA}")
+
+
+def retorno_prazo(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    prazo = c.get("atendimento.prazo_retorno_reclamacao_horas_uteis")
+    if not prazo:
+        return sem_dado(e, p)
+    return f"O retorno de um atendente é em até {prazo} horas úteis." + _retorno_e_canais(e, "horas úteis")
+
+
+def intermediacao(e: Estado, p: dict) -> str:
+    if not _condicoes(e).get("defeito.loja_pode_intermediar_mediante_solicitacao"):
+        return sem_dado(e, p)
+    return ("Sim, nós podemos intermediar o processo da garantia com o fabricante, mediante a sua solicitação. "
+            f"Quer que eu registre o pedido de intermediação para um atendente? {CONFIRMA}")
+
+
+def posvenda_fora_do_prazo(e: Estado, p: dict) -> str:
+    """Aplica o prazo do manual ao tempo que o cliente disse, sem repetir a regra inteira."""
+    c = _condicoes(e)
+    dias, prazo = p["dias"], p["prazo"]
+    if p["objetivo"] == "devolucao":
+        regra = f"a devolução por arrependimento vale por {prazo} dias corridos, contados do recebimento"
+    else:
+        regra = f"a troca por preferência vale por {prazo} dias"
+    txt = f"Pelo que você contou, já se passaram {dias} dias, e {regra}; por isso esse caso está fora do prazo."
+    if p.get("usado"):
+        txt += " Além disso, o produto precisa estar na embalagem original e sem sinais de uso."
+    defeito = c.get("regra.defeito")
+    txt += (f" Se houver defeito de fabricação, a troca vale por {defeito['prazo_dias']} dias da compra, e depois disso há a garantia."
+            if defeito else " Se houver defeito de fabricação, é outro caminho, com outro prazo.")
+    return txt + f" Se tiver outra data de recebimento, me diga. Quer que um atendente avalie o seu caso? {CONFIRMA}"
 
 
 def devolucao_frete(e: Estado, p: dict) -> str:
@@ -1499,7 +1545,8 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
-        preco_pix_e_parcelas, combinacao_formas, ficha_produto, frete_mais_rapido)
+        preco_pix_e_parcelas, combinacao_formas, ficha_produto, frete_mais_rapido, cancelar_pedido,
+        retorno_prazo, intermediacao, posvenda_fora_do_prazo)
 }
 
 

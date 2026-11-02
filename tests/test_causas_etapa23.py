@@ -280,3 +280,68 @@ def test_outra_cidade_depois_de_pergunta_de_frete_com_produto():
     rs = conversar("quanto é o frete pra Dourados?", "é de um violão Yamaha C40", "e pra São Paulo capital?",
                    conversa="e23b8")
     assert re.search(r"S[aã]o Paulo", rs[2].texto) and "Yamaha C40" in rs[2].texto and not _nao_entendi(rs[2]), rs[2].texto
+
+
+# --- item 6: pós-venda com ação ---------------------------------------------------------------------
+
+@pytest.mark.parametrize("fala", ["quero cancelar meu pedido 13, desisti", "cancela o pedido 13 pra mim",
+                                  "como faço pra cancelar meu pedido?", "preciso cancelar a compra"])
+def test_cancelar_pedido_diz_que_nao_e_feito_aqui_e_oferece_atendente(sql, fala):
+    (r,) = conversar(fala, conversa="e23p1")
+    t = r.texto
+    assert "cancel" in t.lower() and "por aqui" in t and "atendente" in t and "Responda sim ou não" in t, t
+    assert "4 últimos" not in t
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 0
+
+
+def test_cancelar_pedido_aceito_registra_o_chamado(sql):
+    conversar("quero cancelar meu pedido 13", conversa="e23p2")
+    (r,) = conversar("sim", conversa="e23p2")
+    assert "Protocolo" in r.texto
+    assert sql.execute("SELECT COUNT(*) FROM chamados").fetchone()[0] == 1
+
+
+def test_pedido_ja_cancelado_nao_e_pedido_de_cancelamento():
+    (r,) = conversar("oi meu pedido 18 foi cancelado? pq?", conversa="e23p3")
+    assert "4 últimos" in r.texto
+
+
+@pytest.mark.parametrize("fala", ["quanto tempo pra me darem retorno?", "qual o prazo de retorno do atendimento?",
+                                  "em quanto tempo vocês me respondem?"])
+def test_prazo_de_retorno_responde_24_horas_uteis(fala):
+    (r,) = conversar(fala, conversa="e23p4")
+    assert "24 horas úteis" in r.texto and not _nao_entendi(r), r.texto
+
+
+def test_garantia_depois_dos_30_dias_informa_legal_fabricante_e_intermediacao():
+    rs = conversar("meu violão parou de funcionar a captação, faz uns 2 meses que recebi, tem garantia?", conversa="e23p5")
+    t = rs[0].texto
+    assert "90 dias" in t and "fabricante" in t and "intermediar" in t, t
+
+
+def test_garantia_pergunta_de_acompanhamento_sobre_a_loja_fazer_por_mim():
+    rs = conversar("meu violão parou de funcionar, faz 2 meses que recebi, tem garantia?",
+                   "e a loja faz isso por mim?", conversa="e23p6")
+    assert "intermediar" in rs[1].texto and not _nao_entendi(rs[1]), rs[1].texto
+
+
+def test_devolucao_fora_do_prazo_aplica_a_regra_ao_que_o_cliente_disse():
+    rs = conversar("quero devolver um ukulele que comprei faz 15 dias, já usei um pouco, recebi dia 15 do mês passado",
+                   "então não dá mais pra devolver, né?", "mas posso trocar por outro modelo?", conversa="e23p7")
+    assert "7 dias" in rs[0].texto and "fora do prazo" in rs[0].texto and "Para consultar o pedido" not in rs[0].texto, rs[0].texto
+    assert "fora do prazo" in rs[1].texto, rs[1].texto
+    assert "troca" in rs[2].texto.lower() and "fora do prazo" in rs[2].texto, rs[2].texto
+
+
+def test_pedido_nao_entregue_nao_pergunta_a_data_de_recebimento():
+    rs = conversar("cadê meu pedido 8", "7821", "quero devolver, quero meu dinheiro de volta", conversa="e23p8")
+    assert "Pedido 8 foi enviado" in rs[1].texto
+    assert "data em que você recebeu" not in rs[2].texto, rs[2].texto
+    assert "fora do prazo" not in rs[2].texto
+
+
+@pytest.mark.parametrize("fala", ["comprei um violão preto e veio sunburst, vocês mandaram errado",
+                                  "mandaram o produto errado, pedi um e veio outro"])
+def test_envio_errado_e_tratado_como_defeito_do_pedido(fala):
+    (r,) = conversar(fala, conversa="e23p9")
+    assert "troca por defeito" in r.texto, r.texto

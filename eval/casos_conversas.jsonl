@@ -89,3 +89,8 @@
 {"id":"c89","cat":"estrutura","turnos":["queria um violão","já toco, quero de aço","com captação","até 1500"],"contem":["Shelby SGD-195E","Tagima Vegas","Encontrei 2 opções"],"nao_contem":["Yamaha F310","Não entendi"],"chamado":false}
 {"id":"c90","cat":"estrutura","turnos":["quero ver guitarras","de nylon"],"contem":["Não encontrei","nylon"],"nao_contem":["Protocolo"],"chamado":false}
 {"id":"c91","cat":"estrutura","turnos":["quanto é o frete pra Dourados?","é de um violão Yamaha C40","qual chega mais rápido?"],"contem":["Dourados","SEDEX (Correios, 2 a 5 dias úteis)"],"nao_contem":["Em Campo Grande","Não entendi","Quer retomar"],"chamado":false}
+{"id":"c92","cat":"estrutura","turnos":["quero cancelar meu pedido 13, desisti"],"contem":["não é feito por aqui","atendente"],"nao_contem":["4 últimos","Protocolo"],"chamado":false}
+{"id":"c93","cat":"estrutura","turnos":["quanto tempo pra me darem retorno?"],"contem":["24 horas úteis"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c94","cat":"estrutura","turnos":["meu violão parou de funcionar a captação, faz uns 2 meses que recebi, tem garantia?"],"contem":["90 dias","fabricante","intermediar"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c95","cat":"estrutura","turnos":["quero devolver um ukulele que comprei faz 15 dias, já usei um pouco, recebi dia 15 do mês passado"],"contem":["fora do prazo","7 dias"],"nao_contem":["Para consultar o pedido"],"chamado":false}
+{"id":"c96","cat":"estrutura","turnos":["comprei um violão preto e veio sunburst, vocês mandaram errado"],"contem":["troca por defeito"],"nao_contem":["preferência"],"chamado":false}

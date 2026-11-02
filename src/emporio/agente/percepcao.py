@@ -111,7 +111,12 @@ def _datas(norm: str) -> list[tuple[date, str | None]]:
         achadas.append((d, dica))
     for m in RE_DIA.finditer(norm):
         dia, com_mes = int(m.group(1)), m.group(2) is not None
-        mes = MESES[m.group(2)] if com_mes else hoje.month
+        mes = MESES[m.group(2)] if com_mes else (hoje.month - 1 or 12) if m.group(3) else hoje.month
+        if m.group(3):
+            d0 = _data_valida(hoje.year - (hoje.month == 1), mes, dia)
+            if d0 is not None:
+                achadas.append((d0, "recebimento" if re.search(r"receb|entreg|chegou", norm[max(0, m.start() - 30):m.start()]) else None))
+            continue
         d = _data_valida(hoje.year, mes, dia)
         if d is not None and d > hoje:  # "dia 27 de outubro" em janeiro é do ano passado; "dia 27" sem mês é do mês anterior
             d = (_data_valida(hoje.year - 1, mes, dia) if com_mes else
@@ -199,7 +204,7 @@ RE_NUMERO_NAO_PRODUTO = re.compile(
 
 MESES = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
          "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
-RE_DIA = re.compile(r"\bdia\s+(\d{1,2})(?:\s+de\s+(" + "|".join(MESES) + r"))?\b")
+RE_DIA = re.compile(r"\bdia\s+(\d{1,2})(?:\s+de\s+(" + "|".join(MESES) + r")|(\s+do mes passado))?\b")
 # valor em reais dito sem "R$" nem "reais": só com palavra de preço antes e três algarismos ou mais ("por 620", "custa 1299")
 RE_VALOR_SOLTO = re.compile(r"\b(?:custa|custando|custou|por|de|ta|esta|fica|sai|saindo|a)\s+(?:r\$\s*)?\d{3,6}(?:[.,]\d{1,2})?\b(?!\s*(?:x\b|%))")
 

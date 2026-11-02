@@ -40,6 +40,21 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     ("rastreio_como", re.compile(
         r"\bcomo\b.{0,25}\b(recebo|receber|ganho|consigo|acompanho|acho|vejo|sei)\b.{0,30}\b(rastre\w*|codigo)\b|"
         r"\bonde\b.{0,20}\bcodigo de rastre\w*")),
+    # pedido de cancelamento (não o pedido "que foi cancelado"): a Lia não cancela, oferece atendente
+    ("cancelar_pedido", re.compile(
+        r"\b(?:quero|queria|preciso|gostaria de|posso|vou|pode|podem|da pra|desejo|como (?:eu )?(?:faco|posso|consigo)(?: pra| para)?)"
+        r"\s+(?:de\s+)?cancel(?:ar|o|e)\b|"
+        r"\bcancel(?:a|e|ar)\b\s+(?:o |a |meu |minha |esse |esta |este |isso )?\s*(?:pedido|compra|pra mim|ai)\b|"
+        r"\bcancelamento d[eao] (?:meu |minha )?(?:pedido|compra)\b")),
+    # em quanto tempo a loja retorna: prazo de retorno do manual
+    ("retorno_prazo", re.compile(
+        r"\b(?:quanto tempo|em quanto tempo|quando|qual o prazo|qual e o prazo|que prazo|prazo)\b.{0,30}"
+        r"\b(?:retorno|retornam|retornar|me (?:dar|darem|responder|respondem|ligar|ligam|chamar|chamam|contactar)|"
+        r"resposta|responder|respondem)\b")),
+    # "a loja faz isso por mim?": intermediação da garantia com o fabricante
+    ("intermediacao", re.compile(
+        r"\b(?:loja|voces|vcs)\b.{0,25}\b(?:faz\w*|resolve\w*|cuida\w*|aciona\w*|intermedi\w*|ajuda\w*)\b.{0,20}"
+        r"\b(?:isso|por mim|pra mim|comigo|fabricante)\b|\bintermedi\w+\b")),
     ("pedir_atendente", re.compile(
         r"\b(atendente|atendimento humano|humano|pessoa de verdade|gerente|responsavel|"
         r"falar com (alguem|uma pessoa|um humano|gente)|passa (pra|para) (alguem|um))\b")),
@@ -68,6 +83,10 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\b(defeit\w*|(entregador|transportadora|motoboy|carteiro)\b.{0,40}\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)|"
         r"(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)\b.{0,25}\bno (transporte|caminho|frete|envio)|quebrou|quebrad\w*|nao (funciona|liga|afina|toca|sai som)|parou de funcionar|"
         r"danificad\w*|avaria\w*|chegou (riscad|amassad|quebrad|danificad)\w*|"
+        # envio errado: o pedido veio diferente do comprado, tratado como defeito do pedido
+        r"\bveio\b.{0,20}\b(errad\w+|diferente|outr[oa]|trocad\w+)\b|"
+        r"\b(mandaram|enviaram|entregaram|mandou|enviou)\b.{0,25}\b(errad\w+|diferente|trocad\w+|outr[oa] (produto|modelo|cor|instrumento))\b|"
+        r"\b(produto|modelo|cor|item|instrumento)\s+errad\w+\b|\bcomprei\b.{0,40}\be (veio|chegou)\b|"
         r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
         r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
@@ -335,7 +354,7 @@ PROXIMO_PASSO = re.compile(r"\b(e agora|o que (eu )?faco|o que fazer|como (eu )?
 DESGASTE = re.compile(
     r"\b(cordas?|palhetas?|trastes?|feltros?)\b.{0,25}\b(arrebent\w*|rebent\w*|estour\w*|romp\w*|partiu|gast\w*|desgast\w*|"
     r"enferruj\w*)|\b(arrebent\w*|rebent\w*|estour\w*|romp\w*)\b.{0,20}\b(cordas?|palhetas?)\b")
-DIAS_DESDE_COMPRA =re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
+DIAS_DESDE_COMPRA =re.compile(r"\b(?:ha|faz|fazem|tem|completou|passou de|passaram)\s+(?:uns |umas |mais ou menos |cerca de |quase |aproximadamente )?(\d{1,3})\s+(dias?|semanas?|mes(?:es)?)\b")
 EMPRESA_CNPJ = re.compile(r"\b(cnpj)\b")
 EMPRESA_RAZAO = re.compile(r"\b(razao social)\b")
 EMPRESA_FUNDACAO = re.compile(r"\b(desde quando|fundad\w+|fundacao|quantos anos|ha quanto tempo|quando (a loja )?(foi )?criad\w+)\b")

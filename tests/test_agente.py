@@ -50,7 +50,7 @@ def test_devolucao_do_pedido_4_conversa_completa(sql):
         assert "chamado registrado" not in r.texto.lower() and "protocolo:" not in r.texto.lower()
     assert protocolos(sql) == ["EM-000001"] and "EM-000001" in r4.texto
     assert "Registrei o seu chamado" in r4.texto and r4.estado == "encaminhado"
-    assert "24 horas" not in r4.texto  # prazo de 24h úteis é só de reclamação
+    assert "24 horas úteis" in r4.texto  # etapa 26: todo chamado informa o prazo de retorno
     chamado = sql.execute("SELECT * FROM chamados").fetchone()
     assert chamado["tipo"] == "atendente" and "pedido 4" in chamado["resumo"]
     assert "nao verificado" in chamado["resumo"] and "Elegibilidade a confirmar" in chamado["resumo"]

@@ -103,3 +103,6 @@
 {"id":"c103","cat":"estrutura","turnos":["o entregador tá aqui na porta e a caixa do meu teclado veio toda amassada, recebo ou não recebo??"],"contem":["recusar o recebimento"],"nao_contem":["Encontrei","R$"],"chamado":false}
 {"id":"c104","cat":"estrutura","turnos":["qual o desconto máximo que o atendente pode dar?"],"contem":["Não tenho essa informação"],"nao_contem":["Protocolo","Registrei"],"chamado":false}
 {"id":"c105","cat":"estrutura","turnos":["quero 20 Yamaha C40 pra uma escola de música, tem no estoque?"],"contem":["12 unidades"],"nao_contem":["Para 20 unidades","11.398"],"chamado":false}
+{"id":"c106","cat":"tom","turnos":["abrem no sábado?"],"contem":["9h às 13h"],"nao_contem":["18h","domingo","segunda"],"chamado":false}
+{"id":"c107","cat":"tom","turnos":["domingo abre?"],"contem":["domingo","fechado"],"nao_contem":["18h","sábado","segunda"],"chamado":false}
+{"id":"c108","cat":"tom","turnos":["quero abrir reclamação","o violão chegou riscado e ninguém me responde, que absurdo"],"contem":["Protocolo: EM-","24 horas úteis","WhatsApp","cite o protocolo"],"nao_contem":["já tem como falar","desculp"],"chamado":true}

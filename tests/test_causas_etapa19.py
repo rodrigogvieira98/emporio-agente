@@ -24,9 +24,13 @@ def test_hora_br(entrada, saida):
 
 
 def test_horario_escrito_no_formato_do_site():
+    # etapa 26: a pergunta de um dia responde só aquele dia; a semana inteira (com 18h) só quando pedida
     (r,) = conversar("que horas vocês abrem sábado?")
-    assert "das 9h às 13h" in r.texto and "das 9h às 18h" in r.texto
+    assert "das 9h às 13h" in r.texto
     assert not re.search(r"\b\d{2}:\d{2}\b", r.texto)
+    (s,) = conversar("qual o horário de funcionamento da semana?", conversa="semana")
+    assert "das 9h às 13h" in s.texto and "das 9h às 18h" in s.texto
+    assert not re.search(r"\b\d{2}:\d{2}\b", s.texto)
 
 
 def test_retorno_fora_do_expediente_no_formato_do_site(monkeypatch):
@@ -202,4 +206,5 @@ def test_pedido_explicito_de_atendente_traz_protocolo_prazo_e_canais(sql, mensag
 
 def test_chamado_aberto_por_devolucao_continua_sem_prazo_de_reclamacao(sql):
     r = conversar("quero devolver um violão", "pedido 4 final 3456", "online, recebi dia 15/12/2025, sem uso", "sim")
-    assert "EM-" in r[3].texto and "24 horas" not in r[3].texto
+    # etapa 26: todo chamado informa o prazo de retorno (antes, só o de reclamação); a verificação de protocolo fica
+    assert "EM-" in r[3].texto and "24 horas úteis" in r[3].texto

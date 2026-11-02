@@ -297,7 +297,7 @@ def test_faq_sem_ponto_em_aberto(cliente, caminho):
 
 def test_faq_orienta_o_pedido_feito_no_site(cliente):
     t = texto(cliente.get("/perguntas-frequentes").text)
-    resposta = re.search(r"Como acompanho meu pedido\? (.*?) (Trocas e garantia|Qual o|Como faço)", t).group(1)
+    resposta = re.search(r"Como acompanho meu pedido\? (.*?) Como recebo o código", t).group(1)
     assert "PED-" in resposta and "no site" in resposta and "sem o telefone" in resposta
 
 

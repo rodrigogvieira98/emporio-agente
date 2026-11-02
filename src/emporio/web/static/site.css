@@ -247,7 +247,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .faq-item summary::-webkit-details-marker { display: none; }
 .faq-item summary::after { content: "+"; position: absolute; right: var(--s2); top: var(--s3); font: 700 1.5rem/1 var(--titulo); color: var(--madeira); }
 .faq-item[open] summary::after { content: "\2212"; }
-.faq-item p { margin: 0 0 var(--s4); color: var(--cinza-texto); max-width: 42rem; }
+.faq-item p { margin: 0 0 var(--s4); color: var(--cinza-texto); max-width: 75ch; }
 .faq-grupo { margin-top: var(--s8); }
 .faq-grupo h2 { font-size: 1.375rem; margin-bottom: var(--s3); }
 

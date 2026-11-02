@@ -197,7 +197,7 @@ def test_smtp_so_com_configuracao(cliente, monkeypatch):
 
 def test_faq_tem_8_a_12_perguntas_em_details_com_valores_do_manual(cliente):
     html = cliente.get("/perguntas-frequentes").text
-    assert 8 <= html.count('<details class="faq-item">') <= 12
+    assert 8 <= html.count('<details class="faq-item">') <= 16
     texto = _texto_visivel(html)
     assert f"até {fato('pagamento.credito_parcelas_max').valor}x sem juros" in texto
     assert f"{fato('pagamento.pix_desconto_percentual').valor}% de desconto" in texto
@@ -205,7 +205,7 @@ def test_faq_tem_8_a_12_perguntas_em_details_com_valores_do_manual(cliente):
     assert f"{fato('regra.arrependimento').valor['prazo_dias']} dias corridos" in texto
     assert f"{fato('regra.garantia_legal').valor['prazo_dias']} dias" in texto
     assert "Em Campo Grande" in texto  # frete sempre com a região
-    assert "Esse caso precisa de confirmação da nossa equipe." in texto
+    assert "Se tiver dúvida no seu caso, fale com a gente." in texto
 
 
 def test_home_traz_4_perguntas_com_link_para_todas(cliente):

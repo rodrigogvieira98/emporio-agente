@@ -378,7 +378,8 @@ def fora_escopo(e: Estado, p: dict) -> str:
         return sem_dado(e, p)
     acessorios = c.get("escopo.acessorios_nao_vendidos", [])
     lista = f" ({_lista(acessorios)})" if acessorios else ""
-    return (f"Aqui trabalhamos só com instrumentos musicais, então não vendemos acessórios{lista}. "
+    loja = " Também não tenho indicação de lojas parceiras para isso." if e.slots.get("pede_loja") else ""
+    return (f"Aqui trabalhamos só com instrumentos musicais, então não vendemos acessórios{lista}.{loja} "
             "Posso te ajudar a escolher um instrumento?")
 
 
@@ -598,6 +599,31 @@ def produto_indisponivel(e: Estado, p: dict) -> str:
     return txt
 
 
+def _campanha_do_manual(e: Estado, termo: str) -> str | None:
+    """A campanha citada pelo cliente como o manual a escreve (nome e época), sem o percentual de desconto."""
+    from ..politicas.manual import carregar_manual
+    from ..texto import tokens
+
+    chaves = [t for t in tokens(termo) if t not in ("de", "da", "do", "dos", "das")]
+    for sec in carregar_manual().secoes:
+        if not sec.publico or "promocoes" not in sec.temas:
+            continue
+        for linha in sec.texto.splitlines():
+            limpa = linha.strip(" •\t")
+            if chaves and all(t in tokens(limpa) for t in chaves):
+                return limpa.split(":")[0].strip() if "%" in limpa else limpa.rstrip(".")
+    return None
+
+
+def frete_gratis_valor(e: Estado, p: dict) -> str:
+    c = _condicoes(e)
+    base, minimo, taxa = c.get("frete.cidade_base"), c.get("frete.gratis_acima_centavos"), c.get("frete.taxa_abaixo_centavos")
+    if not (base and minimo and taxa):
+        return sem_dado(e, p)
+    return (f"Em {base}, o frete é grátis para pedidos acima de {formatar(minimo)}; abaixo disso, é uma taxa fixa de "
+            f"{formatar(taxa)}. Para outras cidades, o frete depende do CEP e do produto.")
+
+
 def promocoes(e: Estado, p: dict) -> str:
     r = e.ultimo("listar_promocoes")
     if r is None:
@@ -605,6 +631,10 @@ def promocoes(e: Estado, p: dict) -> str:
     if r.estado == "vazio":
         termo = r.dados.get("termo")
         if termo:
+            linha = _campanha_do_manual(e, termo)
+            if linha:
+                return (f"Nós temos a campanha {linha} entre as nossas promoções, mas ela não está ativa agora, então não posso "
+                        "prometer desconto nem percentual. Se quiser, mostro as promoções que estão ativas.")
             return (f"A promoção {termo.title()} não está ativa agora, então não posso prometer esse "
                     "desconto. Se quiser, mostro as promoções que estão ativas.")
         return "Não há nenhuma promoção ativa agora."
@@ -1545,7 +1575,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
-        preco_pix_e_parcelas, combinacao_formas, ficha_produto, frete_mais_rapido, cancelar_pedido,
+        preco_pix_e_parcelas, combinacao_formas, ficha_produto, frete_mais_rapido, frete_gratis_valor, cancelar_pedido,
         retorno_prazo, intermediacao, posvenda_fora_do_prazo)
 }
 

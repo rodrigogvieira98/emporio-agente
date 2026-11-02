@@ -823,6 +823,9 @@ class RegrasDecisor:
         """Característica técnica (captação, timbre, comparativo de som): o catálogo não traz ficha técnica."""
         return propor("sem_dado", "sem_dado", "Cliente perguntou uma caracteristica tecnica que o catalogo nao traz.")
 
+    def _i_frete_gratis_valor(self, estado: Estado) -> Acao:
+        return self._info(estado, ["frete"], "frete_gratis_valor")
+
     def _i_promocao(self, estado: Estado) -> Acao:
         args = {"termo": estado.slots["termo_promocao"]} if estado.slots.get("termo_promocao") else {}
         r = resultado_de(estado, "listar_promocoes", **args)
@@ -830,6 +833,8 @@ class RegrasDecisor:
             return ferramenta("listar_promocoes", **args)
         if r.estado == "falha":
             return self._erro(estado, r)
+        if args and r.estado == "vazio":  # campanha citada que não está ativa: o manual diz que ela existe, sem valor
+            estado.coletados["campanha_citada"] = args["termo"]
         return responder("promocoes", citado=estado.slots.get("desconto_citado"))
 
     def _i_endereco_pedido(self, estado: Estado) -> Acao:

@@ -345,3 +345,48 @@ def test_pedido_nao_entregue_nao_pergunta_a_data_de_recebimento():
 def test_envio_errado_e_tratado_como_defeito_do_pedido(fala):
     (r,) = conversar(fala, conversa="e23p9")
     assert "troca por defeito" in r.texto, r.texto
+
+
+# --- item 7: intenções erradas -----------------------------------------------------------------------
+
+@pytest.mark.parametrize("fala", ["quanto precisa comprar pra ser grátis?", "a partir de quanto o frete fica grátis?"])
+def test_pra_ser_gratis_nao_e_cidade_e_responde_a_regra_do_frete(fala):
+    rs = conversar("moro em campo grande, frete é grátis?", fala, conversa="e23i1")
+    t = rs[1].texto
+    assert "Ser Gratis" not in t and "R$ 500,00" in t and "R$ 35,00" in t, t
+
+
+@pytest.mark.parametrize("fala", ["fazem regulagem de guitarra?", "vocês dão aula de música?", "vocês fazem conserto de violão?"])
+def test_servico_sem_dado_recebe_nao_tenho_essa_informacao(fala):
+    (r,) = conversar(fala, conversa="e23i2")
+    assert "Não tenho essa informação" in r.texto and "Encontrei" not in r.texto, r.texto
+
+
+def test_loja_parceira_nao_e_indicada():
+    (r,) = conversar("qual loja vocês indicam pra comprar um violão barato?", conversa="e23i3")
+    assert "Não tenho essa informação" in r.texto and "parceira" in r.texto and "Encontrei" not in r.texto, r.texto
+
+
+def test_loja_para_acessorio_recebe_o_escopo_e_nao_indicamos_loja():
+    (r,) = conversar("qual loja vocês indicam pra comprar amp?", conversa="e23i3b")
+    assert "não vendemos acessórios" in r.texto and "lojas parceiras" in r.texto and "Encontrei" not in r.texto, r.texto
+
+
+def test_data_comemorativa_cita_a_campanha_do_manual_sem_prometer_valor():
+    rs = conversar("vai ter black friday?", "de quanto vai ser o desconto?", conversa="e23i4")
+    assert "Black Friday (Novembro)" in rs[0].texto and "não está ativa" in rs[0].texto, rs[0].texto
+    assert "%" not in rs[0].texto
+    assert "não posso prometer" in rs[1].texto.lower() and "15%" not in rs[1].texto and "30%" not in rs[1].texto, rs[1].texto
+
+
+def test_dia_do_musico_cita_a_campanha_do_manual():
+    (r,) = conversar("a promoção do dia do músico vale pra quem?", conversa="e23i5")
+    assert "Semana do Músico" in r.texto and "22 de novembro" in r.texto and "não está ativa" in r.texto, r.texto
+    assert "Promoções ativas" not in r.texto.split("Se quiser")[0]
+
+
+@pytest.mark.parametrize("fala", ["vcs passam meu telefone pra alguém?", "vocês vendem meus dados?",
+                                  "compartilham meu e-mail com terceiros?"])
+def test_passam_meu_dado_responde_privacidade(fala):
+    (r,) = conversar(fala, conversa="e23i6")
+    assert "dados pessoais" in r.texto and "Telefone: (67)" not in r.texto, r.texto

@@ -28,7 +28,9 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     # seção 9 do manual: privacidade e dados pessoais (antes de "dado de terceiro" e de "fora de escopo")
     ("privacidade", re.compile(
         r"\b(privacidade|lgpd|dados pessoais|(meus|nossos) dados|(exclu\w+|apag\w+|delet\w+|remov\w+|elimin\w+) .{0,20}(dados|cadastro|conta|informacoes)|(nao quero|parar de|deixar de|cancel\w+|sair d\w+) .{0,25}(receber|recebo|recebendo) .{0,12}(promoc\w+|novidades|e-?mails?|mensagens|ofertas)|(nao quero|parar de) .{0,6}receber promoc\w+|"
-        r"compartilh\w+ .{0,15}dados)\b")),
+        r"compartilh\w+ .{0,15}dados|"
+        r"(passam|repassam|compartilham|vendem|fornecem|entregam|cedem|dao)\b.{0,25}\b(meu|meus|minha|minhas)\b.{0,15}\b"
+        r"(telefone|dados|numero|e-?mail|cadastro|cpf|endereco|celular)\b)\b")),
     ("empresa_dados", re.compile(
         r"\b(desde quando (a loja|voces|vcs|existe|funciona)|quando (a loja )?(foi )?(fundad\w+|criad\w+|aberta)|"
         r"fundad[oa]|fundacao|razao social|cnpj|quantos anos (a loja|de loja|de mercado|de atuacao)|"
@@ -345,7 +347,7 @@ ENTRE_OU = re.compile(r"\bentre\b|\bou\b")
 SEPARADOR_COMPARACAO = re.compile(r"\s+(?:e|vs|versus|ou|x|contra|com)\s+(?:o |a |os |as )?|,\s*")
 # Campanha sazonal citada pelo cliente (palavra da conversa, não afirmação sobre a loja): a ferramenta diz se está ativa.
 CAMPANHA_CITADA = re.compile(
-    r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"
+    r"\b(black friday|cyber monday|pascoa|natal|carnaval|ano novo|dia do musico|semana do musico|dia d[aeo]s? (?:maes|pais|criancas|namorados|mulheres|mae|pai)|"
     r"volta as aulas|aniversario da loja|semana do consumidor|liquida\w+ de \w+)\b")
 CUPOM = re.compile(r"\b(cupom|cupon|cupons|cupoes|voucher|codigo (?:promocional|de desconto|de cupom))\b")
 DESCONTO_CITADO = re.compile(r"\b(\d{1,2})\s*(?:%|por cento)")
@@ -452,3 +454,21 @@ FICHA_ROTULO = {("electronics", "yes"): "captação", ("electronics", "no"): "se
 CORES = {"preto", "natural", "sunburst", "mogno", "cedar", "vermelho", "azul", "branco", "vinho"}  # cor não identifica modelo
 PALAVRAS_DE_FILTRO = {"aco", "nylon", "captacao", "captador", "captadores", "eletroacustico", "eletroacustica",
                       "amplificado", "amplificada", "eletronica"}
+
+
+# Quanto precisa comprar para o frete ser grátis: a regra do manual, nunca uma cidade ("pra ser grátis")
+FRETE_GRATIS_VALOR = re.compile(
+    r"\b(quanto|qual (o )?valor|a partir de quanto|acima de quanto|valor minimo)\b.{0,40}\b(gratis|gratuito|sem custo)\b|"
+    r"\b(pra|para) ser gratis\b|\bfrete\b.{0,25}\b(gratis|gratuito)\b.{0,25}\b(a partir|acima|minimo)\b")
+# Serviços e indicações que a loja não registra nos dados (QA 3): "não tenho essa informação"
+SEM_INFO_QA3 = (
+    ("aulas de música", re.compile(
+        r"\b(aulas?|cursos?|oficinas?)\b.{0,20}\b(musica|violao|guitarra|bateria|teclado|canto|instrumento)\b|"
+        r"\b(dao|da|tem|oferecem|fazem|ministram)\b.{0,15}\b(aulas?|cursos?)\b")),
+    ("regulagem e conserto de instrumentos", re.compile(
+        r"\b(fazem|faz|realizam|prestam|oferecem|tem)\b.{0,25}\b(regulagem|regular|conserto|consertar|reparo|manutencao|"
+        r"luthier|lutheria|assistencia tecnica)\b|\b(regulagem|conserto|manutencao|luthier)\b.{0,20}\b(voces|vcs|na loja|aqui)\b")),
+    ("lojas parceiras", re.compile(
+        r"\b(qual|quais|alguma|outra|onde)\b.{0,15}\blojas?\b.{0,25}\b(indic\w+|recomend\w+|sugere\w+|parceir\w+)\b|"
+        r"\blojas? parceiras?\b|\b(indic\w+|recomend\w+|sugere\w+)\b.{0,15}\b(uma |alguma |outra )?lojas?\b")),
+)

@@ -19,7 +19,7 @@ from .estado import Estado
 POSVENDA = {"devolucao", "troca_preferencia", "defeito"}
 # o que sobrevive à troca de assunto: pedido consultado, produto em foco e a última lista mostrada
 MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_busca", "ofertas_recusadas",
-          "recomendado", "cidade_cliente", "dias_compra")
+          "recomendado", "cidade_cliente", "dias_compra", "campanha_citada")
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
@@ -60,7 +60,8 @@ NAO_E_CIDADE = {"compra", "pedido", "valor", "mim", "ele", "ela", "um", "uma", "
                 "entrega", "envio", "casa", "loja", "la", "isso", "esse", "essa", "estoque", "vezes",
                 # pergunta de prazo, preço ou condição nunca é nome de cidade
                 "quantos", "quantas", "quanto", "quantidade", "que", "qual", "quais", "dias", "dia", "tempo", "prazo", "cada",
-                "pix", "boleto", "cartao", "frete", "preco", "parcela", "parcelas", "dois", "duas", "tres", "hoje", "amanha"}
+                "pix", "boleto", "cartao", "frete", "preco", "parcela", "parcelas", "dois", "duas", "tres", "hoje", "amanha",
+                "ser", "ter", "gratis", "gratuito", "ficar", "comprar", "levar", "fazer", "pagar"}
 PALAVRAS_QUE_NAO_SAO_CIDADE = NAO_E_CIDADE | {"chega", "chegar", "demora", "demorar", "fica", "custa", "sai", "dela", "dele"}
 
 
@@ -475,8 +476,8 @@ def classificar(norm: str, slots: dict[str, Any]) -> str | None:
 
 
 def _tema_sem_info(norm: str) -> str | None:
-    """Tema que os dados da loja não cobrem (estacionamento, retirada, usados, nota fiscal, seguro)."""
-    return next((tema for tema, p in v.SEM_INFO if p.search(norm)), None)
+    """Tema que os dados da loja não cobrem (estacionamento, retirada, usados, nota fiscal, seguro, serviços)."""
+    return next((tema for tema, p in (*v.SEM_INFO, *v.SEM_INFO_QA3) if p.search(norm)), None)
 
 
 def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
@@ -485,7 +486,16 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "tentativa_manipulacao"
     if v.CARRINHO.search(norm) and not v.DADO_DE_TERCEIRO.search(norm):
         return "carrinho"  # a Lia não mexe no carrinho: explica e manda o link
+    if v.FRETE_GRATIS_VALOR.search(norm):
+        return "frete_gratis_valor"  # a regra do manual para o frete grátis, nunca "Para Ser Gratis" como cidade
     tema = _tema_sem_info(norm)
+    if tema == "lojas parceiras":
+        # com acessório no pedido ("loja que venda pedal"), vale a resposta de escopo, que acrescenta que não indicamos lojas
+        escopo = next(p for n, p in v.PADROES_INTENCAO if n == "fora_escopo")
+        if escopo.search(norm) or re.search(r"\bamp\b", norm):
+            slots["pede_loja"] = True
+            slots["acessorio"] = True
+            return "fora_escopo"
     if tema == "extravio" and slots.get("pedido_id"):
         tema = None  # com o número do pedido, a consulta do pedido responde
     if tema and not slots.get("ingles") and not v.DADO_DE_TERCEIRO.search(norm):
@@ -731,6 +741,9 @@ def perceber(estado: Estado, mensagem: str) -> None:
                 s[k] = ub[k]
         _somar_filtros(s, ub)
         nova = "busca_produto"
+    if (nova == "promocao" and not s.get("termo_promocao") and estado.coletados.get("campanha_citada")
+            and re.search(r"\b(quanto|qual|percentual|porcentagem|valor|de quanto)\b", norm)):
+        s["termo_promocao"] = estado.coletados["campanha_citada"]  # "de quanto vai ser o desconto?" depois de citar a campanha
     if nova == "promocao" and ultimo and "referencia" not in s and not s.get("termo_promocao") and s.get("demonstrativo"):
         nova = "preco_produto"  # "esse tá em promoção?": a promoção do produto em foco
         s["produto_id"] = ultimo

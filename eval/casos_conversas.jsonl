@@ -94,3 +94,8 @@
 {"id":"c94","cat":"estrutura","turnos":["meu violão parou de funcionar a captação, faz uns 2 meses que recebi, tem garantia?"],"contem":["90 dias","fabricante","intermediar"],"nao_contem":["Não entendi"],"chamado":false}
 {"id":"c95","cat":"estrutura","turnos":["quero devolver um ukulele que comprei faz 15 dias, já usei um pouco, recebi dia 15 do mês passado"],"contem":["fora do prazo","7 dias"],"nao_contem":["Para consultar o pedido"],"chamado":false}
 {"id":"c96","cat":"estrutura","turnos":["comprei um violão preto e veio sunburst, vocês mandaram errado"],"contem":["troca por defeito"],"nao_contem":["preferência"],"chamado":false}
+{"id":"c97","cat":"estrutura","turnos":["moro em campo grande, frete é grátis?","quanto precisa comprar pra ser grátis?"],"contem":["R$ 500,00","R$ 35,00"],"nao_contem":["Ser Gratis","Não entendi"],"chamado":false}
+{"id":"c98","cat":"estrutura","turnos":["fazem regulagem de guitarra?"],"contem":["Não tenho essa informação"],"nao_contem":["Encontrei","Protocolo"],"chamado":false}
+{"id":"c99","cat":"estrutura","turnos":["qual loja vocês indicam pra comprar um violão barato?"],"contem":["Não tenho essa informação","parceiras"],"nao_contem":["Encontrei"],"chamado":false}
+{"id":"c100","cat":"estrutura","turnos":["vai ter black friday?","de quanto vai ser o desconto?"],"contem":["não posso prometer"],"nao_contem":["15%","30%","Promoções ativas:"],"chamado":false}
+{"id":"c101","cat":"estrutura","turnos":["vcs passam meu telefone pra alguém?"],"contem":["dados pessoais"],"nao_contem":["Telefone: (67)"],"chamado":false}

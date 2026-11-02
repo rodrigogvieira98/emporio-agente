@@ -94,9 +94,9 @@ python eval/rodar.py --conjunto dev --rotulo meu_teste
 python eval/comparar.py eval/resultados/dev_a.json eval/resultados/dev_b.json
 ```
 
-Na versão entregue: 1.248 testes unitários e 194 de navegador (Playwright, inclusive celular emulado).
+Na versão entregue: 1.500 testes unitários e 206 de navegador (Playwright, inclusive celular emulado).
 
-Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_conversas.jsonl` (70, achados de revisão e QA) são de desenvolvimento; `casos_frescos.jsonl` (18) foi escrito antes das correções para medir às cegas; `casos_holdout.jsonl` (20) roda uma vez, com hash conferido. Critérios em `eval/PREREGISTRO.md` e `eval/PREREGISTRO_RESERVA.md`; toda correção de instrumento ou gabarito está em `eval/CORRECOES.md`.
+Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_conversas.jsonl` (105, achados de revisão e QA) são de desenvolvimento; `casos_frescos.jsonl` (18) foi escrito antes das correções para medir às cegas e depois passou a desenvolvimento; `casos_holdout.jsonl` (20) e `casos_holdout2.jsonl` (40) rodam uma vez cada, com hash conferido. Critérios em `eval/PREREGISTRO.md` e `eval/PREREGISTRO_RESERVA.md`; toda correção de instrumento ou gabarito está em `eval/CORRECOES.md`.
 
 ## Decisões técnicas
 
@@ -104,7 +104,7 @@ Conjuntos: `casos_dev.jsonl` (62), `casos_variacoes.jsonl` (14) e `casos_convers
 |---|---|---|
 | Ferramentas determinísticas com dados estruturados, sem RAG | Preço, estoque e pedido exigem valor exato | Busca por semelhança traria o produto parecido em vez do certo |
 | Regras decidem; modelo só redige | Medido: modelos locais decidindo erraram mais fatos que as regras (tabela abaixo) | Deixar o modelo decidir com hardware sem GPU piorou conclusão e fatos |
-| Modelo local `qwen3:4b` para redação | Escolhido pelo critério pré-registrado entre `qwen2.5:3b` e `qwen3:4b`: mesmos fatos, mais frases exibidas, menos descartes, mais rápido, licença Apache 2.0 | Modelos de 8B passam de 4 GB e já mediram pior; modelos por API não foram medidos |
+| Modelo local `qwen3:4b` para redação | Escolhido pelo critério pré-registrado entre `qwen2.5:3b` e `qwen3:4b`: mesmos fatos, mais frases exibidas, menos descartes, mais rápido, licença Apache 2.0. Na versão final a redação quase não aparece (ver resultados) | Modelos de 8B passam de 4 GB e já mediram pior; modelos por API não foram medidos |
 | Validador de redação estrito | O modelo inventou "estacionamento", ecoou um ataque e criou "verificação de crédito" | Confiar no prompt não garante a saída |
 | Reserva de intenção desligada | Não passou na barra pré-registrada (ver resultados) | Ligar sem evidência contrariaria o critério |
 | FastAPI, Jinja2 e HTMX, sem build de front-end, PWA | Simples de rodar e de auditar; site e Lia usam as mesmas ferramentas | SPA exigiria build e segunda fonte de dados |
@@ -129,22 +129,48 @@ Rodamos tudo em uma máquina com 16 GB de RAM e sem GPU dedicada, com site, test
 
 Um segundo experimento, com o modelo classificando a intenção antes das regras, deu 47/62 e 5/31 contra 62/62 e 0/31 das regras no mesmo commit, de 5 a 9 vezes mais lento. Foi descartado.
 
-### Medição congelada (commit 735bb85, `qwen3:4b`, decisor de regras)
+### Versão final: holdout 2, execução única (commit fafe24c)
 
-| Conjunto | Só regras | Regras e redação (entregue) | Com reserva |
+O holdout 2 tem 40 casos escritos por um avaliador independente, sem acesso ao código, antes das últimas correções, com hash publicado em `eval/PREREGISTRO.md`. Quem implementou não leu o arquivo.
+
+| Critério pré-registrado | Barra | Entregue | Só regras |
 |---|---|---|---|
-| dev (62) | 62/62, 0/31 | 62/62, 0/31 | 62/62, 0/31 |
-| variações (14) | 14/14, 0/12 | 14/14, 0/12 | 14/14, 0/12 |
-| conversas (70) | 70/70, 0/3 | 70/70, 0/3 | 70/70, 0/3 |
-| frescos, às cegas (18) | 16/18, 0/1 | 16/18, 0/1 | 17/18, 0/1 |
+| Conclusão | ≥ 80% | **30/40 (75%), reprovado** | 30/40 |
+| Fatos críticos errados | 0 | **5/22, reprovado** | 5/22 |
+| Escolha de ações | ≥ 85% | 39/40 | 39/40 |
+| Bloqueios indevidos | ≤ 10% | 0/40 | 0/40 |
+| Pedido de atendente | todos | 2/2 | 2/2 |
 
-Formato: conclusão, fatos críticos errados. Zero chamados indevidos e zero falhas técnicas em todas. Dev, variações e conversas foram usados para ajuste, então medem regressão, não qualidade. Redação no dev: 55 tentadas, 4 exibidas, 3 descartadas; nas conversas: 83, 4 e 0. A redação aparece pouco.
+A versão fafe24c concluiu 30 de 40 casos e reprovou em conclusão e em fatos críticos. Nada foi ajustado depois da execução. Os dez casos que falharam:
 
-A reserva não passou: a barra pedia pelo menos 2 casos de "não entendi" a menos nos frescos, e ela teve 1. Fica desligada.
+| Caso | Pergunta | O que aconteceu | Natureza |
+|---|---|---|---|
+| hb18 (crítico) | "meu pedido 1 ja foi entregue? final do cel 1098" | Pediu de novo os 4 dígitos | Identificação não reconhecida ("final do cel") |
+| hb21 (crítico) | "pq meu pedido 18 foi cancelado? final 7654" | Deu o motivo, sem a palavra "cancelado" | Omissão parcial; o motivo está certo |
+| hb34 (crítico) | "e no pix? e em 12x?" depois do Crafter D-8 | Listou as regras gerais | Pergunta dupla de seguimento sem cálculo |
+| hb35 (crítico) | Arrependimento mais frete da devolução | Respondeu o frete, sem os 7 dias | Pergunta dupla respondida pela metade |
+| hb36 (crítico) | "pedido 2, final 6543: [...] posso trocar por outra cor?" | "Tive um problema na consulta" | Defeito no fluxo |
+| hb04 | "contrabaixo eletrico mais barato" | Leu contrabaixo como cordas orquestrais | Vocabulário |
+| hb14 | "martin d28e eletrica" | Não encontrou o produto | Nome parcial |
+| hb17 | "aquele shelby de 7 cordas, ainda tem?" | Respondeu a ficha, sem dizer descontinuado | Regressão da pergunta sobre produto |
+| hb26 | "qual o horario de segunda a sexta?" | Respondeu "das 9h às 18h" | O gabarito exigia "09:00": formato, não fato. Mantido como falha, sem mudar gabarito depois da execução |
+| hb29 | "moro em Corumbá, quais as opções de envio?" | Listou categorias | Intenção errada |
 
-Depois de ver os frescos, corrigi um defeito real (f02, "isso aqui é uma pessoa de verdade?", abria chamado) antes do holdout. A partir daí os frescos passam a ser de desenvolvimento: os números acima são da versão anterior à correção e não avaliam de forma independente a versão corrigida.
+Comparação caso a caso entre só regras e entregue: nenhum caso melhorou ou piorou, e o texto final foi idêntico nos 40 casos. Na versão final, a redação foi tentada 37 vezes, nenhuma exibida e 1 descartada; nas demais tentativas o modelo devolveu vazio. Com o validador reforçado, a redação ligada não alterou nenhuma resposta medida.
 
-### Holdout, execução única (commit e0f35d6)
+Nos conjuntos de desenvolvimento, usados para ajuste e que medem regressão, não qualidade: dev 62/62 e 0/31, variações 14/14 e 0/12, conversas 105/105 e 0/3, com zero chamados indevidos e zero falhas técnicas.
+
+### Compreensão de frases novas (QA independente)
+
+| Rodada | Conversas / turnos | Turnos corretos | Críticos | Altos |
+|---|---|---|---|---|
+| QA 2 | 35 / 163 | 30,1% | 4 | 60 |
+| QA 3 | 35 / 174 | 33,9% | 0 | 53 |
+| QA 4 | 35 / 181 | 35,4% | 1 | 57 |
+
+Conversas inéditas, simuladas por agentes independentes como caixa-preta; a classificação é de um único avaliador por rodada, então a comparação é aproximada. Três rodadas de correção renderam cerca de 5 pontos: as regras chegaram ao limite para linguagem natural. O QA 4 mediu a versão anterior às correções finais de risco, e não medimos de novo.
+
+### Holdout original, execução única (commit e0f35d6)
 
 | Critério pré-registrado | Barra | Entregue | Só regras |
 |---|---|---|---|
@@ -154,24 +180,15 @@ Depois de ver os frescos, corrigi um defeito real (f02, "isso aqui é uma pessoa
 | Bloqueios indevidos | ≤ 10% | 1/20 | 1/20 |
 | Pedido de atendente | todos | 1/1 | 1/1 |
 
-A versão e0f35d6 concluiu 18 de 20 casos, mas reprovou na exigência de zero erros factuais críticos. Mantivemos a versão congelada e documentamos as falhas:
-
-- **h12, contado como fato crítico** (categoria cruzada): "paguei com cartão, o reembolso da devolução cai como?". O gabarito exigia "mesma forma", porque o manual diz que o reembolso é feito na mesma forma de pagamento original em até 10 dias úteis. A Lia respondeu só a regra de arrependimento e pediu o pedido, sem dizer como o reembolso cai. É omissão da informação pedida, não uma afirmação falsa.
-- **h06**, que reduz a conclusão mas não está nas categorias de fato crítico: "ainda dá pra comprar o Baixo Ibanez 2X?". O gabarito exigia "descontinuado"; a Lia respondeu que não encontrou produtos disponíveis.
-
-Comparação caso a caso entre só regras e entregue: nenhum caso melhorou ou piorou; o texto final mudou em 1 de 20 (h20), sem mudar o resultado. O mesmo 18/20 indica igualdade no agregado, confirmada caso a caso.
-
-O registro do holdout marca `arvore_alterada: true`. O marcador veio de um arquivo de imagem não rastreado, sem uso, em `src/emporio/web/static/` (o retrato original da Lia, depois removido). `git diff e0f35d6` em `src/` e `eval/rodar.py` não mostra mudança de código.
+Aquela versão reprovou por omitir a forma do reembolso (h12); além disso, não identificou um produto descontinuado (h06). O prazo foi estendido depois dessa execução, e o conjunto não rodou de novo. As causas foram corrigidas e a versão final foi medida pelo holdout 2. O conjunto de 40 casos é maior e mais difícil, então 90% e 75% não são comparáveis diretamente. A medição congelada de 735bb85 e os frescos (controle 16/18, redação 16/18, reserva 17/18) estão em `eval/resultados`; a reserva não passou na barra pré-registrada e ficou desligada, e os frescos viraram desenvolvimento depois de corrigir o caso f02 (`eval/CORRECOES.md`).
 
 ### Versão avaliada e verificação da entrega
 
-- Código avaliado no holdout: **e0f35d6**. Documentação final: **38b8370** e posteriores. `git diff e0f35d6 38b8370` altera só `README.md`, `exemplos/*.md` e `eval/resultados/*.json`: nenhuma linha de `src/`, `tests/`, `docker-compose.yml` ou `requirements*.txt`, então o comportamento avaliado é o entregue.
-- Instalação limpa sem Docker, a partir de um clone do GitHub em 38b8370 e seguindo só este README: site e `/saude` no ar, Lia respondendo só com regras, 1.248 testes passando (01/11/2026, 20h13).
-- Instalação limpa com Docker, mesmo clone, `docker compose up -d --build`: a Lia respondeu só com regras durante o download do modelo, e com `qwen3:4b` e redação depois dele, cerca de 4 minutos (01/11/2026, 20h21).
+Preenchido na verificação final, abaixo.
 
 ## Exemplos de conversa
 
-Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exemplos/gerar_conversas.py` na configuração entregue (`qwen3:4b`, redação ligada): catálogo com orçamento e sugestão, informações da loja e fora do escopo, preço com nome ambíguo, promoção e parcela em conferência, devolução com consulta ao pedido e às políticas, e reclamação com chamado. Na conversa 05 a redação abriu a resposta com "Ola", sem acento, em linha solta: o validador deixou passar. Não corrigi para não alterar a versão avaliada.
+Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exemplos/gerar_conversas.py` na configuração entregue (`qwen3:4b`, redação ligada): catálogo com orçamento e sugestão, informações da loja e fora do escopo, preço com nome ambíguo, promoção e parcela em conferência, devolução com consulta ao pedido e às políticas, e reclamação com chamado. Na versão e0f35d6 a redação abriu a conversa 05 com "Ola", sem acento; o validador da versão final barra saudação solta, e as conversas foram geradas de novo.
 
 ## Suposições documentadas
 
@@ -185,12 +202,12 @@ Cinco conversas em [`exemplos/`](exemplos), geradas pelo agente com `python exem
 
 ## Limitações conhecidas
 
-- A compreensão de frases livres é limitada às regras e ao vocabulário. Num QA com 35 conversas novas, só 30% dos turnos estavam corretos antes das últimas correções; não medimos de novo com frases inéditas depois delas.
-- Holdout reprovado em fatos críticos (h12) e com um produto descontinuado não identificado (h06).
-- A redação raramente aparece e já deixou passar "Ola" sem acento.
-- Pedir atendente registra o chamado na hora, sem oferecer antes WhatsApp e telefone.
-- Não entende pelo chat: tirar item do carrinho, "tele" para Telecaster, diferença de preço depois de uma comparação.
-- Horário escrito pela Lia em "09:00", e o site em "9h".
+- **Os dois holdouts reprovaram nas barras pré-registradas.** A versão final concluiu 75% contra a barra de 80%, com 5 falhas em casos de fato crítico.
+- A compreensão de frases livres é o limite real: cerca de 35% dos turnos corretos em conversas novas. O teste com um modelo maior por API não foi feito.
+- A Lia pode omitir parte da resposta em perguntas duplas, mas nos QAs os preços e os dados de pedido conferidos estavam certos, salvo o total por quantidade abaixo.
+- A redação quase não aparece com o validador atual; a experiência da entrega é, na prática, a das regras.
+- Total por quantidade é unidade vezes quantidade, igual ao checkout; o PIX pode diferir em centavos do cálculo sobre o total.
+- A consulta de produto pode citar dois valores quando a ficha contradiz a descrição nos dados originais.
 - Sete produtos têm marca no nome diferente da descrição nos dados originais; os CSV não foram alterados.
 - Celular e PWA testados só em Chromium emulado, sem aparelho real nem Safari.
 - Produção: faltam cabeçalhos de segurança, segredo de sessão obrigatório e proteção ao cabeçalho Host; `/saude` mostra o nome do modelo; o limite de tentativas de rastreio fica em memória.

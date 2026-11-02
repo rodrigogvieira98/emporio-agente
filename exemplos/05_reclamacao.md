@@ -4,8 +4,7 @@ Gerada por `exemplos/gerar_conversas.py`. Data de referência 2026-03-25T10:00:0
 
 **Cliente:** quero abrir reclamação
 
-**Lia:** Ola  
-Entendo. Pode me contar em poucas palavras o que aconteceu? Não precisa passar telefone nem e-mail, um atendente já tem como falar com você.
+**Lia:** Entendo. Pode me contar em poucas palavras o que aconteceu? Não precisa passar telefone nem e-mail, um atendente já tem como falar com você.
 
 **Cliente:** o violão chegou riscado e ninguém me responde, que absurdo
 

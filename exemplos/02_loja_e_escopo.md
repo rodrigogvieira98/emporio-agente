@@ -11,8 +11,8 @@ Gerada por `exemplos/gerar_conversas.py`. Data de referência 2026-03-25T10:00:0
 **Cliente:** E que horas vocês abrem no sábado?
 
 **Lia:** Nosso horário de funcionamento:  
-- segunda a sexta-feira: das 09:00 às 18:00  
-- sábado: das 09:00 às 13:00  
+- segunda a sexta-feira: das 9h às 18h  
+- sábado: das 9h às 13h  
 - domingo: fechado  
 - feriados: fechado  
 Em datas especiais o horário pode ser estendido.  

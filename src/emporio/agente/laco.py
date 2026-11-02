@@ -346,7 +346,7 @@ SEM_REDACAO = {"saudacao", "recusa_manipulacao", "recusa_pedido_indevido", "recu
                # toda recusa fica sem texto livre do modelo: ele não pode abrir brecha nem suavizar o "não"
                "pedido_negado", "pedido_negado_limite", "pedido_demo_negado", "item_nao_elegivel",
                "preco_promocao_conflitante", "cupom_inexistente", "endereco_pedido_privado", "acolhimento", "so_portugues",
-               "comparacao", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
+               "comparacao", "ficha_produto", "frete_cotacao_individual", "frete_cep_indisponivel", "registro_falhou",
                "sem_dado", "sem_info", "dado_recusado",
                # lead: a resposta de objeção e a de "vou pensar" não ganham convite do modelo
                "objecao_preco", "vou_pensar"}

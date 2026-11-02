@@ -77,3 +77,8 @@
 {"id":"c77","cat":"causas","turnos":["quanto custa a Telecaster","e a Stratocaster?","quanto uma custa a mais que a outra?"],"contem":["7.100,00"],"nao_contem":["Somando"],"chamado":false}
 {"id":"c78","cat":"estrutura","turnos":["quero devolver o violão que comprei, ainda tá na caixa","que horas vocês fecham?","não, quero ver o preço do Yamaha C40"],"contem":["Yamaha C40","R$ 599,90"],"nao_contem":["deixei esse assunto de lado","Quer retomar"],"chamado":false}
 {"id":"c79","cat":"estrutura","turnos":["dá pra pagar metade no pix e metade no cartão? o violão custa 1299","e num de 1700?","pix tem desconto?"],"contem":["5% de desconto"],"nao_contem":["Quer retomar","antes estávamos"],"chamado":false}
+{"id":"c80","cat":"estrutura","turnos":["quanto custa o Teclado Nord Synth 2 Pro?","quantas teclas ele tem?"],"contem":["61 teclas"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c81","cat":"estrutura","turnos":["o Yamaha C70 é pra quem já toca?"],"contem":["intermediário"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c82","cat":"estrutura","turnos":["quanto custa o Yamaha C70?","e em quantas vezes dá?"],"contem":["No crédito em 8x"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c83","cat":"estrutura","turnos":["quanto custa o Shelby SU-21S?","e qual a diferença dele pro Kala KA-15S?"],"contem":["Comparando os dois","Kala KA-15S"],"nao_contem":["Não entendi"],"chamado":false}
+{"id":"c84","cat":"estrutura","turnos":["o Yamaha FG800 serve pra iniciante?"],"contem":["Não tenho essa informação"],"nao_contem":["Protocolo"],"chamado":false}

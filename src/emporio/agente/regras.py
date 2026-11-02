@@ -880,6 +880,22 @@ class RegrasDecisor:
             extra["oferta_parcelas"] = True  # próximo passo curto, de sim ou não: as parcelas do produto em foco
         return responder("preco", **extra)
 
+    def _i_pergunta_produto(self, estado: Estado) -> Acao:
+        """Pergunta sobre o produto (teclas, peças, cordas, captação, nível): responde pela ficha e pela descrição do
+        cadastro; o que o cadastro não traz, diz que não tem a informação."""
+        from . import respostas
+
+        acao, produto = self._produto(estado)
+        if acao:
+            return acao
+        atributos = estado.slots.get("atributos") or []
+        achados = [a for a in atributos if respostas.ficha_atributo(produto, a) is not None]
+        if atributos and not achados:
+            return propor("ficha_produto", "sem_dado",
+                          f"Cliente perguntou {', '.join(atributos)} de {produto['nome']} e o cadastro nao traz o dado.",
+                          atributos=atributos)
+        return responder("ficha_produto", atributos=atributos)
+
     def _i_parcelamento_produto(self, estado: Estado) -> Acao:
         """O "sim" à oferta de parcelas: o parcelamento máximo do produto em foco, em duas consultas à ferramenta."""
         pid = estado.coletados.get("ultimo_produto")

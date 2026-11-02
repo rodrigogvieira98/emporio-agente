@@ -47,7 +47,7 @@ POR_RESPOSTA: dict[str, tuple[str, str]] = {
     "sem_dado": ("/perguntas-frequentes", "Ver as perguntas frequentes"),
     "nao_entendi": ("/perguntas-frequentes", "Ver as perguntas frequentes"),
 }
-COM_PRODUTO = {"preco", "disponibilidade", "produto_indisponivel", "extremo_lista", "vou_pensar", "objecao_preco",
+COM_PRODUTO = {"preco", "ficha_produto", "disponibilidade", "produto_indisponivel", "extremo_lista", "vou_pensar", "objecao_preco",
                "frete_produto"}
 
 

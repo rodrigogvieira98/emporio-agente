@@ -12,7 +12,7 @@ from .. import config
 from ..dinheiro import formatar
 from ..ferramentas.etapas_pedido import etapas_do_pedido, etapas_do_site, frase_lia
 from ..texto import normalizar
-from . import expediente
+from . import expediente, vocabulario
 from .estado import Estado
 
 ROTULOS_ASSUNTO = {
@@ -670,6 +670,77 @@ def comparacao(e: Estado, p: dict) -> str:
         if d.get("descricao"):
             txt += f"\n{d['nome']}: {d['descricao']}"
     return txt + "\nNão consigo dizer qual é melhor para o seu uso, só mostrar o que o catálogo informa. Quer ver as condições de algum deles?"
+
+
+def _frases(descricao: str | None) -> list[str]:
+    return [f.strip() for f in re.split(r"(?<=[.!?])\s+", descricao or "") if f.strip()]
+
+
+def _numero_na_descricao(descricao: str | None, palavra: str) -> str | None:
+    m = re.search(rf"\b(\d+)\s+(?:{palavra})\b", descricao or "", re.I)
+    return m.group(1) if m else None
+
+
+def ficha_atributo(d: dict, atributo: str) -> str | None:
+    """Resposta de um atributo do produto pela ficha (especificacoes) e pela descrição do cadastro; None se não há dado.
+    Quando a ficha e a descrição divergem, os dois valores aparecem, sem escolher um."""
+    esp, desc, nome = d.get("especificacoes") or {}, d.get("descricao") or "", d["nome"]
+    if atributo in ("teclas", "cordas", "pecas"):
+        chave, palavra, rotulo = {"teclas": ("keys", "teclas", "teclas"), "cordas": ("strings", "cordas", "cordas"),
+                                  "pecas": ("pieces", "pecas|peças", "peças")}[atributo]
+        ficha = str(esp.get(chave, "")).strip()
+        ficha = ficha if ficha.isdigit() else ""
+        descrita = _numero_na_descricao(desc, palavra)
+        if ficha and descrita and ficha != descrita:
+            return (f"a ficha do catálogo indica {ficha} {rotulo}, mas a descrição fala em {descrita}; como os dois "
+                    "dados divergem, prefiro não afirmar qual vale")
+        if ficha or descrita:
+            return f"tem {ficha or descrita} {rotulo}"
+        if atributo == "cordas" and str(esp.get("strings", "")).lower() in ("nylon", "steel", "aco", "aço"):
+            return "usa cordas de " + ("nylon" if str(esp["strings"]).lower() == "nylon" else "aço")
+        return None
+    if atributo == "ferragem":
+        valor = str(esp.get("hardware", "")).lower()
+        if valor in ("included", "incluida", "incluída", "sim", "yes"):
+            return "vem com as ferragens incluídas"
+        if valor in ("none", "no", "nao", "não", "excluded"):
+            return "não vem com ferragens"
+        frase = next((f for f in _frases(desc) if re.search(r"ferragen", f, re.I)), None)
+        return f"a descrição do catálogo diz: \"{frase.rstrip('.')}\"" if frase else None
+    if atributo == "captacao":
+        eletronica = str(esp.get("electronics", "")).lower()
+        if eletronica in ("no", "nao", "não", "false"):
+            return "não tem captação nem eletrônica, segundo a ficha do catálogo"
+        frase = next((f for f in _frases(desc) if re.search(r"captac|captad|eletroac|pr[eé] ?amplif|\bpr[eé]\b", f, re.I)), None)
+        if eletronica in ("yes", "sim", "true"):
+            return "tem captação, segundo a ficha do catálogo" + (f". A descrição diz: \"{frase.rstrip('.')}\"" if frase else "")
+        return f"a descrição do catálogo diz: \"{frase.rstrip('.')}\"" if frase else None
+    if atributo == "nivel":
+        frase = next((f for f in _frases(desc) if vocabulario.NIVEL_NA_DESCRICAO.search(f)), None)
+        return f"a descrição do catálogo diz: \"{frase.rstrip('.')}\"" if frase else None
+    return None
+
+
+ROTULO_ATRIBUTO = {"teclas": "o número de teclas", "pecas": "o número de peças", "ferragem": "as ferragens",
+                   "cordas": "as cordas", "captacao": "a captação", "nivel": "o nível indicado"}
+
+
+def ficha_produto(e: Estado, p: dict) -> str:
+    """Pergunta sobre o produto: cada atributo pedido sai da ficha ou da descrição do cadastro, sem inferência."""
+    d = _dados(e, "ver_produto")
+    nome, achados, faltam = d["nome"], [], []
+    for a in p.get("atributos") or []:
+        r = ficha_atributo(d, a)
+        (achados if r is not None else faltam).append((a, r))
+    partes = []
+    if achados:
+        partes.append(f"{nome}: " + "; ".join(r for _, r in achados) + ".")
+    if faltam:
+        itens = " e ".join(ROTULO_ATRIBUTO[a] for a, _ in faltam)
+        partes.append(f"Não tenho essa informação sobre {itens} do {nome}, então prefiro não afirmar nada.")
+    if p.get("propor_registro"):
+        partes.append(f"Quer que um atendente confirme para você? {CONFIRMA}")
+    return " ".join(partes)
 
 
 def preco_pix_e_parcelas(e: Estado, p: dict) -> str:
@@ -1394,7 +1465,7 @@ TEXTOS: dict[str, Callable[[Estado, dict], str]] = {
         defeito_apos_prazo, devolucao_frete, rain_check, rastreio_como, privacidade, empresa_dados, frete_modalidade,
         frete_grande_porte, parecidos, soma_dois, diferenca_dois, motivo_cancelamento, reembolso_cancelado, frete_produto,
         cupom_inexistente, endereco_pedido_privado, acolhimento, so_portugues, comparacao,
-        preco_pix_e_parcelas, combinacao_formas)
+        preco_pix_e_parcelas, combinacao_formas, ficha_produto)
 }
 
 

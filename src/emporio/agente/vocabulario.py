@@ -391,3 +391,27 @@ DIFERENCA_PRECO = re.compile(
     r"\bquanto (?:e|fica|ficou|deu|da) a diferenca\b")
 OS_DOIS_REF = re.compile(r"\b(?:entre (?:eles|elas)|um e (?:o )?outro|uma e (?:a )?outra|que (?:o|a) outr[oa]|"
                          r"(?:um|uma) custa)\b")
+
+
+# Pergunta sobre o produto (etapa 23): o que o cliente quer saber da ficha ou da descrição do cadastro. Só vale com
+# produto nomeado ou em foco; o atributo é o assunto da pergunta, nunca uma afirmação sobre a loja.
+ATRIBUTOS_PRODUTO = (
+    ("teclas", re.compile(r"\bquantas teclas\b|\bteclas?\b.{0,14}\b(tem|possui|vem|sao)\b|\b(tem|possui)\b.{0,14}\bteclas\b")),
+    ("pecas", re.compile(r"\bquantas pecas\b|\bpecas?\b.{0,14}\b(tem|possui|vem|sao)\b|\b(tem|possui|vem com)\b.{0,14}\bpecas\b")),
+    ("ferragem", re.compile(r"\bferrage(?:m|ns)\b")),
+    ("cordas", re.compile(r"\bquantas cordas\b|\bcordas?\b.{0,14}\b(tem|possui|vem|sao)\b|\b(tem|possui)\b.{0,14}\bcordas\b|"
+                          r"\bcordas?\b.{0,10}\b(de )?(aco|nylon)\b|\bque (tipo de )?cordas?\b")),
+    ("captacao", re.compile(r"\b(captac\w+|captador\w*|eletroacustic\w+|pickup)\b")),
+    ("nivel", re.compile(
+        r"\b(serve|serviria|bom|boa|ideal|indicad[oa]|recomendad[oa]|adequad[oa]|suficiente)\b.{0,30}\b(iniciantes?|comecando|"
+        r"comecar|principiantes?|quem (ja )?(toca|comeca|esta comecando|esta aprendendo)|aprender|aprendizado|estudo|"
+        r"estudantes?|profission\w+|avancad\w+|intermediari\w+|experientes?)\b|"
+        r"\b(pra|para) quem (ja )?(toca|comeca|esta comecando|esta aprendendo|e iniciante|e profission\w+|ja tem)\b|"
+        r"\bnivel\b|\bpra que (tipo de )?(musico|pessoa)\b")),
+)
+# "em quantas vezes dá": com produto em foco, a resposta é a maior parcela válida do produto
+QUANTAS_VEZES = re.compile(r"\bquantas (vezes|parcelas|x)\b|\bate quantas (vezes|parcelas|x)\b|\bmaximo de (vezes|parcelas)\b")
+# frases da descrição do cadastro que falam do nível indicado
+NIVEL_NA_DESCRICAO = re.compile(
+    r"iniciante|estudante|comecando|come[cç]ando|est[aá] come[cç]ando|intermedi[aá]ri|avan[cç]ad|profission|n[ií]vel|"
+    r"todos os n[ií]veis|palco|est[uú]dio|apresenta[cç]", re.I)

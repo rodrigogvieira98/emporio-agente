@@ -23,7 +23,7 @@ MANTER = ("pedido", "protocolo", "ultimo_produto", "ultimos_produtos", "ultima_b
 FAMILIAS = {
     "busca_produto": "produto", "preco_produto": "produto", "disponibilidade": "produto", "objecao_preco": "produto",
     "status_pedido": "posvenda", "previsao_entrega": "posvenda", "motivo_cancelamento": "posvenda", "devolucao": "posvenda", "troca_preferencia": "posvenda",
-    "defeito": "posvenda", "garantia": "posvenda",
+    "defeito": "posvenda", "garantia": "posvenda", "pergunta_produto": "produto",
 }
 # esperando um dado: respostas curtas continuam o assunto
 AGUARDA_DADO = {"pedido", "dados_posvenda", "referencia_produto", "escolha_produto", "cidade", "valor_pedido", "categoria",
@@ -325,6 +325,8 @@ def extrair_slots(norm: str, mensagem: str, estado: Estado) -> dict[str, Any]:
         slots["estado_produto"] = "com sinais de uso ou sem a embalagem original"
     elif v.ESTADO_BOM.search(norm):
         slots["estado_produto"] = "na embalagem original, sem sinais de uso"
+    slots["atributos"] = [nome for nome, p in v.ATRIBUTOS_PRODUTO if p.search(norm)]
+    slots["quantas_vezes"] = bool(v.QUANTAS_VEZES.search(norm))
     slots["compra"] = bool(v.COMPRA.search(norm))
     slots["nivel"] = "iniciante" if v.NIVEL_INICIANTE.search(norm) else "outro" if v.NIVEL_OUTRO.search(norm) else None
     slots["orcamento_baixo"] = bool(v.ORCAMENTO_BAIXO.search(norm))
@@ -447,6 +449,8 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
         return "encerramento" if slots.get("agradecimento_ingles") else "ingles"
     if len(slots.get("comparar_refs") or []) == 2:
         return "comparar"
+    if slots.get("atributos") and slots.get("referencia") and not slots.get("compra") and not v.COMPARACAO.search(norm):
+        return "pergunta_produto"  # "quantas teclas tem o Korg?": a ficha do produto nomeado responde
     if v.PEDIDO_INSTRUCOES.search(norm):
         return "pedido_instrucoes"
     if v.DADO_DE_TERCEIRO.search(norm):
@@ -622,6 +626,18 @@ def perceber(estado: Estado, mensagem: str) -> None:
         assunto = estado.objetivo or estado.ultimo_assunto
         if assunto in POSVENDA | {"garantia"}:
             nova = assunto  # "o que eu faço?" depois de uma orientação: o assunto de pós-venda continua
+    foco_unico = estado.coletados.get("ultimo_produto")  # consultado de fato; o primeiro de uma lista só vale com "esse"
+    if len(s.get("comparar_refs") or []) == 1 and foco_unico and v.COMPARACAO.search(norm) and nova != "comparar":
+        s["comparar_refs"] = [foco_unico, s["comparar_refs"][0]]  # "a diferença dele pro Kala KA-15S": o foco e o citado
+        nova = "comparar"
+    if (s.get("atributos") and "referencia" not in s and not s.get("compra") and not s.get("comparar_refs")
+            and nova in (None, "caracteristica", "fora_escopo", "confirmacao_solta", "preco_produto", "disponibilidade")
+            and (foco_unico or (s.get("demonstrativo") and ultimo))):
+        nova = "pergunta_produto"  # a pergunta é sobre o produto em foco
+        s["produto_id"] = foco_unico or ultimo
+    if (s.get("quantas_vezes") and foco_unico and "referencia" not in s
+            and nova in (None, "pagamento", "preco_produto", "confirmacao_solta")):
+        nova = "parcelamento_produto"  # "e em quantas vezes dá?": a maior parcela válida do produto em foco
     # busca em andamento: "até 600 reais" refina a lista; "qual você recomenda?" usa a categoria e o teto já ditos
     ub = (estado.coletados.get("ultima_busca") or {}).get("args") or {}
     so_faixa = ("preco_max" in s or "preco_min" in s) and "referencia" not in s and "categoria" not in s

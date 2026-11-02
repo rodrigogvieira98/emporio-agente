@@ -92,3 +92,79 @@ def test_convite_so_uma_vez_por_assunto():
 def test_convite_continua_quando_falta_dado_de_pos_venda_que_o_cliente_pode_dar():
     rs = conversar("quero trocar a guitarra que comprei online, ainda na caixa", "qual o endereço da loja?", conversa="e23r4")
     assert "Quer retomar" in rs[1].texto
+
+
+# --- item 3: pergunta sobre o produto ----------------------------------------------------------
+
+def _nao_entendi(r) -> bool:
+    return "Não entendi" in r.texto or "Ainda não consegui entender" in r.texto
+
+
+def test_teclas_pela_ficha_com_produto_nomeado_e_em_foco():
+    rs = conversar("quanto custa o Teclado Korg Synth 1 Pro?", "quantas teclas ele tem?", conversa="e23f1")
+    assert "61 teclas" in rs[1].texto and not _nao_entendi(rs[1]), rs[1].texto
+    (r,) = conversar("e o Nord Synth 2 Pro, tem quantas teclas?", conversa="e23f1")
+    assert "Nord Synth 2 Pro" in r.texto and "61 teclas" in r.texto, r.texto
+
+
+def test_dado_divergente_entre_ficha_e_descricao_aparece_nos_dois():
+    (r,) = conversar("o Korg Synth 1 Pro tem quantas teclas?", conversa="e23f2")
+    assert "61" in r.texto and "88" in r.texto, r.texto  # ficha diz 61, a descrição do mesmo cadastro fala em 88
+
+
+def test_pecas_e_ferragem_da_bateria_na_mesma_pergunta():
+    rs = conversar("tem a Bateria Acústica Yamaha Kit 1 Studio?", "o kit 1 cabe em quantas peças e vem com ferragem?",
+                   conversa="e23f3")
+    t = rs[1].texto
+    assert "5 peças" in t and "ferragens" in t.lower() and "inclu" in t.lower(), t
+
+
+def test_cordas_pela_ficha():
+    (r,) = conversar("quantas cordas tem o Yamaha Bass 3X?", conversa="e23f4")
+    assert "4 cordas" in r.texto and not _nao_entendi(r), r.texto
+
+
+def test_captacao_do_violao_pela_ficha():
+    rs = conversar("quero ver o Yamaha C40", "ele tem captação?", conversa="e23f5")
+    assert "Yamaha C40" in rs[1].texto and ("não tem" in rs[1].texto.lower() or "sem" in rs[1].texto.lower()), rs[1].texto
+    (r,) = conversar("e o Tagima Vegas Elétrico, tem captação?", conversa="e23f5")
+    assert "captação" in r.texto.lower() and "ativa" in r.texto.lower(), r.texto
+
+
+@pytest.mark.parametrize("pergunta", [
+    "o Yamaha C70 é pra quem já toca?",
+    "o Yamaha C70 serve para iniciante?",
+    "qual o nível do Yamaha C70?",
+])
+def test_nivel_indicado_pela_descricao(pergunta):
+    (r,) = conversar(pergunta, conversa="e23f6")
+    assert "intermediário" in r.texto and "Yamaha C70" in r.texto and not _nao_entendi(r), r.texto
+
+
+def test_nivel_com_produto_em_foco_e_demonstrativo():
+    rs = conversar("quanto custa o Yamaha C70?", "esse é bom pra quem tá começando?", conversa="e23f7")
+    assert "intermediário" in rs[1].texto and not _nao_entendi(rs[1]), rs[1].texto
+
+
+def test_sem_o_dado_diz_que_nao_tem_a_informacao_e_nao_inventa():
+    (r,) = conversar("o Yamaha FG800 serve pra iniciante?", conversa="e23f8")
+    assert "Não tenho essa informação" in r.texto and "Yamaha FG800" in r.texto, r.texto
+    assert "iniciante" not in r.texto.replace("serve pra iniciante", "").lower() or "não tenho" in r.texto.lower()
+
+
+@pytest.mark.parametrize("pergunta", ["e em quantas vezes dá?", "em quantas vezes sem juros dá pra fazer?",
+                                      "até quantas parcelas?"])
+def test_quantas_vezes_mostra_a_maior_parcela_valida(pergunta):
+    rs = conversar("quanto custa o Yamaha C70?", pergunta, conversa="e23f9")
+    assert "No crédito em 8x" in rs[1].texto and "R$ 106,13" in rs[1].texto, rs[1].texto
+
+
+def test_quantas_vezes_sem_produto_em_foco_segue_sendo_pergunta_geral_de_pagamento():
+    (r,) = conversar("em quantas vezes posso parcelar?", conversa="e23f10")
+    assert "até 12x sem juros" in r.texto, r.texto
+
+
+def test_diferenca_entre_o_produto_em_foco_e_outro_citado_usa_a_comparacao():
+    rs = conversar("quanto custa o Shelby SU-21S?", "e qual a diferença dele pro Kala KA-15S?", conversa="e23f11")
+    t = rs[1].texto
+    assert t.startswith("Comparando os dois") and "Shelby SU-21S" in t and "Kala KA-15S" in t, t

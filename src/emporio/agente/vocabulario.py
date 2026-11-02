@@ -485,7 +485,23 @@ SEM_INFO_QA3 = (
     ("regulagem e conserto de instrumentos", re.compile(
         r"\b(fazem|faz|realizam|prestam|oferecem|tem)\b.{0,25}\b(regulagem|regular|conserto|consertar|reparo|manutencao|"
         r"luthier|lutheria|assistencia tecnica)\b|\b(regulagem|conserto|manutencao|luthier)\b.{0,20}\b(voces|vcs|na loja|aqui)\b")),
+    ("o desconto que um atendente pode dar", re.compile(
+        r"\b(atendente|gerente|vendedor|funcionario)s?\b.{0,30}\b(pode\w*|consegue\w*|autoriza\w*|libera\w*|conced\w*|da|dao|faz|fazem)\b.{0,25}\b(desconto|abatimento)s?\b|"
+        r"\b(desconto|abatimento)s?\b.{0,25}\b(maximo|limite|teto)\b.{0,30}\b(atendente|gerente|vendedor)\b|"
+        r"\b(politica|regra)s?\b.{0,20}\bdesconto\b.{0,25}\b(atendente|gerente|vendedor)\b")),
     ("lojas parceiras", re.compile(
         r"\b(qual|quais|alguma|outra|onde)\b.{0,15}\blojas?\b.{0,25}\b(indic\w+|recomend\w+|sugere\w+|parceir\w+)\b|"
         r"\blojas? parceiras?\b|\b(indic\w+|recomend\w+|sugere\w+)\b.{0,15}\b(uma |alguma |outra )?lojas?\b")),
 )
+
+
+# Pedido explícito de atendente: só ele (ou o sim a uma oferta) abre chamado. Pergunta SOBRE o atendente não é pedido.
+PEDIDO_ATENDENTE_EXPLICITO = re.compile(
+    r"\b(falar|conversar|chamar|chama|passa\w*|transfer\w*|encaminh\w*|me lig\w*|ligue|ligar)\b.{0,25}\b"
+    r"(atendente|atendimento|humano|pessoa|alguem|gente|gerente|responsavel)\b|"
+    r"\b(quero|queria|preciso|gostaria|desejo|exijo|peco|pedir|solicito|necessito|posso ter|tem como ter)\b.{0,15}\b"
+    r"(atendente|atendimento humano|humano|gerente|responsavel)\b|"
+    r"\bcade (o |a )?(atendente|gerente)\b|\batendente (por favor|agora|urgente)\b")
+PERGUNTA_SOBRE_ATENDENTE = re.compile(
+    r"\b(o|a|os|as|do|da|dos|das) (atendentes?|gerentes?|vendedor\w*)\b.{0,40}\b(pode\w*|consegue\w*|ganha\w*|"
+    r"atende\w*|trabalha\w*|fala\w*|sabe\w*|tem|faz\w*|recebe\w*|usa\w*)\b")

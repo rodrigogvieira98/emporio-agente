@@ -514,6 +514,9 @@ def _classificar(norm: str, slots: dict[str, Any]) -> str | None:
     achadas = [nome for nome, p in v.PADROES_INTENCAO if nome != "saudacao" and p.search(norm)]
     if v.FINAL_EXPLICITO.search(norm) and "status_pedido" not in achadas:
         achadas = [n for n in achadas if n != "contato"] or ["status_pedido"]  # "telefone termina em 8765" é o dado do pedido
+    if ("pedir_atendente" in achadas and not v.PEDIDO_ATENDENTE_EXPLICITO.search(norm)
+            and v.PERGUNTA_SOBRE_ATENDENTE.search(norm)):
+        achadas = [n for n in achadas if n != "pedir_atendente"]  # pergunta sobre o atendente não é pedido de atendente
     for flag, intencao in (("nega_atendente", "pedir_atendente"), ("nega_reclamacao", "reclamacao")):
         sobra = [n for n in achadas if n != intencao]
         if slots.get(flag) and sobra:  # "não quero atendente, só o preço": o pedido que sobra é o que vale

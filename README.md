@@ -184,7 +184,9 @@ Aquela versão reprovou por omitir a forma do reembolso (h12); além disso, não
 
 ### Versão avaliada e verificação da entrega
 
-Preenchido na verificação final, abaixo.
+- Código avaliado no holdout 2: **fafe24c**. Commits posteriores alteram só `README.md`, `exemplos/*.md` e `eval/resultados/*.json`: nenhuma linha de `src/`, `tests/`, `docker-compose.yml` ou `requirements*.txt`.
+- Instalação limpa sem Docker, em um clone do GitHub de f12c19f, seguindo só este README: 1.500 testes passando (01/11/2026, 23h46).
+- Docker, no mesmo commit, com `docker compose up -d --build`: site no ar, modelo `qwen3:4b` carregado e Lia respondendo. O download do zero foi verificado antes, em 38b8370, com cerca de 4 minutos, e nesta rodada o modelo já estava no volume.
 
 ## Exemplos de conversa
 

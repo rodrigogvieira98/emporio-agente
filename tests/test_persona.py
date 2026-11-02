@@ -1,4 +1,4 @@
-"""Persona da Lia: o que o código verifica (a avaliação de tom é humana, em eval/REVISAO_TOM.md)."""
+"""Persona da Lia: o que o código verifica (a avaliação de tom é humana e não foi feita nesta entrega)."""
 from __future__ import annotations
 
 import ast

@@ -227,7 +227,7 @@ Orientação do Rodrigo em 01/11/2026. Faz parte do núcleo. A persona muda a ma
 
 **O que o código verifica:** apresentação nos templates, apresentação no máximo uma vez, campos obrigatórios da persona, expressões proibidas em `persona.yaml` (gíria forçada, "sem enrolação", emoji, tratamento formal como "prezado cliente", brincadeira) em todos os textos de `respostas.py`.
 
-**O que exige avaliação humana:** acolhimento, naturalidade e adequação à situação. `eval/REVISAO_TOM.md` registra as conversas lidas e estas perguntas, com sim ou não: ela se identifica corretamente? Evita repetir a apresentação? Mantém clareza? Evita brincadeiras diante de reclamações? Os templates parecem vir da mesma assistente que escreve as respostas do modelo? A leitura do Planner é marcada como preliminar; a avaliação humana é a do Rodrigo.
+**O que exige avaliação humana:** acolhimento, naturalidade e adequação à situação. A revisão de tom por pessoa não foi feita; antes registrava-se em `eval/REVISAO_TOM.md`, removido em 02/11/2026. Ela registrava as conversas lidas e estas perguntas, com sim ou não: ela se identifica corretamente? Evita repetir a apresentação? Mantém clareza? Evita brincadeiras diante de reclamações? Os templates parecem vir da mesma assistente que escreve as respostas do modelo? A leitura do Planner é marcada como preliminar; a avaliação humana é a do Rodrigo.
 
 ## Incremento 1: compra de demonstração
 
@@ -488,6 +488,17 @@ Revisão do Rodrigo em 01/11/2026: a disposição já segue a home, mas o conte�
 - Respostas aproveitam a largura do bloco, com medida de leitura confortável (até 75 caracteres por linha), alinhadas à esquerda junto da pergunta.
 - Temas revistos: Pagamento; Entrega e frete; Pedido e rastreio; Trocas, devoluções e garantia; Sobre a loja. Incluir perguntas que faltam e que o manual responde: reembolso (mesma forma de pagamento, até 10 dias úteis), produto com avaria na entrega, acessórios (não vendemos), privacidade dos dados.
 - Fatos continuam derivados do manual pelo código, sem número escrito à mão nos textos fixos.
+
+## Tom das conversas de exemplo (etapa 26)
+
+Decisão do Rodrigo em 02/11/2026, depois do holdout 2: corrigir e declarar no README que a mudança veio depois de fafe24c. `eval/REVISAO_TOM.md` sai do repositório (não é exigido pelo desafio); a avaliação de tom fica registrada como não feita por pessoa.
+
+1. Reclamação com irritação ("que absurdo", "ninguém me responde"): uma frase curta de acolhimento antes do registro, sem pedir desculpa por fato não verificado.
+2. Nunca afirmar que um atendente "já tem como falar com você": o chat é anônimo. Todo chamado registrado informa o protocolo, o prazo de retorno de 24 horas úteis e os canais (WhatsApp e telefone com horário), dizendo para citar o protocolo ao falar com a loja.
+3. Pergunta sobre um dia específico ("abrem no sábado?", "domingo abre?") responde só aquele dia, com a ressalva de feriado quando couber; a semana inteira só quando pedida.
+4. Resumo de devolução mais curto: até 4 linhas, com pedido, o que o cliente informou, a regra e a pergunta de registro.
+
+Sem regressão nos conjuntos de desenvolvimento; holdout e frescos não rodam de novo.
 
 ## Banner com indicadores (etapa 25)
 

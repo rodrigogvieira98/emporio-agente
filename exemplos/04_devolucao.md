@@ -16,14 +16,13 @@ Gerada por `exemplos/gerar_conversas.py`. Data de referência 2026-03-25T10:00:0
 
 **Cliente:** Comprei pelo site, recebi anteontem, nem abri
 
-**Lia:** Resumo da sua solicitação:  
-1) O que consta no seu pedido: pedido 4, status entregue, 1x Giannini GF-3D Dreadnought Sunburst, total gravado R$ 799,90, feito em 10/12/2025, previsão de entrega 22/12/2025.  
-2) O que você me informou (não verificado): compra online; recebimento em 23/03/2026; produto na embalagem original, sem sinais de uso.  
-3) O que um atendente precisa confirmar: se o seu caso se enquadra na nossa regra (7 dias corridos, contados a partir do recebimento e vale para compra online). Produto: embalagem original, sem sinais de uso, com todos os acessórios e manuais. Eu não consigo garantir a elegibilidade; a decisão é de um atendente.  
+**Lia:** O que consta no seu pedido: pedido 4, status entregue, 1x Giannini GF-3D Dreadnought Sunburst, total gravado R$ 799,90, feito em 10/12/2025.  
+O que você me informou (não verificado): compra online; recebimento em 23/03/2026; produto na embalagem original, sem sinais de uso.  
+O que um atendente precisa confirmar: se o seu caso se enquadra na nossa regra (7 dias corridos, contados a partir do recebimento e vale para compra online). Produto: embalagem original, sem sinais de uso, com todos os acessórios e manuais. Eu não consigo garantir a elegibilidade; a decisão é de um atendente.  
 Posso registrar essa solicitação para um atendente avaliar? Responda sim ou não.
 
 **Cliente:** sim
 
-**Lia:** Registrei o seu chamado. Protocolo: EM-000001.
+**Lia:** Registrei o seu chamado. Protocolo: EM-000001. O retorno de um atendente é em até 24 horas úteis. Se preferir falar agora, os canais são WhatsApp (67) 3321-4500 e telefone (67) 3341-4444 (segunda a sexta-feira, das 9h às 18h; sábado, das 9h às 13h). Ao falar com a loja, cite o protocolo.
 
 <sub>Ferramentas: consultar_politica, registrar_encaminhamento</sub>

@@ -2,6 +2,15 @@
 
 Lia é a assistente virtual da Empório da Música, loja fictícia de instrumentos em Campo Grande/MS. Ela responde sobre catálogo, preços, formas de pagamento, frete, status de pedidos e políticas da loja, leva a compra até o carrinho, registra reclamações e encaminha para um atendente. Junto vem um site da loja (catálogo, produto, carrinho, checkout, rastreio, políticas) com a Lia em todas as páginas, instalável como PWA.
 
+## Resumo para quem avalia
+
+- **Rodar:** `docker compose up -d --build` e abrir http://localhost:8000 (detalhes em [Executar com Docker](#executar-com-docker)).
+- **Arquitetura:** o código entende a mensagem e busca os fatos com ferramentas determinísticas (dados dos CSV e manual da loja). Preço, pedido, prazo e regra nunca saem da cabeça do modelo.
+- **Pronta para modelo por API:** `EMPORIO_PROVEDOR=anthropic` liga o Claude (Haiku 5.5 por padrão) na redação e, sem `EMPORIO_DECISOR=regras`, também na decisão das ações, sem mudar a arquitetura. Se a API falhar ou estiver mal configurada, a Lia segue com as regras. Outro provedor é uma classe nova em `provedores.py`. Custo estimado: de centavos a poucos dólares por mês nesta loja ([Trocar de modelo](#trocar-de-modelo)). A integração tem testes com o SDK simulado; a qualidade com a API real não foi medida.
+- **Por que a entrega roda com regras:** sem GPU e com pouca memória, só modelos locais pequenos cabiam. Medidos no mesmo harness, eles erravam a escolha das ações, então a decisão ficou com as regras e o modelo local só pode acrescentar até 2 frases, sob um validador estrito.
+- **Resultado medido:** no teste às cegas, executado uma vez (holdout 2), a Lia acertou 30 de 40 conversas e errou 5 de 22 fatos críticos, abaixo da barra pré-registrada. Os erros estão listados em [Resultados](#resultados). Frases novas são o ponto fraco das regras, e é aí que um modelo por API deve ajudar; essa hipótese ainda não foi testada.
+- **Próximo passo:** rodar o Haiku nos mesmos conjuntos e critérios (`eval/rodar.py`, `eval/PREREGISTRO.md`), comparar com as regras e só então trocar o padrão.
+
 Aviso do repositório: a loja é fictícia e os pedidos não são reais. Nenhum valor é cobrado e nada é entregue. O site não diz isso ao cliente, por decisão de produto. Os links de WhatsApp, telefone e e-mail são gerados dos dados do manual da loja fictícia e não são contatos reais (`EMPORIO_WHATSAPP_URL`, `EMPORIO_TELEFONE_LINK` e `EMPORIO_EMAIL_LINK` substituem). O Fale Conosco só envia e-mail com `EMPORIO_SMTP_HOST` e `EMPORIO_SMTP_PARA`. Fotos e retrato da Lia: ver `docs/CREDITOS_IMAGENS.md`.
 
 ## Como a Lia funciona
@@ -41,7 +50,7 @@ Conversa pelo terminal: `.venv\Scripts\python -m emporio.cli --origem demo`. O P
 
 ## Trocar de modelo
 
-A Lia está pronta para outro provedor, inclusive pago por API, sem mudar a arquitetura: decisão, ferramentas e redação são separadas.
+A Lia está pronta para outro provedor, inclusive pago por API, sem mudar a arquitetura: decisão, ferramentas e redação são separadas. Com `EMPORIO_DECISOR=regras` o modelo só redige; sem essa variável, o modelo do provedor também decide as ações, e as ferramentas continuam escrevendo os fatos.
 
 | Variável | Efeito |
 |---|---|

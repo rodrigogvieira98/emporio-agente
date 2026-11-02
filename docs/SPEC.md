@@ -450,7 +450,7 @@ Decisão do Rodrigo em 01/11/2026 (opção B): congelar só com regras, depois d
 
 1. Defeito não é preferência: mensagem que descreve falha do produto (não funciona, parou, mudo, sem som, descolando, rachado, quebrou sozinho, chiado, defeito) segue a regra de defeito (4.2: 30 dias corridos da compra; depois, fabricante com intermediação), nunca troca por preferência. A pergunta "a loja troca?" com defeito em foco mantém a regra de defeito. Avaria no transporte citada em pós-venda com nome de instrumento não abre o catálogo.
 2. Chamado só com pedido ou aceite do cliente: pergunta sobre atendente, desconto ou política ("qual o desconto máximo que o atendente pode dar") não abre chamado; só o pedido explícito de falar com atendente ou o sim a uma oferta.
-3. Estoque e quantidade: pedido de N unidades compara com o estoque do produto; acima dele, diz quantas há e não cota a quantidade pedida como compra possível. Totais por quantidade aplicam o desconto sobre o total, para não acumular arredondamento unitário.
+3. Estoque e quantidade: pedido de N unidades compara com o estoque do produto; acima dele, diz quantas há e não cota a quantidade pedida como compra possível. Revisão: totais por quantidade seguem unidade vezes quantidade, igual ao checkout (`compra.py`), para Lia e site mostrarem o mesmo valor; aplicar o desconto sobre o total divergiria do checkout em centavos.
 
 ## Causas estruturais do QA 3 (etapa 23)
 

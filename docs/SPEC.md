@@ -444,6 +444,20 @@ Pedidos do Rodrigo em 01/11/2026.
 - `/creditos` continua no ar, porque as licenças exigem atribuição: o aviso "Imagem ilustrativa" do produto passa a ser link para ela.
 - Revisão de português: norma culta e Acordo Ortográfico vigente em todo texto do site e da Lia, incluindo crase, regência, concordância, pontuação, maiúsculas e formatos de hora e moeda. Citações da norma ABNT não se aplicam: ABNT2 é o padrão de teclado, e as NBR tratam de documentos acadêmicos. O texto do manual fica intacto e é exibido como está.
 
+## Causas estruturais do QA 3 (etapa 23)
+
+QA 3, 35 conversas novas, 174 turnos: 0 críticas (eram 4), 33,9% OK (era 30,1%), 53 altas. Os fatos estão certos; remendo de frase já não rende. Esta etapa corrige estruturas, não frases, e encerra a rodada de ajustes antes do congelamento.
+
+1. Sim ou não com conteúdo: resposta pendente só consome a mensagem quando ela é só confirmação ou recusa. "Não, quero colocar o RC-104 no carrinho" encerra a pendência e segue a intenção do resto da frase.
+2. Convite de retomar: só quando o assunto anterior ficou incompleto por falta de um dado que o cliente pode dar, e no máximo uma vez por assunto. Sem convite depois de resposta informativa concluída.
+3. Pergunta sobre o produto: intenção própria. Com produto em foco ou nomeado, responde pela ficha (`especificacoes` e descrição): nível indicado, número de teclas, peças, captação, cordas; sem o dado, diz que não tem essa informação. "Quantas vezes dá" mostra a maior parcela válida. Diferença entre o produto em foco e outro citado usa a comparação.
+4. Números com contexto: quantidade ("levar 2") multiplica o produto em foco; escolha em lista ("o 2") vale enquanto há lista numerada; "4 últimos 7654" é identificação, inclusive sem o número de pedido se já houver pedido em foco; datas e valores citados ("dia 27", "por 620") não entram na busca de produto.
+5. Filtros acumulados: numa busca em andamento, novos filtros (aço, nylon, captação, até R$ X) somam aos anteriores, e o que não existe no catálogo é dito. Destino de frete fica no estado: "é de um violão Yamaha C40" retoma Dourados; "qual chega mais rápido" responde pelos prazos.
+6. Pós-venda com ação: cancelar pedido diz que não é feito por aqui e oferece atendente; "quanto tempo pra retorno" responde 24 horas úteis; garantia depois de 30 dias informa a legal de 90 dias e a do fabricante, e a intermediação; caso fora do prazo aplica a regra ao que o cliente disse, em vez de repetir; pedido não entregue não pergunta a data de recebimento; envio errado é tratado como defeito do pedido.
+7. Intenções erradas: "pra ser grátis" não é cidade; regulagem e serviços sem dado recebem "não tenho essa informação"; loja parceira não é indicada; datas comemorativas citam a campanha do manual sem prometer valor; "passam meu telefone" responde privacidade.
+
+Não regredir: dev, variações e conversas em 100%, zero fatos críticos e zero chamados indevidos.
+
 ## Etapas do pedido no padrão de mercado (etapa 21)
 
 Pedido do Rodrigo em 01/11/2026. Substitui a linha do tempo da etapa 15. Etapas: Pedido recebido, Pagamento confirmado, Em separação, Enviado, Entregue; Cancelado como desvio.

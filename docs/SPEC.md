@@ -489,6 +489,13 @@ Revisão do Rodrigo em 01/11/2026: a disposição já segue a home, mas o conte�
 - Temas revistos: Pagamento; Entrega e frete; Pedido e rastreio; Trocas, devoluções e garantia; Sobre a loja. Incluir perguntas que faltam e que o manual responde: reembolso (mesma forma de pagamento, até 10 dias úteis), produto com avaria na entrega, acessórios (não vendemos), privacidade dos dados.
 - Fatos continuam derivados do manual pelo código, sem número escrito à mão nos textos fixos.
 
+## Banner com indicadores (etapa 25)
+
+Pedido do Rodrigo em 02/11/2026, depois do congelamento. Só site: agente, ferramentas e regras não mudam, e o README declara a mudança depois de fafe24c.
+
+- Bolinhas indicadoras no banner, uma por foto, com a atual marcada. Clicar ou tocar leva à foto escolhida e reinicia a contagem de 6 segundos. Cada bolinha tem rótulo acessível com o nome do instrumento, `aria-current` na atual e alvo de 44 px. Respeitam a pausa e `prefers-reduced-motion`: nesse caso as bolinhas continuam funcionando, sem transição nem troca automática.
+- A foto de alguém tocando violão sai do banner. Entra uma foto só do violão, sem pessoa, de licença livre, no mesmo padrão do gerador (Wikimedia Commons, licença conferida, até 120 KB, crédito em `/creditos` e `docs/CREDITOS_IMAGENS.md`). Se `abertura.webp` não tiver mais uso, sai do repositório e dos créditos.
+
 ## Banner com cinco instrumentos (etapa 20)
 
 Pedido do Rodrigo em 01/11/2026. A foto única da abertura vira uma sequência de cinco fotos de instrumentos (violão, guitarra, baixo, teclado e bateria, ou ukulele), com transição automática suave a cada 6 segundos.

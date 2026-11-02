@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from .. import config
 from ..dinheiro import formatar
+from ..ferramentas.etapas_pedido import etapas_do_pedido, etapas_do_site, frase_lia
 from ..texto import normalizar
 from . import expediente
 from .estado import Estado
@@ -847,6 +848,10 @@ def status_pedido(e: Estado, p: dict) -> str:
             txt += " Essa data já passou e o pedido ainda não consta como entregue."
     if ped.get("nota"):
         txt += f"\nObservação do pedido: {ped['nota']}."
+    etapa = frase_lia(etapas_do_pedido(ped["status"], data_pedido=ped.get("data_pedido"), rastreio=ped.get("rastreio"),
+                                       previsao=ped.get("previsao"), nota=ped.get("nota")))
+    if etapa:
+        txt += f"\n{etapa}"
     if p.get("oferta") == "previsao_vencida":
         txt += f"\nQuer que eu registre para um atendente verificar o atraso? {CONFIRMA}"
     return txt
@@ -855,8 +860,10 @@ def status_pedido(e: Estado, p: dict) -> str:
 def status_pedido_demo(e: Estado, p: dict) -> str:
     d = e.coletados["pedido_demo"]
     itens = ", ".join(f"{i['quantidade']}x {i['nome']}" for i in d["itens"])
+    etapa = frase_lia(etapas_do_site(d))
     return (f"Pedido {d['numero']}: feito no site. {d['aviso']}\n"
-            f"Itens: {itens}.\n{d['frete_linha']}.\n{d['total_rotulo']}: {formatar(d['total_gravado_centavos'])}.")
+            f"Itens: {itens}.\n{d['frete_linha']}.\n{d['total_rotulo']}: {formatar(d['total_gravado_centavos'])}."
+            + (f"\n{etapa}" if etapa else ""))
 
 
 def pedido_demo_negado(e: Estado, p: dict) -> str:

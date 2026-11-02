@@ -53,7 +53,7 @@ def test_linha_do_tempo_do_pedido_8_com_enviado_atual_e_codigo_visivel(url_site,
     p.click("button:has-text('Consultar')")
     p.wait_for_selector("ol.linha-tempo")
     etapas = p.locator("ol.linha-tempo > li")
-    assert etapas.count() == 4
+    assert etapas.count() == 5
     atual = p.locator("ol.linha-tempo > li[aria-current=step]")
     assert atual.count() == 1
     assert "Enviado" in atual.inner_text() and "etapa atual" in atual.inner_text()

@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from emporio.ferramentas import cep as cep_mod
 from emporio.web.app import criar_app
-from emporio.web.linha_do_tempo import STATUS_SITE, Etapa, etapas_do_rastreio
+from emporio.ferramentas.etapas_pedido import STATUS_SITE, Etapa, etapas_do_pedido
 
 TAKAMINE = 95
 ENDERECOS = {
@@ -93,49 +93,50 @@ def resumo(etapas: list[Etapa]) -> list[tuple[str, str]]:
     return [(e.rotulo, e.estado) for e in etapas]
 
 
-def test_pending_marca_so_a_primeira_com_a_data_do_pedido():
-    e = etapas_do_rastreio("pending", data_pedido="2026-02-15")
-    assert resumo(e) == [("Pedido recebido", "atual"), ("Pagamento confirmado", "pendente"),
-                         ("Enviado", "pendente"), ("Entregue", "pendente")]
+def test_pending_aguarda_pagamento_com_a_data_do_pedido():
+    e = etapas_do_pedido("pending", data_pedido="2026-02-15")
+    assert resumo(e) == [("Pedido recebido", "feita"), ("Aguardando pagamento", "atual"),
+                         ("Em separação", "pendente"), ("Enviado", "pendente"), ("Entregue", "pendente")]
     assert e[0].detalhe == "Em 15/02/2026"
 
 
-def test_confirmed_vai_ate_a_segunda():
-    e = etapas_do_rastreio("confirmed", data_pedido="2026-02-15", previsao="2026-02-28")
-    assert resumo(e) == [("Pedido recebido", "feita"), ("Pagamento confirmado", "atual"),
-                         ("Enviado", "pendente"), ("Entregue", "pendente")]
-    assert e[3].detalhe == "Previsão: 28/02/2026"
-
-
-def test_shipped_vai_ate_a_terceira_com_o_codigo_e_a_previsao():
-    e = etapas_do_rastreio("shipped", data_pedido="2026-02-15", rastreio="BRJL5544332BR", previsao="2026-02-28")
+def test_confirmed_esta_em_separacao():
+    e = etapas_do_pedido("confirmed", data_pedido="2026-02-15", previsao="2026-02-28")
     assert resumo(e) == [("Pedido recebido", "feita"), ("Pagamento confirmado", "feita"),
-                         ("Enviado", "atual"), ("Entregue", "pendente")]
-    assert e[2].detalhe == "Código de rastreio: BRJL5544332BR" and e[3].detalhe == "Previsão: 28/02/2026"
-    assert [x.estado_texto for x in e] == ["concluída", "concluída", "etapa atual", "a seguir"]
+                         ("Em separação", "atual"), ("Enviado", "pendente"), ("Entregue", "pendente")]
+    assert e[4].detalhe == "Previsão: 28/02/2026"
+
+
+def test_shipped_vai_ate_enviado_com_o_codigo_e_a_previsao():
+    e = etapas_do_pedido("shipped", data_pedido="2026-02-15", rastreio="BRJL5544332BR", previsao="2026-02-28")
+    assert resumo(e) == [("Pedido recebido", "feita"), ("Pagamento confirmado", "feita"),
+                         ("Em separação", "feita"), ("Enviado", "atual"), ("Entregue", "pendente")]
+    assert e[3].detalhe == "Código de rastreio: BRJL5544332BR" and e[4].detalhe == "Previsão: 28/02/2026"
+    assert [x.estado_texto for x in e] == ["concluída", "concluída", "concluída", "etapa atual", "a seguir"]
 
 
 def test_delivered_conclui_todas_sem_previsao():
-    e = etapas_do_rastreio("delivered", data_pedido="2026-02-15", rastreio="BR1", previsao="2026-02-28")
+    e = etapas_do_pedido("delivered", data_pedido="2026-02-15", rastreio="BR1", previsao="2026-02-28")
     assert resumo(e) == [("Pedido recebido", "feita"), ("Pagamento confirmado", "feita"),
-                         ("Enviado", "feita"), ("Entregue", "atual")]
-    assert e[2].detalhe == "Código de rastreio: BR1" and e[3].detalhe == ""
+                         ("Em separação", "feita"), ("Enviado", "feita"), ("Entregue", "atual")]
+    assert e[3].detalhe == "Código de rastreio: BR1" and e[4].detalhe == ""
 
 
 def test_cancelled_mostra_recebido_e_cancelado_com_a_observacao():
-    e = etapas_do_rastreio("cancelled", data_pedido="2026-02-15", nota="Pagamento não aprovado", rastreio="BR1")
+    e = etapas_do_pedido("cancelled", data_pedido="2026-02-15", nota="Pagamento não aprovado", rastreio="BR1")
     assert resumo(e) == [("Pedido recebido", "feita"), ("Cancelado", "atual")]
     assert e[1].detalhe == "Pagamento não aprovado"
 
 
-def test_pedido_do_site_mostra_so_pedido_recebido():
-    e = etapas_do_rastreio(STATUS_SITE, data_pedido="2026-10-31")
-    assert STATUS_SITE == "PED-" and resumo(e) == [("Pedido recebido", "atual")]
-    assert e[0].detalhe == "Em 31/10/2026"
+def test_pedido_do_site_com_pix_ja_aparece_em_separacao():
+    e = etapas_do_pedido(STATUS_SITE, forma="pix", criado_em="2026-10-31T10:00:00")
+    assert STATUS_SITE == "PED-" and resumo(e)[:3] == [("Pedido recebido", "feita"), ("Pagamento confirmado", "feita"),
+                                                       ("Em separação", "atual")]
+    assert e[0].detalhe == "Em 31/10/2026 às 10h"
 
 
 def test_sem_data_nem_codigo_nao_inventa_detalhe():
-    e = etapas_do_rastreio("shipped")
+    e = etapas_do_pedido("shipped")
     assert all(x.detalhe == "" for x in e)
 
 
@@ -146,7 +147,7 @@ def test_rastreio_do_pedido_8_mostra_lista_ordenada_com_enviado_atual_e_codigo(c
     assert re.search(r'<ol class="linha-tempo"', html)
     atual = re.search(r'<li class="etapa etapa-atual" aria-current="step">(.*?)</li>', html, re.S).group(1)
     assert "Enviado" in texto(atual) and "etapa atual" in texto(atual) and "BRJL5544332BR" in texto(atual)
-    assert html.count('aria-current="step"') == 1 and html.count("<li class=\"etapa ") == 4
+    assert html.count('aria-current="step"') == 1 and html.count("<li class=\"etapa ") == 5
     assert "Previsão: 28/02/2026" in texto(html)
 
 
@@ -158,4 +159,5 @@ def test_rastreio_de_pedido_do_site_mostra_pedido_recebido(cliente):
     assert feito.status_code == 303
     numero = feito.headers["location"].rsplit("/", 1)[1]
     html = cliente.post("/rastreio", data={"pedido": numero, "final_telefone": ""}).text
-    assert html.count('<li class="etapa ') == 1 and "Pedido recebido" in texto(html)
+    assert html.count('<li class="etapa ') == 5 and "Pedido recebido" in texto(html)
+    assert re.search(r'etapa-atual" aria-current="step">.*?Em separação', html, re.S)

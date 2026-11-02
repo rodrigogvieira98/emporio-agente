@@ -32,6 +32,7 @@ from ..agente import llm
 from ..agente.fabrica import criar_agente
 from ..agente.laco import Agente
 from ..ferramentas.condicoes import calcular_condicoes
+from ..ferramentas.etapas_pedido import etapas_do_pedido, etapas_do_site
 from ..ferramentas.pedido_demo import PREFIXO as PREFIXO_PEDIDO, achar_numero, consultar_pedido_demo
 from ..ferramentas.pedidos import consultar_pedido
 from ..ferramentas.politica import consultar_politica
@@ -41,7 +42,6 @@ from ..texto import radical, tokens
 from ..politicas.manual import carregar_manual, fato
 from . import apresentacao, carrinho, compra, conteudo, contato, entradas, fotos, home, navegacao
 from .limite import LimiteRastreio
-from .linha_do_tempo import STATUS_SITE, etapas_do_rastreio
 
 POR_PAGINA = 12  # produtos por página do catálogo; o limite de 5 itens é do chat, não do site
 
@@ -539,7 +539,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                                 "navegador em que foi feito.")
         if r.estado != "ok":
             return pagina(request, "mensagem.html", 502, titulo="Pedido indisponível no momento", texto=MSG_FALHA)
-        return pagina(request, "pedido_demo.html", d=r.dados)
+        return pagina(request, "pedido_demo.html", d=r.dados, etapas=etapas_do_site(r.dados))
 
     @app.get("/rastreio", response_class=HTMLResponse)
     def rastreio_form(request: Request):
@@ -563,7 +563,7 @@ def criar_app(agente: Any = None) -> FastAPI:
             achado = achar_numero(pedido)
             r = (consultar_pedido_demo(numero=achado, conversa_id=request.state.conversa_id) if achado else None)
             if r is not None and r.estado == "ok":
-                etapas = etapas_do_rastreio(STATUS_SITE, data_pedido=str(r.dados.get("criado_em") or "")[:10] or None)
+                etapas = etapas_do_site(r.dados)
                 return pagina(request, "rastreio.html", resultado=None, demo=r.dados, pedido=pedido, aviso=None, etapas=etapas)
             if r is None or r.estado == "negado":
                 negado()
@@ -579,7 +579,7 @@ def criar_app(agente: Any = None) -> FastAPI:
                              conversa_id=f"{sessao_}:{limite.janela_atual()}")
         if r.estado == "ok":
             d = r.dados
-            etapas = etapas_do_rastreio(d["status"], data_pedido=d.get("data_pedido"), rastreio=d.get("rastreio"),
+            etapas = etapas_do_pedido(d["status"], data_pedido=d.get("data_pedido"), rastreio=d.get("rastreio"),
                                         previsao=d.get("previsao"), nota=d.get("nota"))
             return pagina(request, "rastreio.html", resultado=d, pedido=pedido, aviso=None, etapas=etapas,
                           status_pedido=apresentacao.ROTULO_STATUS_PEDIDO)

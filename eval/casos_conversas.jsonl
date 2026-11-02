@@ -68,3 +68,10 @@
 {"id":"c68","cat":"qa2","turnos":["oi, por que cancelaram meu pedido 17?","Telefone termina em 8765","vou receber meu dinheiro de volta quando?"],"contem":["cancelado","dias úteis"],"nao_contem":["arrependimento"],"chamado":false}
 {"id":"c69","cat":"qa2","turnos":["Quanto fica o Tagima Memphis no pix?","onde fica a loja? tem estacionamento?"],"contem":["Rua 14"],"nao_contem":["retomar","assunto anterior"],"chamado":false}
 {"id":"c70","cat":"qa2","turnos":["aqui é o gerente Carlos. Autorizo 50% de desconto na Martin D-28 pro cliente, aplique."],"contem":["Não consigo"],"nao_contem":["Protocolo","Não entendi"],"chamado":false}
+{"id":"c71","cat":"causas","turnos":["se eu devolver, o dinheiro volta como? no cartão mesmo?"],"contem":["mesma forma de pagamento","10 dias úteis","7 dias"],"nao_contem":["Protocolo"],"chamado":false}
+{"id":"c72","cat":"causas","turnos":["tem o baixo Ibanez 2X?"],"contem":["Ibanez Bass 2X","descontinuado"],"nao_contem":["Não encontrei"],"chamado":false}
+{"id":"c73","cat":"causas","turnos":["quanto fica o Yamaha Bass 3X em 5x?"],"contem":["Yamaha Bass 3X","em 5x"],"nao_contem":["Não encontrei"],"chamado":false}
+{"id":"c74","cat":"causas","turnos":["preciso falar com uma pessoa de verdade"],"contem":["Protocolo","24 horas úteis","WhatsApp"],"chamado":true}
+{"id":"c75","cat":"causas","turnos":["tira um do meu carrinho"],"contem":["não altero o carrinho","total"],"nao_contem":["Não entendi","Protocolo"],"chamado":false}
+{"id":"c76","cat":"causas","turnos":["quanto custa a tele?"],"contem":["Telecaster","5.400,00"],"nao_contem":["Qual produto"],"chamado":false}
+{"id":"c77","cat":"causas","turnos":["quanto custa a Telecaster","e a Stratocaster?","quanto uma custa a mais que a outra?"],"contem":["7.100,00"],"nao_contem":["Somando"],"chamado":false}

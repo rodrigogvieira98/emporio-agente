@@ -750,6 +750,9 @@ def perceber(estado: Estado, mensagem: str) -> None:
         s["pergunta_promocao"] = True
     if nova is None and estado.ultimo_assunto == "frete" and s.get("cidade") and s["palavras"] <= 6:
         nova = "frete"  # "e em <outra cidade>?" depois de uma pergunta de frete
+    if (nova in ("troca_preferencia", "info_trocas") and "defeito" in (estado.objetivo, estado.ultimo_assunto)
+            and not v.PREFERENCIA_EXPLICITA.search(norm)):
+        nova = "defeito"  # "a loja troca?" com defeito em foco: a pergunta é da regra de defeito, não da de preferência
     estado.intencao = nova
     s["nova"] = nova
 

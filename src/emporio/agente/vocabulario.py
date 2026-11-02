@@ -7,6 +7,21 @@ from __future__ import annotations
 
 import re
 
+# Falha do produto descrita pelo sintoma (não funciona, mudo, sem som, descolando, rachado, chiado, quebrou sozinho):
+# é defeito, nunca preferência. Verbos de uso comum ("mudo de ideia") ficam de fora.
+SINTOMA_DE_FALHA = re.compile(
+    r"(?:\b(?:esta|ta|ficou|fica|veio|virou|totalmente|completamente) (?:\w+ ){0,2}mud[oa]\b|\b(?:captador|captadores|microfone|falante|saida|canal)\w* (?:\w+ ){0,4}mud[oa]\b|\bsem (?:som|audio|sinal|reacao)\b|"
+    r"\b(?:nao|nunca)\s+(?:\w+\s+){0,2}?(?:funciona|funcionou|funcionando|funcionava|liga|ligou|ligava|toca|tocou|afina|afinou|carrega|carregou|da som|sai som|segura a afinacao)\b|"
+    r"\bparou de (?:funcionar|tocar|ligar|dar som|carregar|responder|afinar|soar)\b|"
+    r"\bdescol\w+|\brachou\b|\brachad\w+|\brachadura\w*|\btrincou\b|\btrincad\w+|\bempenou\b|\bempenad\w+|"
+    r"\bchiad\w+|\bchiand\w+|\bzumbid\w+|\bestragou\b|\bqueimou\b|\bqueimad\w+|\bpifou\b|"
+    r"\bquebrou sozinh\w+|\bfalhand\w+|\bcom ruido\w*)")
+
+# Motivo de preferência dito pelo cliente: só ele tira um defeito em foco do caminho do defeito.
+PREFERENCIA_EXPLICITA = re.compile(
+    r"\b(preferi|prefiro|prefere|nao gostei|nao curti|nao gosto|mudei de ideia|desisti|nao quero mais|"
+    r"gostei mais d\w+|queria outra cor|outra cor|so nao gostei|nao e o que eu queria)\b")
+
 # Ordem importa: a primeira que casar vence (com ajustes em percepcao.py).
 PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
     # quem é a Lia: vem antes de pedir_atendente, porque "você é humano?" não é pedido de atendente
@@ -89,8 +104,10 @@ PADROES_INTENCAO: list[tuple[str, re.Pattern[str]]] = [
         r"\bveio\b.{0,20}\b(errad\w+|diferente|outr[oa]|trocad\w+)\b|"
         r"\b(mandaram|enviaram|entregaram|mandou|enviou)\b.{0,25}\b(errad\w+|diferente|trocad\w+|outr[oa] (produto|modelo|cor|instrumento))\b|"
         r"\b(produto|modelo|cor|item|instrumento)\s+errad\w+\b|\bcomprei\b.{0,40}\be (veio|chegou)\b|"
-        r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
-        r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta))\b")),
+        r"(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,45}\b"
+        r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*|torto|torta)|"
+        r"\b(veio|chegou|recebi)\b.{0,30}\b(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|riscad\w*)|"
+        + SINTOMA_DE_FALHA.pattern + r")\b")),
     ("troca_preferencia", re.compile(r"\b(troc\w+)\b")),
     ("garantia", re.compile(r"\bgarantia\b")),
     # endereço de entrega de um pedido (dado do cliente): a Lia não mostra, e nunca o troca pelo endereço da loja
@@ -309,7 +326,7 @@ AVARIA = re.compile(
     r"\b(amass\w+|danific\w+|quebr\w+|rasg\w+|estrag\w+)\b.{0,25}\bno (transporte|caminho|frete|envio)\b|"
     r"\b(chegou|veio|recebi|entregaram)\b.{0,30}\b(amassad\w*|riscad\w*|quebrad\w*|danificad\w*|avariad\w*|rasgad\w*|"
     r"furad\w*|torto|torta|trincad\w*)\b|\bavaria\w*|"
-    r"\b(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,25}\b"
+    r"\b(caixa|embalagem|tampo|corpo|braco|violao|guitarra|instrumento|produto|case)\b.{0,45}\b"
     r"(amassad\w*|rachad\w*|trincad\w*|rasgad\w*|furad\w*)\b")
 # "esse", "essa guitarra", "ele": remetem ao produto em foco; "os dois" e a quantidade somam/multiplicam
 DEMONSTRATIVO = re.compile(r"\b(esse|essa|esses|essas|este|esta|desse|dessa|deste|desta|dele|dela|nele|nela|ele|ela|"

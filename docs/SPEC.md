@@ -489,6 +489,16 @@ Revisão do Rodrigo em 01/11/2026: a disposição já segue a home, mas o conte�
 - Temas revistos: Pagamento; Entrega e frete; Pedido e rastreio; Trocas, devoluções e garantia; Sobre a loja. Incluir perguntas que faltam e que o manual responde: reembolso (mesma forma de pagamento, até 10 dias úteis), produto com avaria na entrega, acessórios (não vendemos), privacidade dos dados.
 - Fatos continuam derivados do manual pelo código, sem número escrito à mão nos textos fixos.
 
+## Botão de fechar a Lia no celular (etapa 28)
+
+Pedido do Rodrigo em 02/11/2026. Hoje, abaixo de 768px a Lia ocupa a tela (`html.chat-tela-cheia`) e só fecha com toque na faixa acima do painel ou Esc, o que o cliente não descobre.
+
+1. Um botão "×" no cabeçalho do chat (`.chat-topo`), alinhado à direita, `id="chat-fechar"`, `type="button"`, `aria-label="Fechar conversa com a Lia"`, ícone desenhado em SVG ou CSS (sem caractere solto lido pelo leitor de tela), alvo de toque de pelo menos 44x44 px, contraste AA.
+2. Aparece só quando a Lia está em tela cheia (celular e PWA instalado abaixo de 768px). No desktop continua oculto: lá o botão "Lia · conversar" já fecha.
+3. Toque fecha pelo gerenciador único (`Sobreposicoes.fechar`), como Esc: o painel some, `aria-expanded` volta a "false", a rolagem da página volta e o foco retorna ao botão da Lia. A conversa não se perde: ao reabrir, as mensagens continuam lá.
+4. Respeita a área segura do PWA (notch) e não cobre o nome da Lia em 320px.
+5. Testes: unitário da marcação; e2e em 390px (aparece, fecha, foco volta, reabrir mantém as mensagens) e em 320px (não sobrepõe o cabeçalho); e2e em 1280px (oculto). Testes existentes não mudam; se algum precisar mudar, pare e relate.
+
 ## Rodapé sem Perguntas frequentes (etapa 27)
 
 Pedido do Rodrigo em 02/11/2026. O rodapé fica com nome da loja, endereço, Políticas da Loja e Privacidade e cookies. A página `/perguntas-frequentes` continua no ar e é alcançada pelo link "Ver todas as perguntas" da seção da home e pelos links internos já existentes.

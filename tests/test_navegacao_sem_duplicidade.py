@@ -42,9 +42,11 @@ def test_cabecalho_sem_perguntas_frequentes_e_sem_todos_os_instrumentos(cliente)
     assert [h for h in hrefs(cab) if h.startswith("/catalogo")].count("/catalogo") == 1
 
 
-def test_perguntas_frequentes_alcancavel_pelo_rodape(cliente):
-    rod = trecho(cliente.get("/").text, '<footer class="rodape">', "</footer>")
-    assert 'href="/perguntas-frequentes"' in rod and cliente.get("/perguntas-frequentes").status_code == 200
+def test_perguntas_frequentes_fora_do_rodape_e_alcancavel_pela_home(cliente):
+    html = cliente.get("/").text
+    rod = trecho(html, '<footer class="rodape">', "</footer>")
+    assert "/perguntas-frequentes" not in rod and "Perguntas frequentes" not in rod
+    assert 'href="/perguntas-frequentes">Ver todas as perguntas' in html and cliente.get("/perguntas-frequentes").status_code == 200
 
 
 def test_botao_rastrear_da_faixa_de_contato_permanece(cliente):

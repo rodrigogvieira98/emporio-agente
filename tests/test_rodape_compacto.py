@@ -8,9 +8,8 @@ from fastapi.testclient import TestClient
 
 from emporio.web.app import criar_app
 
-LINKS = {"/perguntas-frequentes": "Perguntas frequentes", "/politicas": "Políticas da Loja",
-         "/privacidade": "Privacidade e cookies"}
-FORA_DO_RODAPE = ("/catalogo", "/rastreio", "/creditos")
+LINKS = {"/politicas": "Políticas da Loja", "/privacidade": "Privacidade e cookies"}
+FORA_DO_RODAPE = ("/catalogo", "/rastreio", "/creditos", "/perguntas-frequentes")  # a FAQ sai do rodapé (etapa 27)
 
 
 @pytest.fixture
@@ -24,7 +23,7 @@ def rodape(html):
     return html[html.index('<footer class="rodape">'):html.index("</footer>")]
 
 
-def test_sem_titulos_de_coluna_e_com_os_tres_links(cliente):
+def test_sem_titulos_de_coluna_e_com_os_dois_links(cliente):
     r = rodape(cliente.get("/").text)
     assert "<h2" not in r and "Comprar" not in r and "Informações" not in r
     assert dict(re.findall(r'<a href="([^"]+)">([^<]+)</a>', r)) == LINKS

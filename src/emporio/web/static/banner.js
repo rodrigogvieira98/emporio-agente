@@ -8,6 +8,8 @@
   function iniciar(raiz) {
     var slides = Array.prototype.slice.call(raiz.querySelectorAll("[data-slide]"));
     var botao = raiz.querySelector("[data-pausa]");
+    var pontos = Array.prototype.slice.call(raiz.querySelectorAll("[data-ponto]"));
+    var listaPontos = raiz.querySelector("[data-pontos]");
     var total = slides.length;
     if (total < 2) return;
     var ativo = 0, relogio = null, pausadoPelaPessoa = false, pausadoTemporario = false;
@@ -24,6 +26,9 @@
         s.classList.toggle("e-ativo", k === ativo);
         if (k === ativo) s.removeAttribute("aria-hidden"); else s.setAttribute("aria-hidden", "true");
       });
+      pontos.forEach(function (b, k) {
+        if (k === ativo) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+      });
       carregar(ativo + 1);
     }
     function parar() { if (relogio !== null) { window.clearInterval(relogio); relogio = null; } }
@@ -33,6 +38,12 @@
       relogio = window.setInterval(function () { mostrar(ativo + 1); }, INTERVALO);
     }
 
+    if (listaPontos) {
+      listaPontos.hidden = false;  // sem JS as bolinhas não aparecem: não haveria o que fazer com elas
+      pontos.forEach(function (b, k) {
+        b.addEventListener("click", function () { mostrar(k); atualizar(); });  // atualizar reinicia a contagem de 6 s
+      });
+    }
     if (botao) {
       botao.hidden = reduzido;  // sem troca automática não há o que pausar
       botao.addEventListener("click", function () {

@@ -60,9 +60,10 @@ FOTOS: tuple[dict[str, Any], ...] = (
      "alt": "Ukulele soprano de madeira natural, de frente"},
     {"chave": "ukulele-2", "titulo": "Tenor Ukulele.JPG", "giro": -60, "tolerancia": 110, "bordas": True, "clarear": 215, "borrar": ((620, 112, 700, 146),),
      "alt": "Ukulele de madeira escura de tom mogno, de frente"},
-    {"chave": "abertura", "titulo": "Kytara a ruka.jpg", "giro": 0, "recorte": (0.0, 0.30, 1.0, 0.80), "cobrir": True,
-     "alt": "Mão tocando as cordas de um violão de acabamento sunburst"},
     # banner da home (etapa 20): instrumento em destaque sobre fundo escuro, sem pessoa identificável, até 120 KB cada
+    {"chave": "banner-violao", "titulo": "Yamaha FG403S Dreadnought Style Acoustic Guitar (2002).jpg", "giro": 0,
+     "recorte": (0.22, 0.38, 0.88, 0.98), "cobrir": True, "limite": LIMITE_BANNER,
+     "alt": "Violão folk de tampo claro e escudo preto, sobre uma cortina de veludo vermelho"},
     {"chave": "banner-guitarra", "titulo": "Epiphone Les Paul Standard Ltd. Candy Apple Red finish with Gold hardware body.jpg", "giro": 0,
      "recorte": (0.0, 0.30, 1.0, 0.86), "cobrir": True, "limite": LIMITE_BANNER,
      "alt": "Guitarra elétrica vermelha de corpo único com ferragens douradas, sobre fundo preto"},

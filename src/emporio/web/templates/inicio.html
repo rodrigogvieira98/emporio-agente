@@ -33,7 +33,8 @@
         </li>
       {% endfor %}
       </ul>
-      {% if banner | length > 1 %}<button type="button" class="banner-pausa" data-pausa aria-pressed="false" aria-label="Pausar a troca de fotos" hidden><span class="banner-pausa-icone" aria-hidden="true"></span></button>{% endif %}
+      {% if banner | length > 1 %}<ul class="banner-pontos" data-pontos hidden>{% for f in banner %}<li><button type="button" data-ponto="{{ loop.index0 }}" aria-label="Ver {{ f.nome | lower }}"{% if loop.first %} aria-current="true"{% endif %}></button></li>{% endfor %}</ul>
+      <button type="button" class="banner-pausa" data-pausa aria-pressed="false" aria-label="Pausar a troca de fotos" hidden><span class="banner-pausa-icone" aria-hidden="true"></span></button>{% endif %}
     </div>
     {% endif %}
   </div>

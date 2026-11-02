@@ -21,7 +21,7 @@ def cliente(monkeypatch):
         yield c
 
 
-CHAVES = ("abertura", "banner-guitarra", "banner-baixo", "banner-teclado", "banner-bateria")
+CHAVES = ("banner-violao", "banner-guitarra", "banner-baixo", "banner-teclado", "banner-bateria")
 
 
 def test_home_tem_cinco_fotos_com_alt_e_so_a_primeira_carrega_de_imediato(cliente):
@@ -77,3 +77,25 @@ def test_creditos_pagina_e_documento_listam_as_cinco(cliente):
         assert f"{c}.webp" in pagina and f"{c}.webp" in doc
     assert "Retrato da Lia" in doc
     assert json.loads((WEB / "static" / "fotos" / "creditos.json").read_text(encoding="utf-8"))
+
+
+def test_cinco_bolinhas_com_rotulo_aria_current_e_sem_abertura(cliente):
+    html = cliente.get("/").text
+    html = html[html.index("data-banner"):html.index("data-pausa")]
+    pontos = re.findall(r"<button[^>]*data-ponto=\"(\d)\"[^>]*>", html)
+    assert pontos == ["0", "1", "2", "3", "4"]
+    rotulos = re.findall(r'data-ponto="\d" aria-label="([^"]+)"', html)
+    assert rotulos == ["Ver violão", "Ver guitarra", "Ver baixo", "Ver teclado", "Ver bateria"]
+    assert len(re.findall(r'data-ponto[^>]*aria-current="true"', html)) == 1
+    assert "abertura.webp" not in html
+
+
+def test_nenhuma_foto_do_banner_e_abertura_e_o_arquivo_saiu():
+    assert all(f["chave"] != "abertura" and "abertura" not in f["src"] for f in fotos.fotos_do_banner())
+    assert not (WEB / "static" / "fotos" / "abertura.webp").exists()
+    assert "abertura" not in {c["chave"] for c in fotos.creditos().values()}
+
+
+def test_script_liga_as_bolinhas_e_reinicia_a_contagem():
+    js = (WEB / "static" / "banner.js").read_text(encoding="utf-8")
+    assert "data-ponto" in js and "aria-current" in js and "atualizar()" in js

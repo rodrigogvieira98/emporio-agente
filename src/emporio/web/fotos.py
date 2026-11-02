@@ -104,14 +104,15 @@ def foto_da_categoria(categoria: str | None) -> dict[str, Any] | None:
     return None
 
 
-def foto_de_abertura() -> dict[str, Any] | None:
-    return _ficha("abertura")
 
 
-# banner da home: a abertura (violão) e mais quatro instrumentos, nesta ordem
-CHAVES_DO_BANNER = ("abertura", "banner-guitarra", "banner-baixo", "banner-teclado", "banner-bateria")
+# banner da home: violão, guitarra, baixo, teclado e bateria, nesta ordem
+CHAVES_DO_BANNER = ("banner-violao", "banner-guitarra", "banner-baixo", "banner-teclado", "banner-bateria")
+NOMES_DO_BANNER = {"banner-violao": "Violão", "banner-guitarra": "Guitarra", "banner-baixo": "Baixo",
+                   "banner-teclado": "Teclado", "banner-bateria": "Bateria"}
 
 
 def fotos_do_banner() -> list[dict[str, Any]]:
     """As fotos do banner que existem em `creditos.json`, na ordem de exibição (a primeira carrega de imediato)."""
-    return [f for f in (_ficha(c) for c in CHAVES_DO_BANNER) if f]
+    lista = [f for f in (_ficha(c) for c in CHAVES_DO_BANNER) if f]
+    return [{**f, "nome": NOMES_DO_BANNER.get(f["chave"], "Instrumento")} for f in lista]

@@ -113,3 +113,52 @@ def test_sem_rolagem_horizontal_e_altura_mantida(url_site, navegador, largura):
     assert altura == (432 if largura == 1280 else 288)
     img = p.locator(ATIVO + " img").bounding_box()
     assert img["width"] > 300 and img["height"] == altura
+
+
+def _pontos(p):
+    return p.locator("[data-ponto]")
+
+
+def _atual(p) -> list[int]:
+    return p.evaluate("[...document.querySelectorAll('[data-ponto]')].map((b, i) => b.getAttribute('aria-current') === 'true' ? i : -1).filter(i => i >= 0)")
+
+
+def test_bolinhas_levam_a_foto_certa_e_reiniciam_a_contagem(url_site, navegador):
+    p = _abrir(navegador, url_site)
+    assert _pontos(p).count() == 5 and _atual(p) == [0]
+    p.clock.run_for(5000)  # quase na troca
+    _pontos(p).nth(3).click()
+    p.mouse.move(5, 5)
+    p.locator("body").click(position={"x": 5, "y": 5})
+    assert _indice(p) == 3 and _atual(p) == [3]
+    p.clock.run_for(2000)  # sem reinício, a troca antiga cairia aqui
+    assert _indice(p) == 3
+    p.clock.run_for(4100)  # 6 s depois do clique
+    assert _indice(p) == 4 and _atual(p) == [4]
+
+
+def test_bolinhas_funcionam_com_banner_pausado(url_site, navegador):
+    p = _abrir(navegador, url_site)
+    p.locator("[data-pausa]").click()
+    _pontos(p).nth(2).click()
+    assert _indice(p) == 2 and _atual(p) == [2]
+    p.mouse.move(5, 5)
+    p.clock.run_for(20000)
+    assert _indice(p) == 2  # segue pausado depois do clique
+
+
+def test_bolinhas_funcionam_com_reduced_motion_sem_troca_automatica(url_site, navegador):
+    p = _abrir(navegador, url_site, reduced_motion="reduce")
+    assert _pontos(p).first.is_visible()
+    _pontos(p).nth(4).click()
+    assert _indice(p) == 4 and _atual(p) == [4]
+    p.clock.run_for(30000)
+    assert _indice(p) == 4
+
+
+def test_alvo_de_44px_das_bolinhas_em_390px(url_site, navegador):
+    p = _abrir(navegador, url_site, 390)
+    for i in range(5):
+        caixa = _pontos(p).nth(i).bounding_box()
+        assert caixa["width"] >= 44 and caixa["height"] >= 44, caixa
+    assert p.evaluate("document.documentElement.scrollWidth") <= 390

@@ -156,6 +156,12 @@ button:disabled { opacity: .55; cursor: wait; }
 .banner-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .8s ease, visibility 0s linear .8s; }
 .banner-slide.e-ativo { opacity: 1; visibility: visible; transition: opacity .8s ease, visibility 0s; }
 .banner-pausa { position: absolute; right: var(--s3); bottom: var(--s3); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.6); background: rgba(27,20,16,.72); color: #fff; display: grid; place-items: center; padding: 0; cursor: pointer; }
+.banner-pontos { position: absolute; left: 50%; bottom: var(--s3); transform: translateX(-50%); display: flex; list-style: none; margin: 0; padding: 0; z-index: 2; }
+.banner-pontos[hidden] { display: none; }
+.banner-pontos button { width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; position: relative; cursor: pointer; }
+.banner-pontos button::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(27,20,16,.55); }
+.banner-pontos button[aria-current="true"]::before { background: #fff; }
+.banner-pontos button:hover { background: transparent; }
 .banner-pausa[hidden] { display: none; }
 .banner-pausa:hover { background: rgba(27,20,16,.9); }
 .banner-pausa-icone { width: 12px; height: 14px; border-left: 4px solid currentColor; border-right: 4px solid currentColor; box-sizing: border-box; }

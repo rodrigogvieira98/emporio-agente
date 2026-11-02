@@ -195,16 +195,16 @@
     "alteracoes": "Recortada, girada e ajustada ao quadro 4:3 em fundo branco. Logotipo do fabricante coberto."
   },
   {
-    "chave": "abertura",
-    "arquivo": "abertura.webp",
+    "chave": "banner-violao",
+    "arquivo": "banner-violao.webp",
     "largura": 800,
     "altura": 600,
-    "alt": "Mão tocando as cordas de um violão de acabamento sunburst",
-    "titulo": "Kytara a ruka",
-    "autor": "Honza Groh",
-    "licenca": "CC BY 3.0",
-    "link_licenca": "https://creativecommons.org/licenses/by/3.0",
-    "link_origem": "https://commons.wikimedia.org/wiki/File:Kytara_a_ruka.jpg",
+    "alt": "Violão folk de tampo claro e escudo preto, sobre uma cortina de veludo vermelho",
+    "titulo": "Yamaha FG403S Dreadnought Style Acoustic Guitar (2002)",
+    "autor": "Housing Works Thrift Shops",
+    "licenca": "CC BY-SA 2.0",
+    "link_licenca": "https://creativecommons.org/licenses/by-sa/2.0",
+    "link_origem": "https://commons.wikimedia.org/wiki/File:Yamaha_FG403S_Dreadnought_Style_Acoustic_Guitar_(2002).jpg",
     "alteracoes": "Recortada e ajustada ao quadro 4:3."
   },
   {
